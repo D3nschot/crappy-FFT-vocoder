@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crappy FFT Vocoder</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+        }
+        canvas {
+            border: 1px solid #fff;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #111;
+            border-radius: 10px;
+        }
+        #processingIndicator {
+            display: none;
+            margin-top: 20px;
+            color: #ff0;
+        }
+        @media (max-width: 600px) {
+            #controls {
+                width: 90%;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+        #controls2 {
+            width: 96%;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #222;
+            border-radius: 10px;
+            text-align: center;
+            align-items: center;
+            gap: 10px;
+        }
+        #controls2 > * {
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #iterations {
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h1>Crappy FFT Vocoder</h1>
+        <div id="processingIndicator">Processing... this may take a while (website is frozen so you can do anything until it's done)</div>
+        <canvas id="visualizer" width="800" height="400"></canvas>
+        <div id="controls2">
+        <input type="file" id="carrierInput" accept="audio/*" title="Choose a Input audio file" placeholder="Select Input audio file" /> <!--lables are meassed up i know-->
+        |
+        <input type="file" id="audioInput" accept="audio/*" title="Choose an Carrier file for input" placeholder="Select Carrier audio file" />
+        <br>
+        <label for="decayType">Decay Type:</label>
+        <select id="decayType">
+            <option value="1">RMS</option>
+            <option value="2">Peak</option>
+        </select>
+        |
+        <label for="release">Release:</label>
+        <input type="range" id="release" value="0" min="0" max="0.99" step="0.01" />
+        |
+        <label for="pitch">Pitch: 000</label>
+        <input type="range" id="pitch" value="0" min="-24" max="24" step="1" />
+        <br>
+        <label for="BR_voc">Broken vocoder</label>
+        <input type="checkbox" id="BR_voc" />
+        |
+        <label for="BR_voc_Type">Broken vocoder Type:</label>
+        <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
+            <!--waveforms-->
+            <option value="1">Triangle</option> <!--Best sounding (sounds like it's bit-crushed)-->
+            <option value="5">Square</option> <!--F  L  A  T-->
+            <option value="6">Sawtooth</option> <!--F  L  A  T  2-->
+            <option value="11">semi-sine</option> <!--0 bass at all it's all treble (don't recomend for vocoding)-->
+            <!--repeated functions-->
+            <option value="2">double sine</option> <!--no bass (still good tho)-->
+            <option value="7">triple sine</option> <!--same as double sine-->
+            <option value="8">half sine</option> <!--it sounds like the bands are wide-->
+            <option value="10">sine squared</option> <!--F  L  A  T  3-->
+            <option value="14">sine cubed</option> <!--kinda like the trianle one-->
+            <!--multiplication (sin(o*2))-->
+            <option value="3">2 sine</option> <!--it's half sine but with more bass and it's wider-->
+            <option value="4">3 sine</option> <!--B  A  S  S-->
+            <option value="9">squared sine</option> <!--F  L  A  T  4-->
+            <!--Special waves-->
+            <option value="12">IDK</option> <!--i genuinely have no idea what this is but it sounds like a retro game comming from an old TV-->
+            <option value="13">Noise</option> <!--F  L  A  T  5-->
+            <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
+        </select>
+        |
+        <label for="BR_out">Broken vocoder out</label>
+        <select id="BR_out">
+            <option value="1">Both</option>
+            <option value="2">Input</option>
+            <option value="3">Carrier</option>
+        </select>
+        <br>
+        <label for="iterations">Iterations:</label>
+        <input type="number" id="iterations" value="1" min="1" />
+        it may get loud (or not, i don't recomend using this with long audio files)
+        <br>
+        <label for="volume">volume: 1.00</label>
+        <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
+        <br>
+        <button id="playButton" disabled>Play Audio</button>
+        <button id="pauseButton" disabled>Pause Audio</button>
+        <button id="stopButton" disabled>Stop Audio</button>
+        <button id="downloadButton" disabled>Download Audio</button>
+        <button id="reprocessButton" disabled>Reprocess Audio</button>
+        </div>
+    </div>
+    <script>
+        let audioContext, analyser, source, processedBuffer, audioData, carrierBuffer;
+        let loadedAudioBuffer = null;
+        let loadedCarrierBuffer = null;
+        let playbackSource = null;
+
+        // Replace your existing audioInput event listener
+        document.getElementById('audioInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    audioData = e.target.result;
+                    audioContext.decodeAudioData(audioData, function(buffer) {
+                        loadedAudioBuffer = buffer;
+                        processAudio(buffer);
+                    }, function(error) {
+                        console.error('Error decoding audio data:', error);
+                        alert('Error decoding audio data. Please select a valid audio file.');
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        document.getElementById('carrierInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const carrierData = e.target.result;
+                    audioContext.decodeAudioData(carrierData, function(buffer) {
+                        loadedCarrierBuffer = buffer;
+                        carrierBuffer = buffer;
+                    }, function(error) {
+                        console.error('Error decoding input audio data:', error);
+                        alert('Error decoding input audio data. Please select a valid input audio file.');
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        document.getElementById('reprocessButton').addEventListener('click', function() {
+            if (loadedAudioBuffer && loadedCarrierBuffer) {
+                processAudio(loadedAudioBuffer);
+            } else {
+                alert('Please load both audio and input files first.');
+            }
+        });
+
+        document.getElementById('pitch').addEventListener('input', function(event) {
+            document.querySelector('label[for="pitch"]').textContent = `Pitch: ${(parseFloat(event.target.value)<=0?parseFloat(event.target.value)==0?'0':'-':'+')+Math.abs(parseFloat(event.target.value)).toString().padStart(2, '0')}`;
+        });
+
+        document.getElementById('volume').addEventListener('input', function(event) {
+            document.querySelector('label[for="volume"]').textContent = `volume: ${parseFloat(event.target.value).toFixed(2)}`;
+        });
+        
+        function createLoopedBuffer(buffer, targetLength) {
+            const sampleRate = buffer.sampleRate;
+            const numberOfChannels = buffer.numberOfChannels;
+            const newBuffer = audioContext.createBuffer(numberOfChannels, targetLength, sampleRate);
+            
+            for (let channel = 0; channel < numberOfChannels; channel++) {
+                const nowBuffering = newBuffer.getChannelData(channel);
+                const originalData = buffer.getChannelData(channel);
+                
+                for (let i = 0; i < targetLength; i++) {
+                    nowBuffering[i] = originalData[i % originalData.length];
+                }
+            }
+            
+            return newBuffer;
+        }
+
+        function processAudio(buffer) {
+            if (!loadedCarrierBuffer) {
+                alert('Please select a carrier audio file.');
+                return;
+            }
+
+            // Show processing indicator
+            document.getElementById('processingIndicator').style.display = 'block';
+
+            // Get the number of iterations
+            const iterations = parseInt(document.getElementById('iterations').value);
+            if (iterations < 1) {
+                alert('Please enter a valid number of iterations.');
+                return;
+            }
+
+            if (iterations > 2) {
+                if (iterations == 69) {
+                    document.getElementById('processingIndicator').textContent = 'nice (this will take ages, it\'s frozen for longer too and probably loud af)';
+                } else {
+                    document.getElementById('processingIndicator').textContent = 'Processing... this will take a longer to process (website is frozen so you can do anything until it\'s done)';
+                }
+            }
+
+            // Create looped version of input to match the carrier length
+            const carrierDuration = loadedCarrierBuffer.length / loadedCarrierBuffer.sampleRate;
+            const targetLength = Math.ceil(carrierDuration * buffer.sampleRate);
+            buffer = createLoopedBuffer(buffer, targetLength);
+
+            // Set up analyser
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            const bufferLength = analyser.frequencyBinCount;
+            const frequencyData = new Float32Array(bufferLength);
+
+            // Create a buffer source for the original audio
+            source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            // Perform FFT and reconstruct audio using the provided logic
+            const offlineContext = new OfflineAudioContext(2, buffer.length, buffer.sampleRate); // Stereo
+            let offlineSource = offlineContext.createBufferSource();
+            offlineSource.buffer = buffer;
+
+            const offlineAnalyser = offlineContext.createAnalyser();
+            offlineAnalyser.fftSize = 2048;
+            const offlineFrequencyData = new Uint8Array(offlineAnalyser.frequencyBinCount);
+
+            offlineSource.connect(offlineAnalyser);
+            offlineAnalyser.connect(offlineContext.destination);
+
+            offlineSource.start();
+            offlineContext.startRendering().then(function(renderedBuffer) {
+                let inputLeft = buffer.getChannelData(0);
+                let inputRight = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0);
+                let carrierLeft = loadedCarrierBuffer.getChannelData(0);
+                let carrierRight = loadedCarrierBuffer.numberOfChannels > 1 ? loadedCarrierBuffer.getChannelData(1) : loadedCarrierBuffer.getChannelData(0);
+
+                for (let i = 0; i < iterations; i++) {
+                    // Apply the provided logic to process the audio
+                    processedBuffer = applyFFTLogic(offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer.sampleRate);
+
+                    // Use the processed buffer as the new carrier for the next iteration
+                    carrierLeft = processedBuffer.getChannelData(0);
+                    carrierRight = processedBuffer.numberOfChannels > 1 ? processedBuffer.getChannelData(1) : processedBuffer.getChannelData(0);
+                }
+
+                // Enable buttons
+                document.getElementById('playButton').disabled = false;
+                document.getElementById('pauseButton').disabled = false;
+                document.getElementById('stopButton').disabled = false;
+                document.getElementById('downloadButton').disabled = false;
+                document.getElementById('reprocessButton').disabled = false;
+
+                // Hide processing indicator
+                document.getElementById('processingIndicator').style.display = 'none';
+
+                // Visualize the sine wave volumes
+                visualize(offlineAnalyser, offlineFrequencyData);
+            });
+        }
+
+        function applyFFTLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
+            const SIZE = 1024; // FFT size
+            const OVERLAP = 4; // Overlap factor (e.g., 4x overlap)
+            const HOP_SIZE = SIZE / OVERLAP; // Number of samples to advance for each frame
+            const PI = Math.PI;
+            const cos = Math.cos;
+            const sin = Math.sin;
+            const asin = Math.asin;
+            const abs = Math.abs;
+            const rand=(i)=> {
+                i/=256**3
+                let x=i/1e8%1*85345
+                    for(let i=1;i<=6;i++){
+                        x=x/i*32598347596%1*455534532
+                        x%=1
+                    }
+                return x
+            }, //random() substitute
+
+            // Helper functions
+            BR_voc = document.getElementById('BR_voc').checked;
+            const X = o => {
+                if (!BR_voc) {
+                    return { r: cos(o), i: sin(o) };
+                } else {
+                    switch (parseInt(document.getElementById('BR_voc_Type').value)) {
+                        case 1:
+                            return { r: asin(cos(o)) / PI * 2.25, i: asin(sin(o)) / PI * 2.25 };
+                        case 2:
+                            return { r: sin(cos(o) * 2) * .9 , i: sin(sin(o) * 2) * .9};
+                        case 3:
+                            return { r: cos(o * 2) * .9, i: sin(o * 2) * .9};
+                        case 4:
+                            return { r: cos(o * 3) * .8, i: sin(o * 3) * .8}
+                        case 5:
+                            return { r: o / PI + PI / 4 & 1 ? 0.65 : -0.65, i: o / PI & 1 ? 0.65 : -0.65 }
+                        case 6:
+                            return { r: ((o / PI + PI / 4) % 2 - 1)/1.4 , i: ((o / PI)% 2 - 1) / 1.4 }
+                        case 7:
+                            return { r: sin(sin(cos(o) * 2) * 2) * .8 , i: sin(sin(sin(o) * 2) * 2) * .8}
+                        case 8:
+                            return { r: cos(o / 2) * 0.9, i: sin(o / 2) * 0.9}
+                        case 9:
+                            return { r: cos(o ** 2) * 0.95, i: sin(o ** 2) * 0.95 }
+                        case 10:
+                            return { r: cos(o) ** 2, i: sin(o) ** 2 }
+                        case 11:
+                            return { r: (-abs(cos(o / 2)) + 0.5) * 1.7, i: (-abs(sin(o / 2)) + 0.5) * 1.7}
+                        case 12:
+                            return { r: (abs(sin(o / 2 + PI / 2) ** 3) - 0.5) * 1.8, i: (abs(sin(o / 2 + PI / 4) ** 3) - 0.5) * 1.8 } // i genuinely have no idea what this is
+                        case 13:
+                            return { r: cos(rand(o/1e10)*PI)*.9, i: sin(rand(o/1e10)*PI)*.9 }
+                        case 14:
+                            return { r: cos(o) ** 3 * 1.15, i: sin(o) ** 3 * 1.15 }
+                        case 15:
+                            return { r: cos(o*cos(o)), i: sin(o*sin(o))/2 }
+                    }
+                }
+            };
+            const X2 = o => ({ r: cos(o), i: sin(o) });
+            const M = (a, b) => ({ r: a.r * b.r - a.i * b.i, i: a.r * b.i + b.r * a.i });
+            const A = (a, b) => ({ r: a.r + b.r, i: a.i + b.i });
+
+            // FFT implementation
+            const FFT = (O, I, oi, ii, N, s) => {
+                if (N == 1) O[oi] = { r: I[ii], i: 0 };
+                else {
+                    FFT(O, I, oi, ii, N / 2, s * 2);
+                    FFT(O, I, oi + N / 2, ii + s, N / 2, s * 2);
+                    for (let j = 0; j < N / 2; ++j) {
+                        let T = M(X(-2 * PI / N * j), O[oi + j + N / 2]);
+                        O[oi + j + N / 2] = A(O[oi + j], M(T, { r: -1, i: 0 }));
+                        O[oi + j] = A(O[oi + j], T);
+                    }
+                }
+            };
+
+            // IFFT implementation
+            const IFFT = (O, I, oi, ii, N, s) => {
+                if (N == 1) O[oi] = I[ii];
+                else {
+                    IFFT(O, I, oi, ii, N / 2, s * 2);
+                    IFFT(O, I, oi + N / 2, ii + s, N / 2, s * 2);
+                    for (let j = 0; j < N / 2; ++j) {
+                        let T = M(X(2 * PI / N * j), O[oi + j + N / 2]);
+                        O[oi + j + N / 2] = A(O[oi + j], M(T, { r: -1, i: 0 }));
+                        O[oi + j] = A(O[oi + j], T);
+                    }
+                }
+            };
+
+            // Create output buffer (stereo)
+            const outputBuffer = context.createBuffer(2, inputLeft.length, sampleRate);
+            const outputLeft = outputBuffer.getChannelData(0);
+            const outputRight = outputBuffer.getChannelData(1);
+
+            // Initialize buffers
+            const I = Array.from({ length: SIZE }, () => 0);
+            const O = Array.from({ length: SIZE }, () => ({ r: 0, i: 0 }));
+            const I2 = Array.from({ length: SIZE }, () => 0);
+            const O2 = Array.from({ length: SIZE }, () => ({ r: 0, i: 0 }));
+
+            // Get decay type and release value
+            const DecayType = parseInt(document.getElementById('decayType').value);
+            const Release = parseFloat(document.getElementById('release').value) ** (1 / 4);
+
+            // State arrays for envelope following
+            const envelopeStateLeft = Array(SIZE).fill(0);
+            const envelopeStateRight = Array(SIZE).fill(0);
+
+            // Hann window function
+            const window = Array.from({ length: SIZE }, (_, i) =>
+                0.5 * (1 - Math.cos(2 * Math.PI * i / (SIZE - 1)))
+            );
+
+            // Process left and right channels separately
+            const processChannel = (inputData, carrierData, outputData, envelopeState) => {
+                for (let t = 0; t < inputData.length; t += HOP_SIZE) {
+                    // Fill input buffer for input data with windowing
+                    for (let i = 0; i < SIZE; i++) {
+                        I[i] = (inputData[t + i] || 0) * window[i];
+                        I2[i] = (carrierData[t + i] || 0) * window[i];
+                    }
+
+                    // Perform FFT on input data
+                    FFT(O, I, 0, 0, SIZE, 1);
+
+                    // Perform FFT on carrier data
+                    FFT(O2, I2, 0, 0, SIZE, 1);
+
+                    // Modulate frequency components
+                    for (let i = 0; i < SIZE; i++) {
+                        const pitch = parseInt(document.getElementById('pitch').value);
+                        const ip = i * 2 ** (-pitch / 12) | 0; // Apply pitch shift
+
+                        const mag1 = Math.sqrt(O[i].r * O[i].r + O[i].i * O[i].i);
+                        const mag2 = (ip <= SIZE - 1) ? Math.sqrt(O2[ip].r * O2[ip].r + O2[ip].i * O2[ip].i) : 0;
+
+                        // Apply envelope following
+                        let envelope;
+                        switch (DecayType) {
+                            case 1: // RMS
+                                envelopeState[i] = Release * envelopeState[i] + (1 - Release) * mag2 * mag2;
+                                envelope = Math.sqrt(envelopeState[i]);
+                                break;
+                            case 2: // Peak
+                                envelopeState[i] = Math.max(mag2, envelopeState[i] * Release);
+                                envelope = envelopeState[i];
+                                break;
+                        }
+
+                        // Apply modulation with normalization
+                        const normEQ = Math.min(1, (i < SIZE / 2 ? i : SIZE - i) / (SIZE / 4)) * 32;
+
+                        // Apply modulation based on BR_out value
+                        switch (parseInt(document.getElementById('BR_out').value)) {
+                            case 1:
+                                O[i] = M(O[i], X(2 * PI * i / SIZE));
+                                O2[i] = M(O2[i], X(2 * PI * i / SIZE));
+                                break;
+                            case 3:
+                                O[i] = M(O[i], X2(2 * PI * i / SIZE));
+                                break;
+                            case 2:
+                                O2[i] = M(O2[i], X2(2 * PI * i / SIZE));
+                                break;
+                        }
+
+                        const volume = document.getElementById('volume').value
+
+                        O[i].r *= (envelope / 32) * normEQ * volume;
+                        O[i].i *= (envelope / 32) * normEQ * volume;
+                    }
+
+                    // Perform IFFT
+                    IFFT(I, O, 0, 0, SIZE, 1);
+
+                    // Overlap-add with windowing
+                    for (let i = 0; i < SIZE; i++) {
+                        outputData[t + i] += (I[i].r / SIZE) * window[i];
+                    }
+                }
+            };
+
+            // Process left channel
+            processChannel(inputLeft, carrierLeft, outputLeft, envelopeStateLeft);
+
+            // Process right channel
+            processChannel(inputRight, carrierRight, outputRight, envelopeStateRight);
+
+            return outputBuffer;
+        }
+
+        function visualize(analyser, dataArray) {
+            const canvas = document.getElementById('visualizer');
+            const ctx = canvas.getContext('2d');
+            const bufferLength = analyser.frequencyBinCount;
+
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.fillStyle = 'rgb(0, 0, 0)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i];
+                    //console.log(barHeight);
+                    B255=(Math.min(barHeight,255)/255)**1.5*255
+                    ctx.fillStyle = `rgb(${Math.min(B255*2,255)}, 0, ${Math.min((256-B255)*2,255)})`;
+                    ctx.fillRect(x, canvas.height - barHeight*1.56, barWidth, barHeight*1.56);
+
+                    x += barWidth + 1;
+                }
+            }
+
+            draw();
+        }
+
+        document.getElementById('playButton').addEventListener('click', function() {
+            if (processedBuffer) {
+                playbackSource = audioContext.createBufferSource();
+                playbackSource.buffer = processedBuffer; // Play the processed buffer stored in RAM
+                playbackSource.connect(audioContext.destination);
+
+                // Set up a new analyser for playback visualization
+                const playbackAnalyser = audioContext.createAnalyser();
+                playbackAnalyser.fftSize = 2048;
+                const playbackFrequencyData = new Uint8Array(playbackAnalyser.frequencyBinCount);
+
+                playbackSource.connect(playbackAnalyser);
+                playbackAnalyser.connect(audioContext.destination);
+
+                // Visualize the playback audio
+                visualize(playbackAnalyser, playbackFrequencyData);
+
+                playbackSource.start();
+            }
+        });
+
+        document.getElementById('pauseButton').addEventListener('click', function() {
+            if (playbackSource) {
+                playbackSource.stop();
+                playbackSource = null;
+            }
+        });
+
+        document.getElementById('stopButton').addEventListener('click', function() {
+            if (playbackSource) {
+                playbackSource.stop();
+                playbackSource = null;
+            }
+        });
+
+        document.getElementById('downloadButton').addEventListener('click', function() {
+            const carrierName = document.getElementById('carrierInput').files[0].name.split('.').slice(0, -1).join('.');
+            if (processedBuffer) {
+            const wavBuffer = bufferToWav(processedBuffer);
+            const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${carrierName} (vocoded).wav`;
+            a.click();
+            URL.revokeObjectURL(url);
+            }
+        });
+
+        function bufferToWav(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = loadedCarrierBuffer.length * numOfChan * 2 + 44; // Use carrier buffer length
+            const bufferArray = new ArrayBuffer(length);
+            const view = new DataView(bufferArray);
+
+            // Write WAV header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + loadedCarrierBuffer.length * numOfChan * 2, true); // Use carrier buffer length
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numOfChan, true);
+            view.setUint32(24, buffer.sampleRate, true);
+            view.setUint32(28, buffer.sampleRate * numOfChan * 2, true);
+            view.setUint16(32, numOfChan * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, loadedCarrierBuffer.length * numOfChan * 2, true); // Use carrier buffer length
+
+            // Write interleaved audio data
+            let offset = 44;
+            for (let i = 0; i < loadedCarrierBuffer.length; i++) { // Use carrier buffer length
+                for (let channel = 0; channel < numOfChan; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+
+            return bufferArray;
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+    </script>
+</body>
+</html>

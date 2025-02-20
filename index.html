@@ -60,6 +60,13 @@
         #iterations {
             width: 50px;
         }
+        #helpPopup {
+            display: none;
+            position: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -108,6 +115,8 @@
             <option value="12">IDK</option> <!--i genuinely have no idea what this is but it sounds like a retro game comming from an old TV-->
             <option value="13">Noise</option> <!--F  L  A  T  5-->
             <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
+            <option value="16">harmonics sq</option> <!--harmonic serries-->
+            <option value="17">harmonics saw</option> <!--harmonic serries-->
         </select>
         |
         <label for="BR_out">Broken vocoder out</label>
@@ -123,13 +132,71 @@
         <br>
         <label for="volume">volume: 1.00</label>
         <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
+        |
+        <label for="clamp_output">Clamp output</label>
+        <select id="clamp_output">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+            <option value="2">individual bands</option>
+        </select>
+        |
+        <label for="divbands">Divide bands: 1</label>
+        <input type="range" id="divbands" value="1" min="1" max="64"/>
         <br>
         <button id="playButton" disabled>Play Audio</button>
         <button id="pauseButton" disabled>Pause Audio</button>
         <button id="stopButton" disabled>Stop Audio</button>
         <button id="downloadButton" disabled>Download Audio</button>
         <button id="reprocessButton" disabled>Reprocess Audio</button>
+        <button id="helpButton">Help</button>
         </div>
+        <div id="helpPopup" style="display: none;">
+            <div style="background-color: #333; padding: 20px; border-radius: 10px; color: #fff; max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
+            <h2>Help</h2>
+            <p>Welcome to the Crappy FFT Vocoder! Here are some instructions to get you started:</p>
+            <ul>
+            <li><strong>Decay Type:</strong> Choose between RMS and Peak for the decay type.</li>
+            <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
+            <li><strong>Pitch:</strong> Adjust the pitch of the vocoded audio (input only).</li>
+            <li><strong>Broken Vocoder Type:</strong> Select the type of broken vocoder effect.</li>
+            <ul>
+                <p>All the types with it's desciption I added</p>
+                <li>Triangle: Best sounding (sounds like it's bit-crushed)</li>
+                <li>Square: F L A T</li>
+                <li>Sawtooth: F L A T 2</li>
+                <li>semi-sine: 0 bass at all it's all treble (don't recommend for vocoding)</li>
+                <li>double sine: no bass (still good tho)</li>
+                <li>triple sine: same as double sine</li>
+                <li>half sine: it sounds like the bands are wide</li>
+                <li>sine squared: F L A T 3</li>
+                <li>sine cubed: kinda like the triangle one</li>
+                <li>2 sine: it's half sine but with more bass and it's wider</li>
+                <li>3 sine: B A S S</li>
+                <li>squared sine: F L A T 4</li>
+                <li>IDK: i genuinely have no idea what this is but it sounds like a retro game coming from an old TV</li>
+                <li>Noise: F L A T 5</li>
+                <li>sine sine: this is a joke, sin(o*sin(o)) also very flat</li>
+                <li>harmonics saw: harmonic series of a sawtooth also it's phase shifted by 90</li>
+                <li>harmonics sq: harmonic series of a square also it's phase shifted by 90</li>
+            </ul>
+            <br>
+            <li><strong>Broken Vocoder Out:</strong> Choose which audio to output (Both, Input, Carrier).</li>
+            <li><strong>Iterations:</strong> Set the number of iterations for processing.</li>
+            <li><strong>Volume:</strong> Adjust the volume of the output audio.</li>
+            <li><strong>Divide Bands:</strong> Adjust the number of bands to divide the audio into.</li>
+            </ul>
+            <button id="closeHelpButton">Close</button>
+            </div>
+        </div>
+        <script>
+            document.getElementById('helpButton').addEventListener('click', function() {
+            document.getElementById('helpPopup').style.display = 'block';
+            });
+
+            document.getElementById('closeHelpButton').addEventListener('click', function() {
+            document.getElementById('helpPopup').style.display = 'none';
+            });
+        </script></div>
     </div>
     <script>
         let audioContext, analyser, source, processedBuffer, audioData, carrierBuffer;
@@ -192,6 +259,10 @@
             document.querySelector('label[for="volume"]').textContent = `volume: ${parseFloat(event.target.value).toFixed(2)}`;
         });
         
+        document.getElementById('divbands').addEventListener('input', function(event) {
+            document.querySelector('label[for="divbands"]').textContent = `Divide bands: ${parseFloat(event.target.value)}`;
+        });
+
         function createLoopedBuffer(buffer, targetLength) {
             const sampleRate = buffer.sampleRate;
             const numberOfChannels = buffer.numberOfChannels;
@@ -310,7 +381,23 @@
                         x%=1
                     }
                 return x
-            }, //random() substitute
+            } //random() substitute
+
+            const harm=(T)=> {
+                let x=0
+                    for(let i=0;i<=3;i++){
+                        x+=cos((T-PI/2)*(1+i*2))/(1+i*2)
+                    }
+                return x
+            }
+
+            const harmS=(T)=> {
+                let x=0
+                    for(let i=1;i<=2;i++){
+                        x+=sin(T*i)/i
+                    }
+                return x
+            }
 
             // Helper functions
             BR_voc = document.getElementById('BR_voc').checked;
@@ -349,6 +436,10 @@
                             return { r: cos(o) ** 3 * 1.15, i: sin(o) ** 3 * 1.15 }
                         case 15:
                             return { r: cos(o*cos(o)), i: sin(o*sin(o))/2 }
+                        case 16:
+                            return { r: harm(o+PI/2) * 0.8, i: harm(o) * 0.8 }
+                        case 17:
+                            return { r: harmS(o+PI/2) * 0.9, i: harmS(o) * 0.9 }
                     }
                 }
             };
@@ -408,6 +499,8 @@
                 0.5 * (1 - Math.cos(2 * Math.PI * i / (SIZE - 1)))
             );
 
+            const clampOut = document.getElementById('clamp_output').value
+
             // Process left and right channels separately
             const processChannel = (inputData, carrierData, outputData, envelopeState) => {
                 for (let t = 0; t < inputData.length; t += HOP_SIZE) {
@@ -426,22 +519,38 @@
                     // Modulate frequency components
                     for (let i = 0; i < SIZE; i++) {
                         const pitch = parseInt(document.getElementById('pitch').value);
-                        const ip = i * 2 ** (-pitch / 12) | 0; // Apply pitch shift
+                        const divbands = parseInt(document.getElementById('divbands').value)
 
-                        const mag1 = Math.sqrt(O[i].r * O[i].r + O[i].i * O[i].i);
-                        const mag2 = (ip <= SIZE - 1) ? Math.sqrt(O2[ip].r * O2[ip].r + O2[ip].i * O2[ip].i) : 0;
-
+                        lin=(a,b,p)=>a+(b-a)*Math.min(Math.max(p,0),1)
+                    
                         // Apply envelope following
-                        let envelope;
-                        switch (DecayType) {
-                            case 1: // RMS
-                                envelopeState[i] = Release * envelopeState[i] + (1 - Release) * mag2 * mag2;
-                                envelope = Math.sqrt(envelopeState[i]);
-                                break;
-                            case 2: // Peak
-                                envelopeState[i] = Math.max(mag2, envelopeState[i] * Release);
-                                envelope = envelopeState[i];
-                                break;
+                        let envelope = 0;
+                        const mag1 = Math.sqrt(O[i].r * O[i].r + O[i].i * O[i].i);
+                        let mag2 = 0;
+                        let ip = 0;
+                        let ip_ = 0;
+
+                        // divide bands
+                        for (let j = 0; j <= divbands; j++) {
+                            ip = (i * 2 ** (-pitch / 12) | 0);
+                            const weight = 1 - abs(j - divbands / 2) / divbands;
+
+                            ip_=Math.round(ip + (j - divbands / 2));
+                            if (ip_ < 0) ip_ = 0;
+
+                            mag2 += ((ip_ < SIZE) ? Math.sqrt(O2[ip_].r * O2[ip_].r + O2[ip_].i * O2[ip_].i) : 0) * weight;
+                        
+                            switch (DecayType) {
+                                    case 1: // RMS
+                                    envelopeState[i] = Release * envelopeState[i] + (1 - Release) * mag2 * mag2;
+                                    envelope += Math.sqrt(envelopeState[i]);
+                                    break;
+                                case 2: // Peak
+                                    envelopeState[i] = Math.max(mag2, envelopeState[i] * Release);
+                                    envelope += envelopeState[i];
+                                    break;
+                            }
+                            envelope /= divbands * 2;
                         }
 
                         // Apply modulation with normalization
@@ -465,6 +574,11 @@
 
                         O[i].r *= (envelope / 32) * normEQ * volume;
                         O[i].i *= (envelope / 32) * normEQ * volume;
+
+                        if (clampOut==2) {
+                            O[i].r = Math.min(4, Math.max(-4, O[i].r));
+                            O[i].i = Math.min(4, Math.max(-4, O[i].i));
+                        }
                     }
 
                     // Perform IFFT
@@ -472,7 +586,11 @@
 
                     // Overlap-add with windowing
                     for (let i = 0; i < SIZE; i++) {
-                        outputData[t + i] += (I[i].r / SIZE) * window[i];
+                        if (clampOut==1) {
+                            outputData[t + i] = Math.min(1, Math.max(-1, outputData[t + i] + I[i].r / SIZE * window[i]));
+                        } else {
+                            outputData[t + i] += (I[i].r / SIZE) * window[i];
+                        }
                     }
                 }
             };

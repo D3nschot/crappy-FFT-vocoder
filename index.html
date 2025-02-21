@@ -91,11 +91,9 @@
         <label for="pitch">Pitch: 000</label>
         <input type="range" id="pitch" value="0" min="-24" max="24" step="1" />
         <br>
-        <label for="BR_voc">Broken vocoder</label>
-        <input type="checkbox" id="BR_voc" />
-        |
         <label for="BR_voc_Type">Broken vocoder Type:</label>
         <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
+            <option value="0">OFF</option>
             <!--waveforms-->
             <option value="1">Triangle</option> <!--Best sounding (sounds like it's bit-crushed)-->
             <option value="5">Square</option> <!--F  L  A  T-->
@@ -402,49 +400,46 @@
             }
 
             // Helper functions
-            BR_voc = document.getElementById('BR_voc').checked;
             const X = o => {
-                if (!BR_voc) {
-                    return { r: cos(o), i: sin(o) };
-                } else {
-                    switch (parseInt(document.getElementById('BR_voc_Type').value)) {
-                        case 1:
-                            return { r: asin(cos(o)) / PI * 2.25, i: asin(sin(o)) / PI * 2.25 };
-                        case 2:
-                            return { r: sin(cos(o) * 2) * .9 , i: sin(sin(o) * 2) * .9};
-                        case 3:
-                            return { r: cos(o * 2) * .9, i: sin(o * 2) * .9};
-                        case 4:
-                            return { r: cos(o * 3) * .8, i: sin(o * 3) * .8}
-                        case 5:
-                            return { r: o / PI + PI / 4 & 1 ? 0.65 : -0.65, i: o / PI & 1 ? 0.65 : -0.65 }
-                        case 6:
-                            return { r: ((o / PI + PI / 4) % 2 - 1)/1.4 , i: ((o / PI)% 2 - 1) / 1.4 }
-                        case 7:
-                            return { r: sin(sin(cos(o) * 2) * 2) * .8 , i: sin(sin(sin(o) * 2) * 2) * .8}
-                        case 8:
-                            return { r: cos(o / 2) * 0.9, i: sin(o / 2) * 0.9}
-                        case 9:
-                            return { r: cos(o ** 2) * 0.95, i: sin(o ** 2) * 0.95 }
-                        case 10:
-                            return { r: cos(o) ** 2, i: sin(o) ** 2 }
-                        case 11:
-                            return { r: (-abs(cos(o / 2)) + 0.5) * 1.7, i: (-abs(sin(o / 2)) + 0.5) * 1.7}
-                        case 12:
-                            return { r: (abs(sin(o / 2 + PI / 2) ** 3) - 0.5) * 1.8, i: (abs(sin(o / 2 + PI / 4) ** 3) - 0.5) * 1.8 } // i genuinely have no idea what this is
-                        case 13:
-                            return { r: cos(rand(o/1e10)*PI)*.9, i: sin(rand(o/1e10)*PI)*.9 }
-                        case 14:
-                            return { r: cos(o) ** 3 * 1.15, i: sin(o) ** 3 * 1.15 }
-                        case 15:
-                            return { r: cos(o*cos(o)), i: sin(o*sin(o))/2 }
-                        case 16:
-                            return { r: harm(o+PI/2) * 0.8, i: harm(o) * 0.8 }
-                        case 17:
-                            return { r: harmS(o+PI/2) * 0.9, i: harmS(o) * 0.9 }
-                        case 18:
-                            return { r: cos((o*128/PI&o*127/PI)/128*PI), i: sin((o*128/PI|o*127/PI)/128*PI) }
-                    }
+                switch (parseInt(document.getElementById('BR_voc_Type').value)) {
+                    default:
+                        return { r: cos(o), i: sin(o) }
+                    case 1:
+                        return { r: asin(cos(o)) / PI * 2.25, i: asin(sin(o)) / PI * 2.25 };
+                    case 2:
+                        return { r: sin(cos(o) * 2) * .9 , i: sin(sin(o) * 2) * .9};
+                    case 3:
+                        return { r: cos(o * 2) * .9, i: sin(o * 2) * .9};
+                    case 4:
+                        return { r: cos(o * 3) * .8, i: sin(o * 3) * .8}
+                    case 5:
+                        return { r: o / PI + PI / 4 & 1 ? 0.65 : -0.65, i: o / PI & 1 ? 0.65 : -0.65 }
+                    case 6:
+                        return { r: ((o / PI + PI / 4) % 2 - 1)/1.4 , i: ((o / PI)% 2 - 1) / 1.4 }
+                    case 7:
+                        return { r: sin(sin(cos(o) * 2) * 2) * .8 , i: sin(sin(sin(o) * 2) * 2) * .8}
+                    case 8:
+                        return { r: cos(o / 2) * 0.9, i: sin(o / 2) * 0.9}
+                    case 9:
+                        return { r: cos(o ** 2) * 0.95, i: sin(o ** 2) * 0.95 }
+                    case 10:
+                        return { r: cos(o) ** 2, i: sin(o) ** 2 }
+                    case 11:
+                        return { r: (-abs(cos(o / 2)) + 0.5) * 1.7, i: (-abs(sin(o / 2)) + 0.5) * 1.7}
+                    case 12:
+                        return { r: (abs(sin(o / 2 + PI / 2) ** 3) - 0.5) * 1.8, i: (abs(sin(o / 2 + PI / 4) ** 3) - 0.5) * 1.8 } // i genuinely have no idea what this is
+                    case 13:
+                        return { r: cos(rand(o/1e10)*PI)*.9, i: sin(rand(o/1e10)*PI)*.9 }
+                    case 14:
+                        return { r: cos(o) ** 3 * 1.15, i: sin(o) ** 3 * 1.15 }
+                    case 15:
+                        return { r: cos(o*cos(o)), i: sin(o*sin(o))/2 }
+                    case 16:
+                        return { r: harm(o+PI/2) * 0.8, i: harm(o) * 0.8 }
+                    case 17:
+                        return { r: harmS(o+PI/2) * 0.9, i: harmS(o) * 0.9 }
+                    case 18:
+                        return { r: cos((o*128/PI&o*127/PI)/128*PI), i: sin((o*128/PI|o*127/PI)/128*PI) }
                 }
             };
             const X2 = o => ({ r: cos(o), i: sin(o) });

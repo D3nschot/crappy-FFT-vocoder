@@ -115,7 +115,8 @@
             <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
             <option value="16">harmonics sq</option> <!--harmonic serries-->
             <option value="17">harmonics saw</option> <!--harmonic serries-->
-            <option value="18">bitwise</option>
+            <option value="18">bitwise</option> <!--sounds like Triangle but more bit-crushed-->
+            <option value="19">Floor</option> <!--sounds like Triangle but more bit-crushed-->
         </select>
         |
         <label for="BR_out">Broken vocoder out</label>
@@ -178,6 +179,8 @@
                 <li>harmonics saw: harmonic series of a sawtooth also it's phase shifted by 90</li>
                 <li>harmonics sq: harmonic series of a square also it's phase shifted by 90</li>
                 <li>Bitwise: sounds like Triangle but more bit-crushed</li>
+                <li>Floor: sounds like Triangle but more bit-crushed</li>
+                
             </ul>
             <br>
             <li><strong>Broken Vocoder Out:</strong> Choose which audio to output (Both, Input, Carrier).</li>
@@ -440,6 +443,8 @@
                         return { r: harmS(o+PI/2) * 0.9, i: harmS(o) * 0.9 }
                     case 18:
                         return { r: cos((o*128/PI&o*127/PI)/128*PI), i: sin((o*128/PI|o*127/PI)/128*PI) }
+                    case 19:
+                        return { r: cos((o*4/PI|0)/4*PI), i: sin((o*4/PI|0)/4*PI) }
                 }
             };
             const X2 = o => ({ r: cos(o), i: sin(o) });

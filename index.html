@@ -67,17 +67,136 @@
             align-items: center;
             justify-content: center;
         }
+        button {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 5px 20px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #666;
+        }
+        button:disabled {
+            background-color: #333;
+            cursor: not-allowed;
+        }
+        input[type="file"] {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 2px 3px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        input[type="file"]::file-selector-button {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 3px 10px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #666;
+        }
+        select {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        select:hover {
+            background-color: #666;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 125px;
+            margin: 10px 0;
+            background-color: #444;
+            border-radius: 5px;
+            height: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background-color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background-color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover,
+        input[type="range"]::-moz-range-thumb:hover {
+            background-color: #666;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track,
+        input[type="range"]::-moz-range-track {
+            background-color: #444;
+            border-radius: 5px;
+            height: 5px;
+        }
+        input[type="number"] {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 4px 5px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        
+        .drag-over {
+            border: 2px dashed #fff;
+            background-color: #333;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .expanded {
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+        }
     </style>
 </head>
 <body>
-    <div id="controls">
+    <div id="controls" style="overflow-y: auto; max-height: 80vh;">
         <h1>Crappy FFT Vocoder</h1>
-        <div id="processingIndicator">Processing... this may take a while (website is frozen so you can do anything until it's done)</div>
+        <div id="processingIndicator">Processing... thiss may take a while (website is frozen so you can do anything until it's done)</div>
         <canvas id="visualizer" width="800" height="400"></canvas>
         <div id="controls2">
-        <input type="file" id="carrierInput" accept="audio/*" title="Choose a Input audio file" placeholder="Select Input audio file" /> <!--lables are meassed up i know-->
+        <input type="file" id="carrierInput" accept="audio/*,video/*" title="Choose an Input audio or video file" placeholder="Select Input audio or video file" />
         |
-        <input type="file" id="audioInput" accept="audio/*" title="Choose an Carrier file for input" placeholder="Select Carrier audio file" />
+        <input type="file" id="audioInput" accept="audio/*,video/*" title="Choose an Carrier file for input" placeholder="Select Carrier audio file" />
         <br>
         <label for="decayType">Decay Type:</label>
         <select id="decayType">
@@ -91,7 +210,7 @@
         <label for="pitch">Pitch: 000</label>
         <input type="range" id="pitch" value="0" min="-24" max="24" step="1" />
         <br>
-        <label for="BR_voc_Type">Broken vocoder Type:</label>
+        <label for="BR_voc_Type">Broken vocoder:</label>
         <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
             <option value="0">OFF</option>
             <!--waveforms-->
@@ -115,7 +234,7 @@
             <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
             <option value="16">harmonics sq</option> <!--harmonic serries-->
             <option value="17">harmonics saw</option> <!--harmonic serries-->
-            <option value="18">bitwise</option> <!--sounds like Triangle but more bit-crushed-->
+            <option value="18">Bitwise</option> <!--sounds like Triangle but more bit-crushed-->
             <option value="19">Floor</option> <!--sounds like Triangle but more bit-crushed-->
         </select>
         |
@@ -133,15 +252,70 @@
         <label for="volume">volume: 1.00</label>
         <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
         |
-        <label for="clamp_output">Clamp output</label>
+        <label for="clamp_output">Clamp out</label>
         <select id="clamp_output">
             <option value="0">Off</option>
             <option value="1">On</option>
-            <option value="2">individual bands</option>
+            <option value="2">individual</option>
+            <!--option value="3">Compressor</option-->
+            <option value="4">individual (soft)</option>
         </select>
         |
+        <label for="threshold">Clamp Threshold: 1.00</label>
+        <input type="range" id="threshold" value="1" min="0" max="1" step="0.01"/>
+        <br>
         <label for="divbands">Divide bands: 1</label>
         <input type="range" id="divbands" value="1" min="1" max="64"/>
+        |
+        <label for="FFTsize">FFT size: 2^10 (1024)</label>
+        <input type="range" id="FFTsize" value="10" min="2" max="14" step="1"/>
+        <br>
+        <label for="BassBoost">Bass Boost: 0.00</label>
+        <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01"/>
+        |
+        <label for="BassCurve">Bass Curve</label>
+        <select id="BassCurve">
+            <option value="0">+1</option>
+            <option value="1">x/i</option>
+            <option value="2">quadratic</option>
+        </select>
+        |
+        <label for="EQType">Norm EQ type</label>
+        <select id="EQType">
+            <option value="0">original</option>
+            <option value="1">sin</option>
+        </select>
+        <br>
+        <label for="steps">Steps: OFF</label>
+        <input type="range" id="steps" value="0" min="0" max="16" step="1"/>
+        |
+        <label for ="RoundType">Round Type</label>
+        <select id="RoundType">
+            <option value="0">Floor</option>
+            <option value="1">Round</option>
+            <option value="2">Ceil</option>
+        </select>
+        |
+        <label for="SoundGoodizer">SoundGoodizer? OFF:</label>
+        <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01"/>
+        <br>
+        <label for="simpleChorus">simple Chorus</label>
+        <select id="simpleChorus">
+            <option value="0">OFF</option>
+            <option value="1">sin</option>
+            <option value="2">cos</option>
+            <option value="3">asin</option>
+            <option value="4">acos</option>
+        </select>
+        |
+        <label for="speedType">speed</label>
+        <select id="speedType">
+            <option value="0">Auto</option>
+            <option value="1">file length</option>
+            <option value="2">user</option>
+        </select>
+        <label for="userSpeed">| speed: 1.00 Hz</label>
+        <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01"/>
         <br>
         <button id="playButton" disabled>Play Audio</button>
         <button id="pauseButton" disabled>Pause Audio</button>
@@ -150,6 +324,7 @@
         <button id="reprocessButton" disabled>Reprocess Audio</button>
         <button id="helpButton">Help</button>
         </div>
+        
         <div id="helpPopup" style="display: none;">
             <div style="background-color: #333; padding: 20px; border-radius: 10px; color: #fff; max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
             <h2>Help</h2>
@@ -180,18 +355,41 @@
                 <li>harmonics sq: harmonic series of a square also it's phase shifted by 90</li>
                 <li>Bitwise: sounds like Triangle but more bit-crushed</li>
                 <li>Floor: sounds like Triangle but more bit-crushed</li>
-                
             </ul>
             <br>
             <li><strong>Broken Vocoder Out:</strong> Choose which audio to output (Both, Input, Carrier).</li>
             <li><strong>Iterations:</strong> Set the number of iterations for processing.</li>
             <li><strong>Volume:</strong> Adjust the volume of the output audio.</li>
             <li><strong>Divide Bands:</strong> Adjust the number of bands to divide the audio into.</li>
+            <li><strong>Clamp Out:</strong> Choose whether to clamp the output audio (Off, On, individual bands).</li>
+            <li><strong>Clamp Threshold:</strong> Adjust the threshold for clamping the output audio.</li>
+            <li><strong>FFT Size:</strong> Adjust the size of the FFT (Fast Fourier Transform) used for processing.</li>
+            <li><strong>Bass Boost:</strong> Adjust the Bass boost level for the audio. (putting it in the negatives won't decrease it, it will increase it in a different way)</li>
+            <li><strong>Steps:</strong> Adjust the number of steps for quantizing the envelope (OFF means no quantization).</li>
+            <li><strong>Round Type:</strong> Choose the rounding type for the steps (Floor, Round, Ceil).</li>
+            <li><strong>Simple Chorus:</strong> Choose the type of simple chorus effect.</li>
+            <li><strong>Speed:</strong> Choose the speed type for the chorus effect.</li>
+            <li><strong>User Speed:</strong> Adjust the user-defined speed for the chorus effect.</li>
+            <br>
+            version 1.1 <!--current version-->
             </ul>
             <button id="closeHelpButton">Close</button>
             </div>
         </div>
         <script>
+            const cornerElement = document.createElement('a');
+            cornerElement.href = 'https://github.com/D3nschot/crappy-FFT-vocoder';
+            cornerElement.style.position = 'fixed';
+            cornerElement.style.bottom = '10px';
+            cornerElement.style.right = '10px';
+            cornerElement.style.backgroundColor = '#444';
+            cornerElement.style.color = '#fff';
+            cornerElement.style.padding = '10px';
+            cornerElement.style.borderRadius = '5px';
+            cornerElement.style.zIndex = '1000';
+            cornerElement.textContent = 'Fork me on GitHub :)';
+            document.body.appendChild(cornerElement);
+
             document.getElementById('helpButton').addEventListener('click', function() {
             document.getElementById('helpPopup').style.display = 'block';
             });
@@ -199,6 +397,53 @@
             document.getElementById('closeHelpButton').addEventListener('click', function() {
             document.getElementById('helpPopup').style.display = 'none';
             });
+
+            function handleDragOver(event) {
+                event.preventDefault();
+                event.target.classList.add('drag-over');
+                event.target.classList.add('expanded');
+            }
+
+            function handleDragLeave(event) {
+                event.target.classList.remove('drag-over');
+                event.target.classList.remove('expanded');
+            }
+
+            function handleDrop(event) {
+                event.preventDefault();
+                event.target.classList.remove('drag-over');
+                event.target.classList.remove('expanded');
+                const fileInput = event.target;
+                const files = event.dataTransfer.files;
+                fileInput.files = files;
+
+                // Trigger change event manually
+                const changeEvent = new Event('change');
+                fileInput.dispatchEvent(changeEvent);
+            }
+
+            document.getElementById('carrierInput').addEventListener('dragover', handleDragOver);
+            document.getElementById('carrierInput').addEventListener('dragleave', handleDragLeave);
+            document.getElementById('carrierInput').addEventListener('drop', handleDrop);
+
+            document.getElementById('audioInput').addEventListener('dragover', handleDragOver);
+            document.getElementById('audioInput').addEventListener('dragleave', handleDragLeave);
+            document.getElementById('audioInput').addEventListener('drop', handleDrop);
+
+            document.getElementById('speedType').addEventListener('change', function(event) {
+                const userSpeedLabel = document.querySelector('label[for="userSpeed"]');
+                const userSpeedSlider = document.getElementById('userSpeed');
+                if (event.target.value == '2') {
+                    userSpeedLabel.style.display = 'inline';
+                    userSpeedSlider.style.display = 'inline';
+                } else {
+                    userSpeedLabel.style.display = 'none';
+                    userSpeedSlider.style.display = 'none';
+                }
+            });
+
+            // Initialize the visibility of the speed slider based on the current selection
+            document.getElementById('speedType').dispatchEvent(new Event('change'));
         </script></div>
     </div>
     <script>
@@ -207,7 +452,58 @@
         let loadedCarrierBuffer = null;
         let playbackSource = null;
 
-        // Replace your existing audioInput event listener
+        function extractAudioFromVideo(file, callback) {
+            const video = document.createElement('video');
+            video.src = URL.createObjectURL(file);
+            video.muted = true;
+            video.play();
+
+            video.addEventListener('canplaythrough', function() {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaElementSource(video);
+                const destination = audioContext.createMediaStreamDestination();
+                source.connect(destination);
+                const recorder = new MediaRecorder(destination.stream);
+                const chunks = [];
+
+                recorder.ondataavailable = function(event) {
+                    chunks.push(event.data);
+                };
+
+                recorder.onstop = function() {
+                    const blob = new Blob(chunks, { type: 'audio/wav' });
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        callback(e.target.result);
+                    };
+                    reader.readAsArrayBuffer(blob);
+                };
+
+                recorder.start();
+                video.play();
+                setTimeout(() => {
+                    recorder.stop();
+                    video.pause();
+                    URL.revokeObjectURL(video.src);
+                }, video.duration * 1000);
+            });
+        }
+
+        function handleFileInput(event, callback) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.type.startsWith('video/')) {
+                    extractAudioFromVideo(file, callback);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        callback(e.target.result);
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+            }
+        }
+
         document.getElementById('audioInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
@@ -226,6 +522,7 @@
                 reader.readAsArrayBuffer(file);
             }
         });
+
 
         document.getElementById('carrierInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -266,6 +563,30 @@
             document.querySelector('label[for="divbands"]').textContent = `Divide bands: ${parseFloat(event.target.value)}`;
         });
 
+        document.getElementById('FFTsize').addEventListener('input', function(event) {
+            document.querySelector('label[for="FFTsize"]').textContent = `FFT size: 2^${parseFloat(event.target.value)} (${2**parseFloat(event.target.value)})`;
+        });
+        
+        document.getElementById('BassBoost').addEventListener('input', function(event) {
+            document.querySelector('label[for="BassBoost"]').textContent = `Bass Boost: ${parseFloat(event.target.value).toFixed(2)}`;
+        });
+
+        document.getElementById('steps').addEventListener('input', function(event) {
+            document.querySelector('label[for="steps"]').textContent = `Steps: ${parseFloat(event.target.value)?parseFloat(event.target.value).toFixed(2):'OFF'}`;
+        });
+        
+        document.getElementById('threshold').addEventListener('input', function(event) {
+            document.querySelector('label[for="threshold"]').textContent = `Clamp Threshold: ${parseFloat(event.target.value).toFixed(2)}`;
+        });
+
+        document.getElementById('userSpeed').addEventListener('input', function(event) {
+            document.querySelector('label[for="userSpeed"]').textContent = `| speed: ${parseFloat(event.target.value).toFixed(2)} Hz`;
+        });
+
+        document.getElementById('SoundGoodizer').addEventListener('input', function(event) {
+            document.querySelector('label[for="SoundGoodizer"]').textContent = `SoundGoodizer? ${parseFloat(event.target.value)!==0?parseFloat(event.target.value).toFixed(2):'OFF'}`;
+        });
+
         function createLoopedBuffer(buffer, targetLength) {
             const sampleRate = buffer.sampleRate;
             const numberOfChannels = buffer.numberOfChannels;
@@ -282,6 +603,8 @@
             
             return newBuffer;
         }
+
+        
 
         function processAudio(buffer) {
             if (!loadedCarrierBuffer) {
@@ -368,41 +691,16 @@
         }
 
         function applyFFTLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
-            const SIZE = 1024; // FFT size
-            const OVERLAP = 4; // Overlap factor (e.g., 4x overlap)
-            const HOP_SIZE = SIZE / OVERLAP; // Number of samples to advance for each frame
+            const FFTsize = document.getElementById('FFTsize').value;
+            const SIZE = 2 ** FFTsize;
+            const OVERLAP = 4;
+            const HOP_SIZE = SIZE / OVERLAP;
             const PI = Math.PI;
             const cos = Math.cos;
             const sin = Math.sin;
             const asin = Math.asin;
             const abs = Math.abs;
-            const rand=(i)=> {
-                i/=256**3
-                let x=i/1e8%1*85345
-                    for(let i=1;i<=6;i++){
-                        x=x/i*32598347596%1*455534532
-                        x%=1
-                    }
-                return x
-            } //random() substitute
 
-            const harm=(T)=> {
-                let x=0
-                    for(let i=0;i<=3;i++){
-                        x+=cos((T-PI/2)*(1+i*2))/(1+i*2)
-                    }
-                return x
-            }
-
-            const harmS=(T)=> {
-                let x=0
-                    for(let i=1;i<=2;i++){
-                        x+=sin(T*i)/i
-                    }
-                return x
-            }
-
-            // Helper functions
             const X = o => {
                 switch (parseInt(document.getElementById('BR_voc_Type').value)) {
                     default:
@@ -447,11 +745,10 @@
                         return { r: cos((o*4/PI|0)/4*PI), i: sin((o*4/PI|0)/4*PI) }
                 }
             };
-            const X2 = o => ({ r: cos(o), i: sin(o) });
+            const X2 = o => ({ r: cos(o), i: sin(o) }); //back up
             const M = (a, b) => ({ r: a.r * b.r - a.i * b.i, i: a.r * b.i + b.r * a.i });
             const A = (a, b) => ({ r: a.r + b.r, i: a.i + b.i });
 
-            // FFT implementation
             const FFT = (O, I, oi, ii, N, s) => {
                 if (N == 1) O[oi] = { r: I[ii], i: 0 };
                 else {
@@ -465,7 +762,6 @@
                 }
             };
 
-            // IFFT implementation
             const IFFT = (O, I, oi, ii, N, s) => {
                 if (N == 1) O[oi] = I[ii];
                 else {
@@ -479,6 +775,9 @@
                 }
             };
 
+            // Calculate the duration of the audio buffer
+            const duration = inputLeft.length / sampleRate;
+
             // Create output buffer (stereo)
             const outputBuffer = context.createBuffer(2, inputLeft.length, sampleRate);
             const outputLeft = outputBuffer.getChannelData(0);
@@ -490,24 +789,30 @@
             const I2 = Array.from({ length: SIZE }, () => 0);
             const O2 = Array.from({ length: SIZE }, () => ({ r: 0, i: 0 }));
 
-            // Get decay type and release value
-            const DecayType = parseInt(document.getElementById('decayType').value);
-            const Release = parseFloat(document.getElementById('release').value) ** (1 / 4);
+            const pitch = parseInt(document.getElementById('pitch').value);
+            const divbands = parseInt(document.getElementById('divbands').value);
 
-            // State arrays for envelope following
+            const DecayType = parseInt(document.getElementById('decayType').value);
+            const Release = parseFloat(document.getElementById('release').value) ** (1 / (4 + (divbands - 1) * 2));
+            const BassBoost = parseFloat(document.getElementById('BassBoost').value);
+
             const envelopeStateLeft = Array(SIZE).fill(0);
             const envelopeStateRight = Array(SIZE).fill(0);
 
-            // Hann window function
             const window = Array.from({ length: SIZE }, (_, i) =>
                 0.5 * (1 - Math.cos(2 * Math.PI * i / (SIZE - 1)))
             );
 
-            const clampOut = document.getElementById('clamp_output').value
+            const clampOut = parseFloat(document.getElementById('clamp_output').value);
+            const Threshold = parseFloat(document.getElementById('threshold').value);
 
             // Process left and right channels separately
             const processChannel = (inputData, carrierData, outputData, envelopeState) => {
+                const startTime = performance.now();
+
                 for (let t = 0; t < inputData.length; t += HOP_SIZE) {
+                    const currentTime = (performance.now() - startTime) / 1000; // Current time in seconds
+
                     // Fill input buffer for input data with windowing
                     for (let i = 0; i < SIZE; i++) {
                         I[i] = (inputData[t + i] || 0) * window[i];
@@ -522,43 +827,108 @@
 
                     // Modulate frequency components
                     for (let i = 0; i < SIZE; i++) {
-                        const pitch = parseInt(document.getElementById('pitch').value);
-                        const divbands = parseInt(document.getElementById('divbands').value)
+                        let timer = currentTime; // Timer value between 0 and 1
+                        const speedType = parseInt(document.getElementById('speedType').value)
 
-                        lin=(a,b,p)=>a+(b-a)*Math.min(Math.max(p,0),1)
-                    
+                        switch (speedType) {
+                            case 0:
+                                timer = currentTime / 8;
+                                break;
+                            case 1:
+                                timer = currentTime / duration;
+                                break;
+                            case 2:
+                                timer = currentTime * parseFloat(document.getElementById('userSpeed').value);
+                                break;
+                        }
+
                         // Apply envelope following
                         let envelope = 0;
                         const mag1 = Math.sqrt(O[i].r * O[i].r + O[i].i * O[i].i);
                         let mag2 = 0;
                         let ip = 0;
                         let ip_ = 0;
+                        const Ratio = (SIZE / 1024);
+
+                        let callCount = 0;
+
+                        const lin = (a, b, t) => a * (1 - t) + b * t;
 
                         // divide bands
                         for (let j = 0; j <= divbands; j++) {
                             ip = (i * 2 ** (-pitch / 12) | 0);
                             const weight = 1 - abs(j - divbands / 2) / divbands;
 
-                            ip_=Math.round(ip + (j - divbands / 2));
+                            ip_ = Math.round(ip + (j - divbands / 2));
                             if (ip_ < 0) ip_ = 0;
 
                             mag2 += ((ip_ < SIZE) ? Math.sqrt(O2[ip_].r * O2[ip_].r + O2[ip_].i * O2[ip_].i) : 0) * weight;
-                        
+
+                            const REL = Math.min((1 - Release) * Ratio, 1);
+
                             switch (DecayType) {
-                                    case 1: // RMS
-                                    envelopeState[i] = Release * envelopeState[i] + (1 - Release) * mag2 * mag2;
+                                case 1: // RMS
+                                    envelopeState[i] = (1 - REL) * envelopeState[i] + REL * mag2 * mag2;
                                     envelope += Math.sqrt(envelopeState[i]);
                                     break;
                                 case 2: // Peak
-                                    envelopeState[i] = Math.max(mag2, envelopeState[i] * Release);
+                                    envelopeState[i] = Math.max(mag2, envelopeState[i] * (1 - REL));
                                     envelope += envelopeState[i];
                                     break;
                             }
-                            envelope /= divbands * 2;
+                            // somehow (1 + 2 / divbands / 2) solved the volume issue
+                            envelope /= divbands * ((1 + 2 / divbands) / 2);
                         }
 
-                        // Apply modulation with normalization
-                        const normEQ = Math.min(1, (i < SIZE / 2 ? i : SIZE - i) / (SIZE / 4)) * 32;
+                        // Apply modulation with normalization and volume with BassBoost
+                        const BassCurveType = parseInt(document.getElementById('BassCurve').value);
+                        const normEQcurveType = parseInt(document.getElementById('EQType').value);
+
+                        let BassCurve = 0;
+                        switch (BassCurveType) {
+                            case 0:
+                                BassCurve = 1;
+                                break;
+                            case 1:
+                                BassCurve = 10 / (i + 1);
+                                break;
+                            case 2:
+                                BassCurve = ((1 - i / SIZE) ** 2);
+                                break;
+                        }
+
+                        let normEQcurve = 0;
+                        switch (normEQcurveType) {
+                            case 0:
+                                normEQcurve = Math.min(1, (i < SIZE / 2 ? i : SIZE - i) / (SIZE / 4));
+                                break;
+                            case 1:
+                                normEQcurve = Math.sin(i / SIZE * PI);
+                                break;
+                        }
+
+                        // Example calculation using the timer
+                        let modulatedValue = 1
+                        const simpleChorus = parseInt(document.getElementById('simpleChorus').value);
+                        const modulatedInput = i*((timer*256|0)/256);
+
+                        switch (simpleChorus) {
+                            case 1:
+                                modulatedValue = cos(modulatedInput*PI);
+                                break;
+                            case 2:
+                                modulatedValue = cos(modulatedInput*PI);
+                                break;
+                            case 3:
+                                modulatedValue = asin(sin(modulatedInput*PI));
+                                break;
+                            case 4:
+                                modulatedValue = asin(cos(modulatedInput*PI));
+                                break;
+                        }
+
+                        soundgoodizer = parseFloat(document.getElementById('SoundGoodizer').value);
+                        const normEQ = (normEQcurve + BassBoost * BassCurve / (Math.sqrt(Ratio)*1024) * 20) * modulatedValue * lin(1, ((i/SIZE)**150*15+((i/SIZE)**150-1)*2-sin(i/SIZE*PI)*4)/2, soundgoodizer)
 
                         // Apply modulation based on BR_out value
                         switch (parseInt(document.getElementById('BR_out').value)) {
@@ -574,24 +944,45 @@
                                 break;
                         }
 
-                        const volume = document.getElementById('volume').value
+                        const volume = document.getElementById('volume').value / Math.sqrt(Ratio);
 
-                        O[i].r *= (envelope / 32) * normEQ * volume;
-                        O[i].i *= (envelope / 32) * normEQ * volume;
+                        const steps = parseFloat(document.getElementById('steps').value);
+                        const RoundType = [Math.floor, Math.round, Math.ceil][parseInt(document.getElementById('RoundType').value)];
+                        envelope = steps ? RoundType(envelope * (steps / 16)) / (steps / 16) : envelope;
 
-                        if (clampOut==2) {
-                            O[i].r = Math.min(4, Math.max(-4, O[i].r));
-                            O[i].i = Math.min(4, Math.max(-4, O[i].i));
+                        O[i].r *= envelope * volume * normEQ;
+                        O[i].i *= envelope * volume * normEQ;
+
+                        if (clampOut == 2) {
+                            O[i].r = Math.min(4 * Ratio * Threshold, Math.max(-4 * Ratio * Threshold, O[i].r));
+                            O[i].i = Math.min(4 * Ratio * Threshold, Math.max(-4 * Ratio * Threshold, O[i].i));
                         }
                     }
 
+                    let frequencyMagnitudes = Array(SIZE).fill(0);
+                    if (clampOut == 4) {
+                        for (let i = 0; i < SIZE; i++) {
+                            const ratio = 2; // Compression ratio
+
+                            // Calculate the magnitude of the frequency component
+                            const magni = Math.sqrt(O[i].r * O[i].r + O[i].i * O[i].i);
+                            frequencyMagnitudes[i] = Math.sqrt((frequencyMagnitudes[i] ** 2 * 24 + magni ** 2) / 25);
+                            let level = frequencyMagnitudes[i];
+
+                            let gain = Math.min(1, (Threshold / level) ** (ratio - 1)); // Compute gain reduction
+
+                            O[i].r *= gain;
+                            O[i].i *= gain;
+                        }
+                    }
                     // Perform IFFT
                     IFFT(I, O, 0, 0, SIZE, 1);
 
                     // Overlap-add with windowing
                     for (let i = 0; i < SIZE; i++) {
-                        if (clampOut==1) {
-                            outputData[t + i] = Math.min(1, Math.max(-1, outputData[t + i] + I[i].r / SIZE * window[i]));
+                        const inputt =  outputData[t + i] + I[i].r / SIZE * window[i];
+                        if (clampOut == 1) {
+                            outputData[t + i] = Math.min(Threshold, Math.max(-Threshold, inputt));
                         } else {
                             outputData[t + i] += (I[i].r / SIZE) * window[i];
                         }
@@ -614,24 +1005,23 @@
             const bufferLength = analyser.frequencyBinCount;
 
             function draw() {
-                requestAnimationFrame(draw);
-                analyser.getByteFrequencyData(dataArray);
+            analyser.getByteFrequencyData(dataArray);
 
-                ctx.fillStyle = 'rgb(0, 0, 0)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                const barWidth = (canvas.width / bufferLength) * 2.5;
-                let x = 0;
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let x = 0;
 
-                for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = dataArray[i];
-                    //console.log(barHeight);
-                    B255=(Math.min(barHeight,255)/255)**1.5*255
-                    ctx.fillStyle = `rgb(${Math.min(B255*2,255)}, 0, ${Math.min((256-B255)*2,255)})`;
-                    ctx.fillRect(x, canvas.height - barHeight*1.56, barWidth, barHeight*1.56);
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = dataArray[i];
+                const B255 = (Math.min(barHeight, 255) / 255) ** 1.5 * 255;
+                ctx.fillStyle = `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
+                ctx.fillRect(x, canvas.height - barHeight * 1.56, barWidth, barHeight * 1.56);
 
-                    x += barWidth + 1;
-                }
+                x += barWidth + 1;
+            }
+
+            requestAnimationFrame(draw);
             }
 
             draw();

@@ -29,11 +29,7 @@
             background-color: #111;
             border-radius: 10px;
         }
-        #processingIndicator {
-            display: none;
-            margin-top: 20px;
-            color: #ff0;
-        }
+
         @media (max-width: 600px) {
             #controls {
                 width: 90%;
@@ -191,10 +187,17 @@
 </head>
 <body>
     <div id="controls" style="overflow-y: auto; max-height: 80vh;">
-        <h1>Crappy FFT Vocoder</h1>
-        <div id="processingIndicator">Processing... thiss may take a while (website is frozen so you can do anything until it's done)</div>
+
+        <div style="text-align: center; line-height: 1.5;">
+          <div style="font-size: 35px;">Crappy FFT Vocoder</div>
+          <div style="color: #aaa; font-size: 10px;">by DX3050/D3nschot</div>
+        </div>
+
+        <br>
         <canvas id="visualizer" width="800" height="400"></canvas>
         <div id="controls2">
+        <button id="ViewProperties">View properties</button>
+        |
         <input type="file" id="carrierInput" accept="audio/*,video/*" title="Choose an Input audio or video file" placeholder="Select Input audio or video file" />
         |
         <input type="file" id="audioInput" accept="audio/*,video/*" title="Choose an Carrier file for input" placeholder="Select Carrier audio file" />
@@ -329,7 +332,15 @@
         <div id="helpPopup" style="display: none;">
             <div style="background-color: #333; padding: 20px; border-radius: 10px; color: #fff; max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
             <h2>Help</h2>
-            <p>Welcome to the Crappy FFT Vocoder! Here are some instructions to get you started:</p>
+            <p>Welcome to the Crappy FFT Vocoder!</p>
+            <p>this is a Fast Fourier Transform based vocoder that uses a lot of math to process audio files.</p>
+            <p><strong>What is FFT?</strong></p>
+            <p>The Fast Fourier Transform (FFT) is an algorithm that quickly converts a signal from its original time domain into a frequency domain. This allows the vocoder to analyze and manipulate the different frequency components of audio, enabling effects like filtering, modulation, and vocoding.</p>
+            <p>Learn more about the <a href="https://en.wikipedia.org/wiki/Fast_Fourier_transform" target="_blank" rel="noopener noreferrer" style="color:#4af;">Fast Fourier Transform (FFT)</a> on Wikipedia.</p>
+            <p>this is why it's taking so long to process</p>
+
+            <p>fun fact: dividing the FFT index by 2 will multiply the pitch by 2, multiplying it will do the opposite
+            <p>Here are some instructions and information to get you started:</p>
             <ul>
             <li><strong>Decay Type:</strong> Choose between RMS and Peak for the decay type.</li>
             <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
@@ -378,6 +389,11 @@
             <button id="closeHelpButton">Close</button>
             </div>
         </div>
+
+        <script id="MainWorker" type="javascript/workder">
+
+        </script>
+
         <script>
             const cornerElement = document.createElement('a');
             cornerElement.href = 'https://github.com/D3nschot/crappy-FFT-vocoder';
@@ -446,8 +462,226 @@
 
             // Initialize the visibility of the speed slider based on the current selection
             document.getElementById('speedType').dispatchEvent(new Event('change'));
-        </script></div>
-    </div>
+
+            // Function to update the URL with the current state
+            function updateURLParams() {
+                const params = new URLSearchParams();
+
+                // Collect all slider and select values
+                document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(input => {
+                    params.set(input.id, input.value);
+                });
+
+                // Update the URL without reloading the page
+                const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                window.history.replaceState({}, '', newUrl);
+            }
+
+            // Function to load state from the URL
+            function loadStateFromURL() {
+                const params = new URLSearchParams(window.location.search);
+
+                // Set all sliders and selects based on URL parameters
+                params.forEach((value, key) => {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = value;
+
+                        // Trigger input events to update labels
+                        input.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+
+            // Attach event listeners to all sliders and dropdowns
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(input => {
+                    input.addEventListener('input', updateURLParams);
+                    input.addEventListener('change', updateURLParams);
+                });
+
+                // Load state from URL on page load
+                loadStateFromURL();
+            });
+
+            document.getElementById('ViewProperties').addEventListener('click', function() {
+                const inputs = document.querySelectorAll('input, select');
+                const fileInputs = document.querySelectorAll('input[type="file"]');
+                const properties = [];
+                const fileInfo = [];
+
+                // Collect input values
+                inputs.forEach(input => {
+                    if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                        properties.push(`${input.id}: ${input.value}`);
+                    }
+                });
+
+                // Collect file input details
+                fileInputs.forEach(fileInput => {
+                    const file = fileInput.files[0];
+                    if (file) {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            audioContext.decodeAudioData(e.target.result, function(buffer) {
+                                const duration = buffer.duration.toFixed(2);
+                                fileInfo.push(`
+                                    <h2>${file.name}</h2>
+                                    <li>Size: ${(file.size / 1024).toFixed(2)} KB</li>
+                                    <li>Duration: ${Math.floor(duration / 60)}:${Math.floor(duration % 60).toString().padStart(2, '0')}:${Math.floor((duration % 1) * 1000).toString().padStart(3, '0')} (${duration} seconds)</li>
+                                    <li>Sample Rate: ${buffer.sampleRate} Hz</li>
+                                    <li>Channels: ${buffer.numberOfChannels}</li>
+                                    <li>Codec: ${(co=file.type.split('/')[1]|| 'failed to get Codec') , file.type === 'audio/wav' || file.type.includes('pcm') ? co + ` (PCM ${buffer.getChannelData(0).BYTES_PER_ELEMENT * 8})`: co}</li>
+                                `);
+
+                                // Update the popup content dynamically
+                                const popup = document.querySelector('div[style*="z-index: 1000"]');
+                                if (popup) {
+                                    popup.innerHTML = `
+                                        <h1>Properties</h1>
+                                        ${fileInfo.join('')}
+                                        <br>
+                                        <h1>Input Values</h1>
+                                        <ul>${properties.map(prop => `<li>${prop}</li>`).join('')}</ul>
+                                        <button id="ExportJSON" style="margin-top: 10px;">Export as JSON</button>|<button id="closePropertiesButton" style="margin-top: 10px;">Close</button>
+                                    `;
+
+                                    // Reattach the close button event listener
+                                    document.getElementById('closePropertiesButton').addEventListener('click', function() {
+                                        document.body.removeChild(popup);
+                                    });
+
+                                    // Add ExportJSON functionality
+                                    document.getElementById('ExportJSON').addEventListener('click', function() {
+                                        const jsonObject = {};
+                                        inputs.forEach(input => {
+                                            if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                                                jsonObject[input.id] = input.value;
+                                            }
+                                        });
+
+                                        const jsonBlob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
+                                        const jsonUrl = URL.createObjectURL(jsonBlob);
+                                        const downloadLink = document.createElement('a');
+                                        downloadLink.href = jsonUrl;
+                                        downloadLink.download = 'properties.json';
+                                        downloadLink.click();
+                                        URL.revokeObjectURL(jsonUrl);
+                                    });
+                                }
+                            });
+                        };
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        fileInfo.push(`
+                            <h2>${fileInput.id}</h2>
+                            <li>No file selected</li>
+                        `);
+                    }
+                });
+
+                // Create the popup
+                const popup = document.createElement('div');
+                popup.style.position = 'fixed';
+                popup.style.top = '50%';
+                popup.style.left = '50%';
+                popup.style.transform = 'translate(-50%, -50%)';
+                popup.style.backgroundColor = '#333';
+                popup.style.color = '#fff';
+                popup.style.padding = '20px';
+                popup.style.borderRadius = '10px';
+                // Responsive and flex styles:
+                popup.style.width = '90vw';
+                popup.style.maxWidth = '600px';
+                popup.style.minWidth = '220px';
+                popup.style.maxHeight = '80vh';
+                popup.style.overflowY = 'auto';
+                popup.style.overflowX = 'hidden';
+                popup.style.zIndex = '1000';
+                popup.style.display = 'flex';
+                popup.style.flexDirection = 'column';
+                popup.style.alignItems = 'flex-start'; // or 'center' if you want centered content
+                popup.style.justifyContent = 'flex-start';
+                popup.style.boxSizing = 'border-box';
+                popup.style.textAlign = 'left';
+
+                // Add content to the popup
+                popup.innerHTML = `
+                    <h2>Properties</h2>
+                    ${fileInfo.join('')}
+                    <br>
+                    <h2>Input Values</h2>
+                    <ul style="width:100%;word-break:break-word;overflow-wrap:anywhere;padding:1;margin:0;">
+                        ${properties.map(prop => `<li style="word-break:break-word;overflow-wrap:anywhere;">${prop}</li>`).join('')}
+                    </ul>
+                    <br>
+                    <div>
+                        <button id="ExportJSON" style="margin-top: 10px;">Export as JSON</button> |
+                        <button id="ImportJSON" style="margin-top: 10px;">Import JSON</button> |
+                        <button id="closePropertiesButton" style="margin-top: 10px;">Close</button>
+                    </div>
+                `;
+
+                // Append the popup to the body
+                document.body.appendChild(popup);
+
+                // Add event listener to close the popup
+                document.getElementById('closePropertiesButton').addEventListener('click', function() {
+                    document.body.removeChild(popup);
+                });
+
+                // Add ExportJSON functionality
+                document.getElementById('ExportJSON').addEventListener('click', function() {
+                    const jsonObject = {};
+                    inputs.forEach(input => {
+                        if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                            jsonObject[input.id] = input.value;
+                        }
+                    });
+
+                    const jsonBlob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
+                    const jsonUrl = URL.createObjectURL(jsonBlob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = jsonUrl;
+                    downloadLink.download = 'properties.json';
+                    downloadLink.click();
+                    URL.revokeObjectURL(jsonUrl);
+                });
+
+                document.getElementById('ImportJSON').addEventListener('click', function() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/json';
+                    input.addEventListener('change', function(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                try {
+                                    const jsonObject = JSON.parse(e.target.result);
+                                    Object.keys(jsonObject).forEach(key => {
+                                        const inputElement = document.getElementById(key);
+                                        if (inputElement) {
+                                            inputElement.value = jsonObject[key];
+
+                                            // Trigger input and change events to update UI
+                                            inputElement.dispatchEvent(new Event('input'));
+                                            inputElement.dispatchEvent(new Event('change'));
+                                        }
+                                    });
+                                    alert('Properties imported successfully!');
+                                } catch (error) {
+                                    alert('Invalid JSON file. Please select a valid properties file.');
+                                }
+                            };
+                            reader.readAsText(file);
+                        }
+                    });
+                    input.click();
+                });
+            });
+        </script>
     <script>
         let audioContext, analyser, source, processedBuffer, audioData, carrierBuffer;
         let loadedAudioBuffer = null;
@@ -515,16 +749,22 @@
                     audioData = e.target.result;
                     audioContext.decodeAudioData(audioData, function(buffer) {
                         loadedAudioBuffer = buffer;
-                        processAudio(buffer);
+                        tryProcessAudio(loadedAudioBuffer);
                     }, function(error) {
-                        console.error('Error decoding audio data:', error);
-                        alert('Error decoding audio data. Please select a valid audio file.');
+                        console.error('Error decoding carrier audio data:', error);
+                        alert('Error decoding carrier audio data. Please select a valid audio file.');
                     });
                 };
                 reader.readAsArrayBuffer(file);
             }
         });
 
+        // this fixed the issue of requireing the carrier file to be loaded first
+        function tryProcessAudio(B) {
+            if (loadedCarrierBuffer && loadedAudioBuffer) {
+                processAudio(B);
+            }
+        }
 
         document.getElementById('carrierInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -536,9 +776,10 @@
                     audioContext.decodeAudioData(carrierData, function(buffer) {
                         loadedCarrierBuffer = buffer;
                         carrierBuffer = buffer;
+                        tryProcessAudio(loadedAudioBuffer);
                     }, function(error) {
-                        console.error('Error decoding input audio data:', error);
-                        alert('Error decoding input audio data. Please select a valid input audio file.');
+                        console.error('Error decoding modular audio data:', error);
+                        alert('Error decoding modular audio data. Please select a valid input audio file.');
                     });
                 };
                 reader.readAsArrayBuffer(file);
@@ -606,16 +847,132 @@
             return newBuffer;
         }
 
-        
+        function showProcessPOP_UP(text, block = true, bar = false, per) {
+            let popup = document.getElementById('processPopup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'processPopup';
+                popup.style.position = 'fixed';
+                popup.style.top = '50%';
+                popup.style.left = '50%';
+                popup.style.transform = 'translate(-50%, -50%)';
+                popup.style.background = '#222';
+                popup.style.color = '#fff';
+                popup.style.padding = '30px 40px';
+                popup.style.borderRadius = '12px';
+                popup.style.boxShadow = '0 4px 24px #000a';
+                popup.style.zIndex = '2000';
+                popup.style.fontSize = '1.2em';
+                popup.style.textAlign = 'center';
+                popup.style.display = 'flex';
+                popup.style.flexDirection = 'column';
+                popup.style.alignItems = 'center';
+                popup.style.justifyContent = 'center';
+                popup.style.width = '90vw';        // Responsive width
+                popup.style.maxWidth = '600px';    // Maximum width
+                popup.style.minWidth = '220px';    // Minimum width for usability
+                popup.style.maxHeight = '90vh';    // Responsive height
+                //popup.style.overflowY = 'auto';    // Enable vertical scroll if needed
+                document.body.appendChild(popup);
+            }
+
+            // Clear popup content
+            popup.innerHTML = '';
+
+            // Add text
+            const textDiv = document.createElement('div');
+            textDiv.innerHTML = text.replace(/\n/g, '<br>');
+            popup.appendChild(textDiv);
+
+            // Add or update progress bar
+            if (bar) {
+                let progressBar = document.getElementById('progressBar');
+                let progressFill = document.getElementById('progressFill');
+                if (!progressBar) {
+                    progressBar = document.createElement('div');
+                    progressBar.id = 'progressBar';
+                    progressBar.style.width = '100%';
+                    progressBar.style.height = '20px';
+                    progressBar.style.backgroundColor = '#444';
+                    progressBar.style.borderRadius = '10px';
+                    progressBar.style.marginTop = '10px';
+
+                    progressFill = document.createElement('div');
+                    progressFill.id = 'progressFill';
+                    progressFill.style.height = '100%';
+
+                    const B255 = (Math.min(per/100*255, 255) / 255) ** 1.5 * 255;
+                    progressFill.style.backgroundColor = `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
+                    progressFill.style.borderRadius = '10px';
+
+                    progressBar.appendChild(progressFill);
+                    popup.appendChild(progressBar);
+                }
+                // Always update width
+                progressFill.style.width = `${per || 0}%`;
+            }
+
+            // Remove any fixed height so it grows/shrinks automatically
+            popup.style.height = '';
+
+            popup.style.display = block && text ? 'block' : 'none';
+        }
+
+        async function processAudioIterations(iterations, offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer) {
+            await new Promise(resolve => setTimeout(resolve, 20));
+            if (iterations >= 2) {
+                if (iterations == 69) {
+                    showProcessPOP_UP(`nice, 1/${iterations}`, true, true, 1 / iterations * 100);
+                } else {
+                    showProcessPOP_UP(`Processing... this will take a while (website is frozen so you can do anything until it\'s done) \n1/${iterations} iterations`, true, true, 1 / iterations * 100);
+                }
+            } else {
+                showProcessPOP_UP('Processing... this will take a while (website is frozen so you can do anything until it\'s done)', true);
+            }
+            for (let i = 0; i < iterations; i++) {
+                
+                if (iterations >= 2) {
+                    if (iterations == 69) {
+                        showProcessPOP_UP(`nice, ${i + 1}/${iterations}`, true, true, (i + 1) / iterations * 100);
+                    } else {
+                        showProcessPOP_UP(`Processing... this will take a while (website is frozen so you can do anything until it\'s done) \n${i + 1}/${iterations} iterations`, true, true, i / iterations * 100);
+                    }
+                } else {
+                    showProcessPOP_UP('Processing... this will take a while (website is frozen so you can do anything until it\'s done)', true);
+                }
+
+                // Pause for 10ms (adjust as needed)
+                await new Promise(resolve => setTimeout(resolve, 10));
+
+                // Apply the provided logic to process the audio
+                processedBuffer = applyFFTLogic(
+                    offlineContext,
+                    inputLeft,
+                    inputRight,
+                    carrierLeft,
+                    carrierRight,
+                    buffer.sampleRate
+                );
+
+                // Use the processed buffer as the new carrier for the next iteration
+                carrierLeft = processedBuffer.getChannelData(0);
+                carrierRight = processedBuffer.numberOfChannels > 1
+                    ? processedBuffer.getChannelData(1)
+                    : processedBuffer.getChannelData(0);
+            }
+            // Hide popup when done
+            showProcessPOP_UP('', false);
+        }
 
         function processAudio(buffer) {
             if (!loadedCarrierBuffer) {
                 alert('Please select a carrier audio file.');
                 return;
             }
-
-            // Show processing indicator
-            document.getElementById('processingIndicator').style.display = 'block';
+            if (!loadedAudioBuffer) {
+                alert('Please select a Modular audio file.');
+                return;
+            }
 
             // Get the number of iterations
             const iterations = parseInt(document.getElementById('iterations').value);
@@ -623,15 +980,7 @@
                 alert('Please enter a valid number of iterations.');
                 return;
             }
-
-            if (iterations > 2) {
-                if (iterations == 69) {
-                    document.getElementById('processingIndicator').textContent = 'nice (this will take ages, it\'s frozen for longer too and probably loud af)';
-                } else {
-                    document.getElementById('processingIndicator').textContent = 'Processing... this will take a longer to process (website is frozen so you can do anything until it\'s done)';
-                }
-            }
-
+            
             // Create looped version of input to match the carrier length
             const carrierDuration = loadedCarrierBuffer.length / loadedCarrierBuffer.sampleRate;
             const targetLength = Math.ceil(carrierDuration * buffer.sampleRate);
@@ -668,14 +1017,7 @@
                 let carrierLeft = loadedCarrierBuffer.getChannelData(0);
                 let carrierRight = loadedCarrierBuffer.numberOfChannels > 1 ? loadedCarrierBuffer.getChannelData(1) : loadedCarrierBuffer.getChannelData(0);
 
-                for (let i = 0; i < iterations; i++) {
-                    // Apply the provided logic to process the audio
-                    processedBuffer = applyFFTLogic(offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer.sampleRate);
-
-                    // Use the processed buffer as the new carrier for the next iteration
-                    carrierLeft = processedBuffer.getChannelData(0);
-                    carrierRight = processedBuffer.numberOfChannels > 1 ? processedBuffer.getChannelData(1) : processedBuffer.getChannelData(0);
-                }
+                processAudioIterations(iterations, offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer);
 
                 // Enable buttons
                 document.getElementById('playButton').disabled = false;
@@ -684,11 +1026,11 @@
                 document.getElementById('downloadButton').disabled = false;
                 document.getElementById('reprocessButton').disabled = false;
 
-                // Hide processing indicator
-                document.getElementById('processingIndicator').style.display = 'none';
-
                 // Visualize the sine wave volumes
                 visualize(offlineAnalyser, offlineFrequencyData);
+
+                // Hide processing indicator
+                showProcessPOP_UP('', false);
             });
         }
 

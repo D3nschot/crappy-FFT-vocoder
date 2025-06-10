@@ -211,9 +211,18 @@
         |
         <label for="release">Release:</label>
         <input type="range" id="release" value="0" min="0" max="0.99" step="0.01" />
-        |
+        <br>
         <label for="pitch">Pitch: 000</label>
         <input type="range" id="pitch" value="0" min="-24" max="24" step="1" />
+        |
+        <label for="BandShift">Shift: 000</label>
+        <input type="range" id="BandShift" value="0" min="-100" max="100" step="1" />
+        |
+        <label for="FreqFlip">Flip:</label>
+        <input type="checkbox" id="FreqFlip">
+        |
+        <lable for="BandBreak">Band Break:</lable>
+        <input type="checkbox" id="BandBreak">
         <br>
         <label for="BR_voc_Type">Broken vocoder:</label>
         <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
@@ -346,6 +355,9 @@
             <li><strong>Decay Type:</strong> Choose between RMS and Peak for the decay type.</li>
             <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
             <li><strong>Pitch:</strong> Adjust the pitch of the vocoded audio (input only).</li>
+            <li><strong>Shift:</strong> Shifts the FFT bands of the vocoded audio (input only)</li>
+            <li><strong>BandBreak:</strong> this shifts the bands a couple of times</li>
+            <li><strong>Flip:</strong> self explanitory it flips the bands</li>
             <li><strong>Broken Vocoder Type:</strong> Select the type of broken vocoder effect.</li>
             <ul>
                 <p>All the types with it's desciption I added</p>
@@ -457,6 +469,8 @@
                 }
             });
 
+            const inputs='input[type="range"], input[type="number"], input[type="checkbox"], select'
+
             // Initialize the visibility of the speed slider based on the current selection
             document.getElementById('speedType').dispatchEvent(new Event('change'));
 
@@ -464,9 +478,13 @@
             function updateURLParams() {
                 const params = new URLSearchParams();
 
-                // Collect all slider and select values
-                document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(input => {
-                    params.set(input.id, input.value);
+                // Collect all slider, select, and checkbox values
+                document.querySelectorAll(inputs).forEach(input => {
+                    if (input.type === 'checkbox') {
+                        params.set(input.id, input.checked ? 'true' : 'false');
+                    } else {
+                        params.set(input.id, input.value);
+                    }
                 });
 
                 // Update the URL without reloading the page
@@ -478,13 +496,14 @@
             function loadStateFromURL() {
                 const params = new URLSearchParams(window.location.search);
 
-                // Set all sliders and selects based on URL parameters
                 params.forEach((value, key) => {
                     const input = document.getElementById(key);
                     if (input) {
-                        input.value = value;
-
-                        // Trigger input events to update labels
+                        if (input.type === 'checkbox') {
+                            input.checked = value === 'true';
+                        } else {
+                            input.value = value;
+                        }
                         input.dispatchEvent(new Event('input'));
                     }
                 });
@@ -492,7 +511,7 @@
 
             // Attach event listeners to all sliders and dropdowns
             document.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(input => {
+                document.querySelectorAll(inputs).forEach(input => {
                     input.addEventListener('input', updateURLParams);
                     input.addEventListener('change', updateURLParams);
                 });
@@ -509,7 +528,7 @@
 
                 // Collect input values
                 inputs.forEach(input => {
-                    if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                    if (input.type === 'range' || input.type === 'number' || input.type === 'checkbox' || input.tagName === 'SELECT') {
                         properties.push(`${input.id}: ${input.value}`);
                     }
                 });
@@ -553,7 +572,7 @@
                                     document.getElementById('ExportJSON').addEventListener('click', function() {
                                         const jsonObject = {};
                                         inputs.forEach(input => {
-                                            if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                                            if (input.type === 'range' || input.type === 'number' || input.type === 'checkbox' || input.tagName === 'SELECT') {
                                                 jsonObject[input.id] = input.value;
                                             }
                                         });
@@ -632,7 +651,9 @@
                 document.getElementById('ExportJSON').addEventListener('click', function() {
                     const jsonObject = {};
                     inputs.forEach(input => {
-                        if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                        if (input.type === 'checkbox') {
+                            jsonObject[input.id] = input.checked ? 'true' : 'false';
+                        } else if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
                             jsonObject[input.id] = input.value;
                         }
                     });
@@ -660,8 +681,11 @@
                                     Object.keys(jsonObject).forEach(key => {
                                         const inputElement = document.getElementById(key);
                                         if (inputElement) {
-                                            inputElement.value = jsonObject[key];
-
+                                            if (inputElement.type === 'checkbox') {
+                                                inputElement.checked = jsonObject[key] === 'true' || jsonObject[key] === true || jsonObject[key] === true;
+                                            } else {
+                                                inputElement.value = jsonObject[key];
+                                            }
                                             // Trigger input and change events to update UI
                                             inputElement.dispatchEvent(new Event('input'));
                                             inputElement.dispatchEvent(new Event('change'));
@@ -794,6 +818,10 @@
         document.getElementById('pitch').addEventListener('input', function(event) {
             document.querySelector('label[for="pitch"]').textContent = `Pitch: ${(parseFloat(event.target.value)<=0?parseFloat(event.target.value)==0?'0':'-':'+')+Math.abs(parseFloat(event.target.value)).toString().padStart(2, '0')}`;
         });
+
+        document.getElementById('BandShift').addEventListener('input',function(event) {
+            document.querySelector('label[for="BandShift"]').textContent = `Shift: ${(parseFloat(event.target.value)<=0?parseFloat(event.target.value)==0?'0':'-':'+')+Math.abs(parseFloat(event.target.value)).toString().padStart(2, '0')}`;
+        })
 
         document.getElementById('volume').addEventListener('input', function(event) {
             document.querySelector('label[for="volume"]').textContent = `volume: ${parseFloat(event.target.value).toFixed(2)}`;
@@ -1131,6 +1159,7 @@
             const O2 = Array.from({ length: SIZE }, () => ({ r: 0, i: 0 }));
 
             const pitch = parseInt(document.getElementById('pitch').value);
+            const Shift = parseInt(document.getElementById('BandShift').value)
             const divbands = parseInt(document.getElementById('divbands').value);
 
             const DecayType = parseInt(document.getElementById('decayType').value);
@@ -1150,6 +1179,8 @@
             // Process left and right channels separately
             const processChannel = (inputData, carrierData, outputData, envelopeState) => {
                 const startTime = performance.now();
+                const Break = document.getElementById('BandBreak').checked;
+                const flip = document.getElementById('FreqFlip').checked
 
                 for (let t = 0; t < inputData.length; t += HOP_SIZE) {
                     const currentTime = (performance.now() - startTime) / 1000; // Current time in seconds
@@ -1199,11 +1230,18 @@
                         for (let j = 0; j <= divbands; j++) {
                             ip = (i * 2 ** (-pitch / 12) | 0);
                             const weight = 1 - abs(j - divbands / 2) / divbands;
+                            
+                            ip_ = Math.round(ip + (j - divbands / 2) + Shift);
 
-                            ip_ = Math.round(ip + (j - divbands / 2));
-                            if (ip_ < 0) ip_ = 0;
+                            if (flip) {
+                                ip_=Math.round(SIZE/16-ip_)
+                            }
 
-                            mag2 += ((ip_ < SIZE) ? Math.sqrt(O2[ip_].r * O2[ip_].r + O2[ip_].i * O2[ip_].i) : 0) * weight;
+                            if (ip_ >= 0 && ip_ < SIZE && O2[ip_]) {
+                                mag2 += Math.sqrt(O2[ip_].r * O2[ip_].r + O2[ip_].i * O2[ip_].i) * weight;
+                            } else {
+                                mag2 += 0;
+                            }
 
                             const REL = Math.min((1 - Release) * Ratio, 1);
 
@@ -1255,7 +1293,7 @@
 
                         switch (simpleChorus) {
                             case 1:
-                                modulatedValue = cos(modulatedInput*PI);
+                                modulatedValue = sin(modulatedInput*PI);
                                 break;
                             case 2:
                                 modulatedValue = cos(modulatedInput*PI);
@@ -1316,6 +1354,21 @@
                             O[i].i *= gain;
                         }
                     }
+
+                    if (Break) {
+                        // Reverse the second half of the spectrum
+                        for (let i = 1; i < SIZE / 2; i++) {
+                            let tmp = O[i];
+                            O[i] = O[SIZE - i];
+                            O[SIZE - i] = tmp;
+                        }
+                        // discard the second half of the spectrum
+                        for (let i = SIZE / 2; i < SIZE; i++) {
+                            O[i].r = 0;
+                            O[i].i = 0;
+                        }
+                    }
+
                     // Perform IFFT
                     IFFT(I, O, 0, 0, SIZE, 1);
 
@@ -1405,13 +1458,14 @@
 
         document.getElementById('downloadButton').addEventListener('click', function() {
             const carrierName = document.getElementById('carrierInput').files[0].name.split('.').slice(0, -1).join('.');
+            const modularName = document.getElementById('audioInput').files[0].name.split('.').slice(0, -1).join('.');
             if (processedBuffer) {
             const wavBuffer = bufferToWav(processedBuffer);
             const blob = new Blob([wavBuffer], { type: 'audio/wav' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${carrierName} (vocoded).wav`;
+            a.download = `${carrierName} (${modularName}).wav`;
             a.click();
             URL.revokeObjectURL(url);
             }

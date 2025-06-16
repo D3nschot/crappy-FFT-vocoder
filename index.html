@@ -189,14 +189,36 @@
     <div id="controls" style="overflow-y: auto; max-height: 80vh;">
 
         <div style="text-align: center; line-height: 1.5;">
-          <div style="font-size: 35px;">Crappy FFT Vocoder</div>
+          <div id="Title" style="font-size: 35px;">Crappy FFT Vocoder</div>
             a Fast Fourier Transform vocoder
           <div style="color: #aaa; font-size: 10px;">by DX3050/D3nschot</div>
+            <div id="randomQuote" style="display: none;"></div>
         </div>
-
+        <script>
+            const quotes = [
+                "FFT? I only know it as Functional Family Therapy", //found this while searching for FFT (fast fourier transform)
+                "I love math -D3nschot",
+                "I love math -DX3050",
+                "probably gonna make Crappy Analog Vocoder",
+                "A fast Fourier transform (FFT) is an algorithm \n that computes the discrete Fourier transform (DFT) of a sequence, or its inverse (IDFT). \n A Fourier transform converts a signal from its original domain (often time or space)\n to a representation in the frequency domain and vice versa. -wikipedia",
+                "Don't we love how long it takes to process audio files? :D",
+            ];
+            document.getElementById('Title').addEventListener('click', function() {
+                document.getElementById('randomQuote').style.display = 'block';
+                document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            });
+            document.getElementById('randomQuote').addEventListener('click', function() {
+                document.getElementById('randomQuote').style.display = 'block';
+                document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            })
+            document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        </script>
         <br>
         <canvas id="visualizer" width="800" height="400"></canvas>
         <div id="controls2">
+            <div id="changeBack" style="display: none;">
+                <button id="changeBackButton">Change Back to FFT</button>
+            </div>
         <button id="ViewProperties">View properties</button>
         |
         <input type="file" id="carrierInput" accept="audio/*,video/*" title="Choose an Input audio or video file" placeholder="Select Input audio or video file" />
@@ -220,99 +242,122 @@
         |
         <label for="FreqFlip">Flip:</label>
         <input type="checkbox" id="FreqFlip">
-        |
-        <lable for="BandBreak">Band Break:</lable>
-        <input type="checkbox" id="BandBreak">
-        <br>
-        <label for="BR_voc_Type">Broken vocoder:</label>
-        <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
-            <option value="0">OFF</option>
-            <!--waveforms-->
-            <option value="1">Triangle</option> <!--Best sounding (sounds like it's bit-crushed)-->
-            <option value="5">Square</option> <!--F  L  A  T-->
-            <option value="6">Sawtooth</option> <!--F  L  A  T  2-->
-            <option value="11">semi-sine</option> <!--0 bass at all it's all treble (don't recomend for vocoding)-->
-            <!--repeated functions-->
-            <option value="2">double sine</option> <!--no bass (still good tho)-->
-            <option value="7">triple sine</option> <!--same as double sine-->
-            <option value="8">half sine</option> <!--it sounds like the bands are wide-->
-            <option value="10">sine squared</option> <!--F  L  A  T  3-->
-            <option value="14">sine cubed</option> <!--kinda like the trianle one-->
-            <!--multiplication (sin(o*2))-->
-            <option value="3">2 sine</option> <!--it's half sine but with more bass and it's wider-->
-            <option value="4">3 sine</option> <!--B  A  S  S-->
-            <option value="9">squared sine</option> <!--F  L  A  T  4-->
-            <!--Special waves-->
-            <option value="12">IDK</option> <!--i genuinely have no idea what this is but it sounds like a retro game comming from an old TV-->
-            <option value="13">Noise</option> <!--F  L  A  T  5-->
-            <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
-            <option value="16">harmonics sq</option> <!--harmonic serries-->
-            <option value="17">harmonics saw</option> <!--harmonic serries-->
-            <option value="18">Bitwise</option> <!--sounds like Triangle but more bit-crushed-->
-            <option value="19">Floor</option> <!--sounds like Triangle but more bit-crushed-->
-        </select>
-        |
-        <label for="BR_out">Broken vocoder out</label>
-        <select id="BR_out">
-            <option value="1">Both</option>
-            <option value="2">Input</option>
-            <option value="3">Carrier</option>
-        </select>
-        <br>
-        <label for="iterations">Iterations:</label>
-        <input type="number" id="iterations" value="1" min="1" />
-        it may get loud (or not, i don't recomend using this with long audio files)
-        <br>
-        <label for="volume">volume: 1.00</label>
-        <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
-        |
-        <label for="clamp_output">Clamp out</label>
-        <select id="clamp_output">
-            <option value="0">Off</option>
-            <option value="1">On</option>
-            <option value="2">individual</option>
-            <!--option value="3">Compressor</option-->
-            <option value="4">individual (soft)</option>
-        </select>
-        |
-        <label for="threshold">Clamp Threshold: 1.00</label>
-        <input type="range" id="threshold" value="1" min="0" max="1" step="0.01"/>
-        <br>
-        <label for="divbands">Divide bands: 1</label>
-        <input type="range" id="divbands" value="1" min="1" max="64"/>
-        |
-        <label for="FFTsize">FFT size: 2^10 (1024)</label>
-        <input type="range" id="FFTsize" value="10" min="2" max="14" step="1"/>
-        <br>
-        <label for="BassBoost">Bass Boost: 0.00</label>
-        <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01"/>
-        |
-        <label for="BassCurve">Bass Curve</label>
-        <select id="BassCurve">
-            <option value="0">+1</option>
-            <option value="1">x/i</option>
-            <option value="2">quadratic</option>
-        </select>
-        |
-        <label for="EQType">Norm EQ type</label>
-        <select id="EQType">
-            <option value="0">original</option>
-            <option value="1">sin</option>
-        </select>
-        <br>
-        <label for="steps">Steps: OFF</label>
-        <input type="range" id="steps" value="0" min="0" max="16" step="1"/>
-        |
-        <label for ="RoundType">Round Type</label>
-        <select id="RoundType">
-            <option value="0">Floor</option>
-            <option value="1">Round</option>
-            <option value="2">Ceil</option>
-        </select>
-        |
-        <label for="SoundGoodizer">SoundGoodizer? OFF:</label>
-        <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01"/>
-        <br>
+        
+        <div id="FFTcontrols" style="display: block;">
+            <label for="BandBreak">Band Break:</label>
+            <input type="checkbox" id="BandBreak">
+            <br>
+            <label for="BR_voc_Type">Broken vocoder:</label>
+            <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
+                <option value="0">OFF</option>
+                <!--waveforms-->
+                <option value="1">Triangle</option> <!--Best sounding (sounds like it's bit-crushed)-->
+                <option value="5">Square</option> <!--F  L  A  T-->
+                <option value="6">Sawtooth</option> <!--F  L  A  T  2-->
+                <option value="11">semi-sine</option> <!--0 bass at all it's all treble (don't recomend for vocoding)-->
+                <!--repeated functions-->
+                <option value="2">double sine</option> <!--no bass (still good tho)-->
+                <option value="7">triple sine</option> <!--same as double sine-->
+                <option value="8">half sine</option> <!--it sounds like the bands are wide-->
+                <option value="10">sine squared</option> <!--F  L  A  T  3-->
+                <option value="14">sine cubed</option> <!--kinda like the trianle one-->
+                <!--multiplication (sin(o*2))-->
+                <option value="3">2 sine</option> <!--it's half sine but with more bass and it's wider-->
+                <option value="4">3 sine</option> <!--B  A  S  S-->
+                <option value="9">squared sine</option> <!--F  L  A  T  4-->
+                <!--Special waves-->
+                <option value="12">IDK</option> <!--i genuinely have no idea what this is but it sounds like a retro game comming from an old TV-->
+                <option value="13">Noise</option> <!--F  L  A  T  5-->
+                <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
+                <option value="16">harmonics sq</option> <!--harmonic serries-->
+                <option value="17">harmonics saw</option> <!--harmonic serries-->
+                <option value="18">Bitwise</option> <!--sounds like Triangle but more bit-crushed-->
+                <option value="19">Floor</option> <!--sounds like Triangle but more bit-crushed-->
+            </select>
+            |
+            <label for="BR_out">Broken vocoder out</label>
+            <select id="BR_out">
+                <option value="1">Both</option>
+                <option value="2">Input</option>
+                <option value="3">Carrier</option>
+            </select>
+            <br>
+            <label for="iterations">Iterations:</label>
+            <input type="number" id="iterations" value="1" min="1" />
+            it may get loud (or not, i don't recomend using this with long audio files)
+            <br>
+            <label for="volume">volume: 1.00</label>
+            <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
+            |
+            <label for="clamp_output">Clamp out</label>
+            <select id="clamp_output">
+                <option value="0">Off</option>
+                <option value="1">On</option>
+                <option value="2">individual</option>
+                <!--option value="3">Compressor</option-->
+                <option value="4">individual (soft)</option>
+            </select>
+            |
+            <label for="threshold">Clamp Threshold: 1.00</label>
+            <input type="range" id="threshold" value="1" min="0" max="1" step="0.01"/>
+            <br>
+            <label for="divbands">Divide bands: 1</label>
+            <input type="range" id="divbands" value="1" min="1" max="64"/>
+            |
+            <label for="FFTsize">FFT size: 2^10 (1024)</label>
+            <input type="range" id="FFTsize" value="10" min="2" max="14" step="1"/>
+            <br>
+            <label for="BassBoost">Bass Boost: 0.00</label>
+            <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01"/>
+            |
+            <label for="BassCurve">Bass Curve</label>
+            <select id="BassCurve">
+                <option value="0">+1</option>
+                <option value="1">x/i</option>
+                <option value="2">quadratic</option>
+            </select>
+            |
+            <label for="EQType">Norm EQ type</label>
+            <select id="EQType">
+                <option value="0">original</option>
+                <option value="1">sin</option>
+            </select>
+            <br>
+            <label for="steps">Steps: OFF</label>
+            <input type="range" id="steps" value="0" min="0" max="16" step="1"/>
+            |
+            <label for ="RoundType">Round Type</label>
+            <select id="RoundType">
+                <option value="0">Floor</option>
+                <option value="1">Round</option>
+                <option value="2">Ceil</option>
+            </select>
+            |
+            <label for="SoundGoodizer">SoundGoodizer? OFF:</label>
+            <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01"/>
+            <br>
+        </div>
+        <div id="analogControls" style="display: none;">
+            <label for="TotalBands">Total Bands: 40</label>
+            <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1"/>
+            |
+            <label for="Resonance">Resonance: 0.92</label>
+            <input type="range" id="Resonance" value=".92" min="0" max=".999" step="0.001"/>
+            <br>
+            <label for="BPwidth">Bandpass Width: 0.00</label>
+            <input type="range" id="BPwidth" value="0" min="0" max="1" step="0.01"/>
+            |
+            <label for="Volboost">Volume Boost: 1.00</label>
+            <input type="range" id="Volboost" value="1" min="0" max="10" step="0.01"/>
+            <br>
+            <label for="DBperOct">dB per Octave: 12</label>
+            <input type="range" id="DBperOct" value="2" min="1" max="8" step="1"/>
+            |
+            <label for="Alt_BP">Alternative Bandpass:</label>
+            <input type="checkbox" id="Alt_BP">
+            <br>
+            still a work in progress
+        </div>
         <label for="simpleChorus">simple Chorus</label>
         <select id="simpleChorus">
             <option value="0">OFF</option>
@@ -396,12 +441,72 @@
             <li><strong>Speed:</strong> Choose the speed type for the chorus effect.</li>
             <li><strong>User Speed:</strong> Adjust the user-defined speed for the chorus effect.</li>
             <br>
-            version 1.1 <!--current version-->
+            <div id="version">version 1.2</div> <!--current version-->
             Made by D3nschot (DX3050)
             </ul>
             <button id="closeHelpButton">Close</button>
             </div>
         </div>
+
+        <script>
+            let TotalClicks = 0;
+            let popupShown = false;
+            let mode = 0; // 0 for FFT, 1 for analog
+            document.getElementById('version').addEventListener('click', function() {
+                TotalClicks++;
+                if (TotalClicks >= 10) {
+                    if (!popupShown) {
+                        popupShown = true;
+                        const easterEgg = document.createElement('div');
+                        easterEgg.style.position = 'fixed';
+                        easterEgg.style.top = '50%';
+                        easterEgg.style.left = '50%';
+                        easterEgg.style.transform = 'translate(-50%, -50%)';
+                        easterEgg.style.backgroundColor = '#333';
+                        easterEgg.style.color = '#fff';
+                        easterEgg.style.padding = '20px';
+                        easterEgg.style.borderRadius = '10px';
+                        easterEgg.innerHTML = '<h2>Congratulations!</h2><p>You found the Easter Egg!</p>';
+                        document.body.appendChild(easterEgg);
+                        
+                        // Add a button to change mode from FFT to analog and close the popup
+                        const modeButton = document.createElement('button');
+                        modeButton.textContent = 'Switch to Analog Mode';
+                        modeButton.style.marginTop = '10px';
+                        modeButton.addEventListener('click', function() {
+                            mode = 1; // Set mode to analog
+                            document.body.removeChild(easterEgg); // Close the popup
+                            // Optionally, show a message or update UI to indicate analog mode
+                            if (document.getElementById('changeBack')) {
+                                document.getElementById('changeBack').style.display = 'block';
+                                document.getElementById('FFTcontrols').style.display = 'none';
+                                document.getElementById('analogControls').style.display = 'block';
+                                document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
+                            }
+                        });
+                        easterEgg.appendChild(modeButton);
+                    }
+                }
+            });
+
+            document.getElementById('changeBackButton').addEventListener('click', function() {
+                mode=(mode+1)%2; // Toggle between 0 (FFT) and 1 (analog)
+                if (mode === 0) {
+                    document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
+                    document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
+                    document.getElementById('FFTcontrols').style.display = 'block';
+                    document.getElementById('analogControls').style.display = 'none';
+                    document.getElementById('changeBack').style.display = 'block';
+                } else {
+                    document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
+                    document.getElementById('FFTcontrols').style.display = 'none';
+                    document.getElementById('analogControls').style.display = 'block';
+                    document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
+                    document.getElementById('changeBack').style.display = 'block';
+                }
+                console.log(mode);
+            });
+        </script>
         
         <script>
             const cornerElement = document.createElement('a');
@@ -855,6 +960,22 @@
             document.querySelector('label[for="SoundGoodizer"]').textContent = `SoundGoodizer? ${parseFloat(event.target.value)!==0?parseFloat(event.target.value).toFixed(2):'OFF'}`;
         });
 
+        document.getElementById('Resonance').addEventListener('input', function(event) {
+            document.querySelector('label[for="Resonance"]').textContent = `Resonance: ${parseFloat(event.target.value).toFixed(3)}`;
+        });
+        document.getElementById('BPwidth').addEventListener('input', function(event) {
+            document.querySelector('label[for="BPwidth"]').textContent = `Bandpass Width: ${parseFloat(event.target.value).toFixed(2)}`;
+        });
+        document.getElementById('TotalBands').addEventListener('input', function(event) {
+            document.querySelector('label[for="TotalBands"]').textContent = `Total Bands: ${parseInt(event.target.value)}`;
+        });
+        document.getElementById('Volboost').addEventListener('input', function(event) {
+            document.querySelector('label[for="Volboost"]').textContent = `Volume Boost: ${parseFloat(event.target.value).toFixed(2)}`;
+        });
+        document.getElementById('DBperOct').addEventListener('input', function(event) {
+            document.querySelector('label[for="DBperOct"]').textContent = `dB per Octave: ${parseFloat(event.target.value)*6}`;
+        });
+
         function createLoopedBuffer(buffer, targetLength) {
             const sampleRate = buffer.sampleRate;
             const numberOfChannels = buffer.numberOfChannels;
@@ -969,21 +1090,39 @@
                 // Pause for 10ms (adjust as needed)
                 await new Promise(resolve => setTimeout(resolve, 10));
 
-                // Apply the provided logic to process the audio
-                processedBuffer = applyFFTLogic(
-                    offlineContext,
-                    inputLeft,
-                    inputRight,
-                    carrierLeft,
-                    carrierRight,
-                    buffer.sampleRate
-                );
+                if (mode==0){
+                    // Apply the provided logic to process the audio
+                    processedBuffer = applyFFTLogic(
+                        offlineContext,
+                        inputLeft,
+                        inputRight,
+                        carrierLeft,
+                        carrierRight,
+                        buffer.sampleRate
+                    );
 
-                // Use the processed buffer as the new carrier for the next iteration
-                carrierLeft = processedBuffer.getChannelData(0);
-                carrierRight = processedBuffer.numberOfChannels > 1
-                    ? processedBuffer.getChannelData(1)
-                    : processedBuffer.getChannelData(0);
+                    // Use the processed buffer as the new carrier for the next iteration
+                    carrierLeft = processedBuffer.getChannelData(0);
+                    carrierRight = processedBuffer.numberOfChannels > 1
+                        ? processedBuffer.getChannelData(1)
+                        : processedBuffer.getChannelData(0);
+                } else if (mode==1) {
+                    // Analog mode processing logic
+                    processedBuffer = applyAnalogLogic(
+                        offlineContext,
+                        inputLeft,
+                        inputRight,
+                        carrierLeft,
+                        carrierRight,
+                        buffer.sampleRate
+                    );
+
+                    // Use the processed buffer as the new carrier for the next iteration
+                    carrierLeft = processedBuffer.getChannelData(0);
+                    carrierRight = processedBuffer.numberOfChannels > 1
+                        ? processedBuffer.getChannelData(1)
+                        : processedBuffer.getChannelData(0);
+                }
             }
             // Hide popup when done
             showProcessPOP_UP('', false);
@@ -1057,6 +1196,220 @@
                 // Hide processing indicator
                 showProcessPOP_UP('', false);
             });
+        }
+
+        function applyAnalogLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
+            // Helper functions and state
+            const min = Math.min, max = Math.max, abs = Math.abs, pow = Math.pow, sqrt = Math.sqrt, sin = Math.sin, cos = Math.cos, PI = Math.PI;
+            const clamp = (minn, maxx, value) => min(max(value, minn), maxx);
+
+            let z2 = [{lp6:0,lp12:0,lp18:0,lp24:0,lp30:0,lp36:0,lp42:0,lp48:0}];
+            let z3 = [{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}];
+            let z4 = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
+            let z5 = [{var1:0}];
+
+            // UI values
+            const sel = parseInt(document.getElementById('decayType').value)-1;
+            const rel = parseFloat(document.getElementById('release').value);
+            const fb = parseFloat(document.getElementById('Resonance').value);
+            const db = parseInt(document.getElementById('DBperOct').value);
+            const dw = parseFloat(document.getElementById('BPwidth').value);
+            const vol = parseFloat(document.getElementById('Volboost').value);
+            const n = parseInt(document.getElementById('TotalBands').value) || 40;
+            const flip = document.getElementById('FreqFlip').checked;
+            const pitch = parseFloat(document.getElementById('pitch').value);
+
+            // Envelope followers
+            function peak(a, decayF, call) {
+                z5[call] ??= { var1: 0 };
+                z5[call].var1 = Math.max(abs(a), z5[call].var1 - sqrt(decayF) / 2);
+                return z5[call].var1 / 3;
+            }
+            function rms(a, decayF, call) {
+                z5[call] ??= { var1: 0 };
+                z5[call].var1 = (1 - decayF) * z5[call].var1 + decayF * a * a;
+                return sqrt(z5[call].var1);
+            }
+
+            function lp(d, c, r = 0, dbv = 2, callCount) {
+                if (!z2[callCount]) {
+                    z2[callCount] = {lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0};
+                }
+                const cc = clamp(0, 0.99, c);
+                const fbv = r + r / (1 - cc);
+                const f = d;
+                z2[callCount].lp6 += cc * (f - z2[callCount].lp6 + fbv * (z2[callCount].lp6 - z2[callCount].lp12));
+                z2[callCount].lp12 += cc * (z2[callCount].lp6 - z2[callCount].lp12);
+                z2[callCount].lp18 += cc * (z2[callCount].lp12 - z2[callCount].lp18);
+                z2[callCount].lp24 += cc * (z2[callCount].lp18 - z2[callCount].lp24);
+                z2[callCount].lp30 += cc * (z2[callCount].lp24 - z2[callCount].lp30);
+                z2[callCount].lp36 += cc * (z2[callCount].lp30 - z2[callCount].lp36);
+                z2[callCount].lp42 += cc * (z2[callCount].lp36 - z2[callCount].lp42);
+                z2[callCount].lp48 += cc * (z2[callCount].lp42 - z2[callCount].lp48);
+                switch (dbv) {
+                    case 1:  return z2[callCount].lp6;
+                    case 2:  return z2[callCount].lp12;
+                    case 3:  return z2[callCount].lp18;
+                    case 4:  return z2[callCount].lp24;
+                    case 5:  return z2[callCount].lp30;
+                    case 6:  return z2[callCount].lp36;
+                    case 7:  return z2[callCount].lp42;
+                    case 8:  return z2[callCount].lp48;
+                    default: return z2[callCount].lp12;
+                }
+            }
+
+            function hp(input, c, r = 0, dbv = 2, callCount) {
+                if (!z3[callCount]) {
+                    z3[callCount] = {hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0};
+                }
+                const cc = clamp(0, 0.99, c);
+                const fbv = r + r / (1 - cc);
+                const f = input;
+                let x = f;
+                z3[callCount].hp6 += cc * (f - z3[callCount].hp6 + fbv * (z3[callCount].hp6 - z3[callCount].hp12));
+                z3[callCount].hp12 += cc * (z3[callCount].hp6 - z3[callCount].hp12);
+                x = f - ((dbv >= 2) ? z3[callCount].hp12 : z3[callCount].hp6);
+                if (dbv === 1 || dbv === 2) return x;
+                x = x - (z3[callCount].hp18 += cc * (x - z3[callCount].hp18)); if (dbv === 3) return x;
+                x = x - (z3[callCount].hp24 += cc * (x - z3[callCount].hp24)); if (dbv === 4) return x;
+                x = x - (z3[callCount].hp30 += cc * (x - z3[callCount].hp30)); if (dbv === 5) return x;
+                x = x - (z3[callCount].hp36 += cc * (x - z3[callCount].hp36)); if (dbv === 6) return x;
+                x = x - (z3[callCount].hp42 += cc * (x - z3[callCount].hp42)); if (dbv === 7) return x;
+                x = x - (z3[callCount].hp48 += cc * (x - z3[callCount].hp48)); if (dbv === 8) return x;
+                return x;
+            }
+
+            function bp(d, c, r = 0, dbv = 2, dww = 0, call) {
+                return hp(lp(d, c + dww, r, dbv, call), c - dww, r, dbv, call);
+            }
+
+            function bp2(d,c,r=0,db=2, callCount) {
+                try {
+                    if(!z4[callCount]) {
+                        z4.push({bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0})
+                    }
+                    const clamp=(minn,maxx,value)=>min(max(value,minn),maxx)
+                    const cc=clamp(0,0.99,c)
+                    const fb=r+r/(1-cc)
+                    const f=d
+                    let out=0
+                    
+                    z4[callCount].bp1+=cc*(f-z4[callCount].bp1+fb*(z4[callCount].bp1-z4[callCount].bp2))
+                    z4[callCount].bp2+=cc*(z4[callCount].bp1-z4[callCount].bp2)
+                    z4[callCount].bp3+=cc*(z4[callCount].bp2-z4[callCount].bp3)
+                    z4[callCount].bp4+=cc*(z4[callCount].bp3-z4[callCount].bp4)
+                    z4[callCount].bp5+=cc*(z4[callCount].bp4-z4[callCount].bp5)
+                    z4[callCount].bp6+=cc*(z4[callCount].bp5-z4[callCount].bp6)
+                    z4[callCount].bp7+=cc*(z4[callCount].bp6-z4[callCount].bp7)
+                    z4[callCount].bp8+=cc*(z4[callCount].bp7-z4[callCount].bp8)
+                    z4[callCount].bp9+=cc*(z4[callCount].bp8-z4[callCount].bp9)
+
+                    switch (db) {
+                        case 1:  out=z4[callCount].bp1-z4[callCount].bp2; break;
+                        case 2: out=z4[callCount].bp2-z4[callCount].bp3; break;
+                        case 3: out=z4[callCount].bp3-z4[callCount].bp4; break;
+                        case 4: out=z4[callCount].bp4-z4[callCount].bp5; break;
+                        case 5: out=z4[callCount].bp5-z4[callCount].bp6; break;
+                        case 6: out=z4[callCount].bp6-z4[callCount].bp7; break;
+                        case 7: out=z4[callCount].bp7-z4[callCount].bp8; break;
+                        case 8: out=z4[callCount].bp8-z4[callCount].bp9; break;
+                        default: out=z4[callCount].bp2-z4[callCount].bp3;  // Default: 12 dB
+                    }
+
+                    return out;
+                } catch (e) {
+                    return 0;
+                }
+            }
+            
+            let modulatedValue = 1
+            const simpleChorus = parseInt(document.getElementById('simpleChorus').value);
+            // Vocoder function
+            function vocoder(inp, car) {
+                let relv = rel, nv = n, volv = vol, fbv = fb, dbv = db, dww = dw, selv = sel;
+                let dd = 0.025 / pow(1 - fbv, 0.83362376);
+                let p = [rms, peak][max(min(selv, 2), 0)];
+                let result = 0;
+                let carrierSum = 0, modSum = 0;
+                const Alt_BP=document.getElementById('Alt_BP').checked;
+
+                let timer = currentTime; // Timer value between 0 and 1
+                const speedType = parseInt(document.getElementById('speedType').value)
+
+                switch (speedType) {
+                    case 0:
+                        timer = currentTime / 8;
+                        break;
+                    case 1:
+                        timer = currentTime / duration;
+                        break;
+                    case 2:
+                        timer = currentTime * parseFloat(document.getElementById('userSpeed').value);
+                        break;
+                }
+
+                for (let i = 1; i <= nv; i++) {
+                    const modulatedInput = i*((timer*256|0)/256);
+                    switch (simpleChorus) {
+                        case 0:
+                            modulatedValue = 1;
+                            break;
+                        case 1:
+                            modulatedValue = sin(modulatedInput*PI);
+                            break;
+                        case 2:
+                            modulatedValue = cos(modulatedInput*PI);
+                            break;
+                        case 3:
+                            modulatedValue = asin(sin(modulatedInput*PI));
+                            break;
+                        case 4:
+                            modulatedValue = asin(cos(modulatedInput*PI));
+                            break;
+                    }
+
+                    const g = i / nv * 2**(pitch/12);
+                    // Filter input (modulator) and carrier
+                    const filter = (v, m, f = 0) => Alt_BP
+                        ? bp2(v * 64, (f ? 1 - g : g), fbv, dbv, m)
+                        : bp(v * 2, (f ? 1 - g : g), fbv, dbv, dww / nv, m) * (max(dbv - 1, 0) ** 2.5 * 2 + 1) / dd;
+                    const modFiltered = filter(inp, i, flip);
+                    const carFiltered = filter(car, i + n, false);
+
+                    const absFilterX = abs(modFiltered);
+                    const mod = p(absFilterX, 2**-((rel*3)**2)/800, i)*modulatedValue;
+
+                    // For debugging: sum up mod and carrier
+                    //modSum += mod;
+                    //carrierSum += carFiltered;
+
+                    // If mod is always zero, you will only hear silence or the modular
+                    const combined = mod * carFiltered * (1 - fbv) / sqrt(nv * 10) * (1 - g);
+                    result += combined * volv*8;
+                }
+
+                // Prevent NaN/Infinity
+                if (!isFinite(result) || isNaN(result)) result = 0;
+                return result / 128;
+            }
+
+            // Output buffer
+            const bufferLen = inputLeft.length;
+            const outputBuffer = context.createBuffer(2, bufferLen, sampleRate);
+            const outputLeft = outputBuffer.getChannelData(0);
+            const outputRight = outputBuffer.getChannelData(1);
+            let startTime = performance.now();
+            // Analog vocoder processing
+            for (let idx = 0; idx < bufferLen; idx++) {
+                currentTime = (performance.now() - startTime) / 1000
+                const idxL = idx % carrierLeft.length;
+                const idxR = idx % carrierRight.length;
+                outputLeft[idx] = vocoder(carrierLeft[idxL], inputLeft[idx]);
+                outputRight[idx] = vocoder(carrierRight[idxR], inputRight[idx]);
+            }
+
+            return outputBuffer;
         }
 
         function applyFFTLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {

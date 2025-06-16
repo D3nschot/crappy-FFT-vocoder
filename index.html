@@ -1373,7 +1373,7 @@
                     // Filter input (modulator) and carrier
                     const filter = (v, m, f = 0) => Alt_BP
                         ? bp2(v * 64, (f ? 1 - g : g), fbv, dbv, m)
-                        : bp(v * 2, (f ? 1 - g : g), fbv, dbv, dww / nv, m) * (max(dbv - 1, 0) ** 2.5 * 2 + 1) / dd;
+                        : bp(v, (f ? 1 - g : g), fbv, dbv, dww / nv, m) * (max(dbv - 1, 0) ** 2.5 * 2 + 1) / dd;
                     const modFiltered = filter(inp, i, flip);
                     const carFiltered = filter(car, i + n, false);
 

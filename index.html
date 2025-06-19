@@ -190,7 +190,7 @@
 
         <div style="text-align: center; line-height: 1.5;">
           <div id="Title" style="font-size: 35px;">Crappy FFT Vocoder</div>
-            a Fast Fourier Transform vocoder
+            <div id="what_is">a Fast Fourier Transform vocoder</div>
           <div style="color: #aaa; font-size: 10px;">by DX3050/D3nschot</div>
             <div id="randomQuote" style="display: none;"></div>
         </div>
@@ -216,8 +216,8 @@
         <br>
         <canvas id="visualizer" width="800" height="400"></canvas>
         <div id="controls2">
-            <div id="changeBack" style="display: none;">
-                <button id="changeBackButton">Change Back to FFT</button>
+            <div id="changeBack" style="display: block;">
+                <button id="changeBackButton">Change to Analog Mode</button>
             </div>
         <button id="ViewProperties">View properties</button>
         |
@@ -338,6 +338,8 @@
             <br>
         </div>
         <div id="analogControls" style="display: none;">
+            <canvas id="filterView" width="700" height="100"></canvas>
+            <br>
             <label for="TotalBands">Total Bands: 40</label>
             <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1"/>
             |
@@ -353,10 +355,14 @@
             <label for="DBperOct">dB per Octave: 12</label>
             <input type="range" id="DBperOct" value="2" min="1" max="8" step="1"/>
             |
-            <label for="Alt_BP">Alternative Bandpass:</label>
-            <input type="checkbox" id="Alt_BP">
-            <br>
-            still a work in progress
+            <label for="Alt_BP">Alt Bandpass:</label>
+            <select id="Alt_BP">
+                <option value="0">Default</option>
+                <option value="1">normal</option>
+                <option value="2">weird</option>
+                <option value="3">fast</option>
+                <option value="4">3FLT</option>
+            </select>
         </div>
         <label for="simpleChorus">simple Chorus</label>
         <select id="simpleChorus">
@@ -401,6 +407,8 @@
             <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
             <li><strong>Pitch:</strong> Adjust the pitch of the vocoded audio (input only).</li>
             <li><strong>Shift:</strong> Shifts the FFT bands of the vocoded audio (input only)</li>
+            
+            <p><strong>FFT Vocoder Mode:</strong></p>
             <li><strong>BandBreak:</strong> this shifts the bands a couple of times</li>
             <li><strong>Flip:</strong> self explanitory it flips the bands</li>
             <li><strong>Broken Vocoder Type:</strong> Select the type of broken vocoder effect.</li>
@@ -437,11 +445,30 @@
             <li><strong>Bass Boost:</strong> Adjust the Bass boost level for the audio. (putting it in the negatives won't decrease it, it will increase it in a different way)</li>
             <li><strong>Steps:</strong> Adjust the number of steps for quantizing the envelope (OFF means no quantization).</li>
             <li><strong>Round Type:</strong> Choose the rounding type for the steps (Floor, Round, Ceil).</li>
+            
+            <p><strong>Analog Vocoder Mode:</strong></p>
+
+                <li><strong>Total Bands:</strong> Sets the number of filter bands (more bands = more detailed vocoding).</li>
+                <li><strong>Resonance:</strong> Controls the sharpness of the bandpass filters (higher values = more pronounced filtering).</li>
+                <li><strong>Bandpass Width:</strong> Adjusts the width of each bandpass filter. (only anvalibe ont the default bandpass)</li>
+                <li><strong>Volume Boost:</strong> Increases the output volume after processing.</li>
+                <li><strong>dB per Octave:</strong> Sets the filter slope (steepness) in decibels per octave.</li>
+                <li><strong>Alternative Bandpass:</strong> Switches to an alternative bandpass filter algorithm. (first one is really sensitive/strong)</li>
+                <ul>
+                    <li>Default: Default bandpass filter. it is really sensitive when Bandpass Width is 0</li>
+                    <li>Normal: A standard bandpass filter.</li>
+                    <li>Weird: non-linear filter.</li>
+                    <li>Fast: A faster bandpass filter with less processing time.</li>
+                    <li>3FLT: A bandpass filter that uses three filters for better sound.</li>
+                </ul>
+            
+            <p>just another way of vocoding</p>
+            
             <li><strong>Simple Chorus:</strong> Choose the type of simple chorus effect.</li>
             <li><strong>Speed:</strong> Choose the speed type for the chorus effect.</li>
             <li><strong>User Speed:</strong> Adjust the user-defined speed for the chorus effect.</li>
             <br>
-            <div id="version">version 1.2</div> <!--current version-->
+            <div id="version">version 1.2.1</div> <!--current version-->
             Made by D3nschot (DX3050)
             </ul>
             <button id="closeHelpButton">Close</button>
@@ -449,62 +476,26 @@
         </div>
 
         <script>
-            let TotalClicks = 0;
-            let popupShown = false;
             let mode = 0; // 0 for FFT, 1 for analog
-            document.getElementById('version').addEventListener('click', function() {
-                TotalClicks++;
-                if (TotalClicks >= 10) {
-                    if (!popupShown) {
-                        popupShown = true;
-                        const easterEgg = document.createElement('div');
-                        easterEgg.style.position = 'fixed';
-                        easterEgg.style.top = '50%';
-                        easterEgg.style.left = '50%';
-                        easterEgg.style.transform = 'translate(-50%, -50%)';
-                        easterEgg.style.backgroundColor = '#333';
-                        easterEgg.style.color = '#fff';
-                        easterEgg.style.padding = '20px';
-                        easterEgg.style.borderRadius = '10px';
-                        easterEgg.innerHTML = '<h2>Congratulations!</h2><p>You found the Easter Egg!</p>';
-                        document.body.appendChild(easterEgg);
-                        
-                        // Add a button to change mode from FFT to analog and close the popup
-                        const modeButton = document.createElement('button');
-                        modeButton.textContent = 'Switch to Analog Mode';
-                        modeButton.style.marginTop = '10px';
-                        modeButton.addEventListener('click', function() {
-                            mode = 1; // Set mode to analog
-                            document.body.removeChild(easterEgg); // Close the popup
-                            // Optionally, show a message or update UI to indicate analog mode
-                            if (document.getElementById('changeBack')) {
-                                document.getElementById('changeBack').style.display = 'block';
-                                document.getElementById('FFTcontrols').style.display = 'none';
-                                document.getElementById('analogControls').style.display = 'block';
-                                document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
-                            }
-                        });
-                        easterEgg.appendChild(modeButton);
-                    }
-                }
-            });
 
             document.getElementById('changeBackButton').addEventListener('click', function() {
                 mode=(mode+1)%2; // Toggle between 0 (FFT) and 1 (analog)
                 if (mode === 0) {
                     document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
+                    document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
                     document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
                     document.getElementById('FFTcontrols').style.display = 'block';
                     document.getElementById('analogControls').style.display = 'none';
                     document.getElementById('changeBack').style.display = 'block';
                 } else {
                     document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
+                    document.getElementById('what_is').textContent = 'an Analog Vocoder';
                     document.getElementById('FFTcontrols').style.display = 'none';
                     document.getElementById('analogControls').style.display = 'block';
                     document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
                     document.getElementById('changeBack').style.display = 'block';
                 }
-                console.log(mode);
+                //console.log(mode);
             });
         </script>
         
@@ -1198,6 +1189,328 @@
             });
         }
 
+        /**
+         * Visualize the frequency response of the analog filters based on current analog control properties.
+         * Draws the response on the #filterView canvas.
+         */
+
+
+        const clamp=(minn,maxx,value)=>Math.min(Math.max(value,minn),maxx)
+
+        function studyAnalogFilters() {
+            let z2S=[{lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0}]
+            let z3S=[{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}]
+            let z4S=[{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}]
+            let z8S=[{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}]
+
+            function lp(d, c, r = 0, dbv = 2, callCount) {
+                if (!z2S[callCount]) {
+                    z2S[callCount] = {lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0};
+                }
+                const cc = clamp(0, 0.99, c);
+                const fbv = r + r / (1 - cc);
+                const f = d;
+                z2S[callCount].lp6 += cc * (f - z2S[callCount].lp6 + fbv * (z2S[callCount].lp6 - z2S[callCount].lp12));
+                z2S[callCount].lp12 += cc * (z2S[callCount].lp6 - z2S[callCount].lp12);
+                z2S[callCount].lp18 += cc * (z2S[callCount].lp12 - z2S[callCount].lp18);
+                z2S[callCount].lp24 += cc * (z2S[callCount].lp18 - z2S[callCount].lp24);
+                z2S[callCount].lp30 += cc * (z2S[callCount].lp24 - z2S[callCount].lp30);
+                z2S[callCount].lp36 += cc * (z2S[callCount].lp30 - z2S[callCount].lp36);
+                z2S[callCount].lp42 += cc * (z2S[callCount].lp36 - z2S[callCount].lp42);
+                z2S[callCount].lp48 += cc * (z2S[callCount].lp42 - z2S[callCount].lp48);
+                switch (dbv) {
+                    case 1:  return z2S[callCount].lp6;
+                    case 2:  return z2S[callCount].lp12;
+                    case 3:  return z2S[callCount].lp18;
+                    case 4:  return z2S[callCount].lp24;
+                    case 5:  return z2S[callCount].lp30;
+                    case 6:  return z2S[callCount].lp36;
+                    case 7:  return z2S[callCount].lp42;
+                    case 8:  return z2S[callCount].lp48;
+                    default: return z2S[callCount].lp12;
+                }
+            }
+
+            function hp(input, c, r = 0, dbv = 2, callCount) {
+                if (!z3S[callCount]) {
+                    z3S[callCount] = {hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0};
+                }
+                const cc = clamp(0, 0.99, c);
+                const fbv = r + r / (1 - cc);
+                const f = input;
+                let x = f;
+                z3S[callCount].hp6 += cc * (f - z3S[callCount].hp6 + fbv * (z3S[callCount].hp6 - z3S[callCount].hp12));
+                z3S[callCount].hp12 += cc * (z3S[callCount].hp6 - z3S[callCount].hp12);
+                x = f - ((dbv >= 2) ? z3S[callCount].hp12 : z3S[callCount].hp6);
+                if (dbv === 1 || dbv === 2) return x;
+                x = x - (z3S[callCount].hp18 += cc * (x - z3S[callCount].hp18)); if (dbv === 3) return x;
+                x = x - (z3S[callCount].hp24 += cc * (x - z3S[callCount].hp24)); if (dbv === 4) return x;
+                x = x - (z3S[callCount].hp30 += cc * (x - z3S[callCount].hp30)); if (dbv === 5) return x;
+                x = x - (z3S[callCount].hp36 += cc * (x - z3S[callCount].hp36)); if (dbv === 6) return x;
+                x = x - (z3S[callCount].hp42 += cc * (x - z3S[callCount].hp42)); if (dbv === 7) return x;
+                x = x - (z3S[callCount].hp48 += cc * (x - z3S[callCount].hp48)); if (dbv === 8) return x;
+                return x;
+            }
+
+            function bp(d, c, r = 0, dbv = 2, dww = 0, call) {
+                return hp(lp(d, c*2**(dww/1), r, dbv, call), c*2**(-dww/1), r, dbv, call)/2*dbv;
+            }
+
+            function bp2(d, c, r = 0, db = 2, callCount) {
+                try {
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(0.001, 0.5, c);
+                    const fb = r + r / (1.0 - cc)
+                    const f = d;
+
+                    if (callCount >= z4S.length) {
+                        z4S.push({ bp1: 0, bp2: 0, bp3: 0, bp4: 0, bp5: 0, bp6: 0, bp7: 0, bp8: 0, bp9: 0 });
+                    }
+
+                    z4S[callCount].bp1 += cc * (f - z4S[callCount].bp1 + fb * (z4S[callCount].bp1 - z4S[callCount].bp2));
+                    z4S[callCount].bp2 += cc * (z4S[callCount].bp1 - z4S[callCount].bp2);
+                    z4S[callCount].bp3 += cc * (z4S[callCount].bp2 - z4S[callCount].bp1);
+                    z4S[callCount].bp4 += cc * (z4S[callCount].bp3 - z4S[callCount].bp4);
+                    z4S[callCount].bp5 += cc * (z4S[callCount].bp4 - z4S[callCount].bp5);
+                    z4S[callCount].bp6 += cc * (z4S[callCount].bp5 - z4S[callCount].bp6);
+                    z4S[callCount].bp7 += cc * (z4S[callCount].bp6 - z4S[callCount].bp7);
+                    z4S[callCount].bp8 += cc * (z4S[callCount].bp7 - z4S[callCount].bp8);
+                    z4S[callCount].bp9 += cc * (z4S[callCount].bp8 - z4S[callCount].bp9);
+
+                    let out;
+                    switch (db) {
+                        case 1: out = z4S[callCount].bp1 - z4S[callCount].bp2; break;
+                        case 2: out = z4S[callCount].bp2 - z4S[callCount].bp3; break;
+                        case 3: out = z4S[callCount].bp3 - z4S[callCount].bp4; break;
+                        case 4: out = z4S[callCount].bp4 - z4S[callCount].bp5; break;
+                        case 5: out = z4S[callCount].bp5 - z4S[callCount].bp6; break;
+                        case 6: out = z4S[callCount].bp6 - z4S[callCount].bp7; break;
+                        case 7: out = z4S[callCount].bp7 - z4S[callCount].bp8; break;
+                        case 8: out = z4S[callCount].bp8 - z4S[callCount].bp9; break;
+                        default: out = z4S[callCount].bp2 - z4S[callCount].bp3;
+                    }
+
+                    return out;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function bp3(d, c, r = 0, w=1, callCount) {
+                try {
+                    if (!z4S[callCount]) {
+                        z4S.push({ bp1: 0, bp2: 0, bp3: 0, bp4: 0, bp5: 0, bp6: 0, bp7: 0, bp8: 0, bp9: 0 });
+                    }
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(0, 0.9999, c);
+                    const fb = r + r / (1 - cc);
+                    const f = d;
+                    let out = 0;
+
+                    w = clamp(1, 2, w);
+
+                    switch (w) {
+                        case 1:
+                            z4S[callCount].bp3 += clamp(-1, 1, f - z4S[callCount].bp3) * cc;
+                            z4S[callCount].bp1 += clamp(-1, 1, (f - z4S[callCount].bp3 - z4S[callCount].bp1 + fb * (z4S[callCount].bp1 - z4S[callCount].bp2))) * cc;
+                            break;
+                        case 2:
+                            z4S[callCount].bp3 += clamp(-cc, cc, f - z4S[callCount].bp3);
+                            z4S[callCount].bp1 += clamp(-cc, cc, (f - z4S[callCount].bp3 - z4S[callCount].bp1 + fb * (z4S[callCount].bp1 - z4S[callCount].bp2)));
+                            break;
+                    }
+                    z4S[callCount].bp2 += clamp(-1, 1, z4S[callCount].bp1 - z4S[callCount].bp2) * cc;
+
+                    out = z4S[callCount].bp1;
+
+                    return out;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function bp4(d, c, r = 0, w = 1, callCount) {
+                try {
+                    if (!z4S[callCount]) {
+                        z4S.push({ bp1: 0, bp2: 0, bp3: 0, bp4: 0, bp5: 0, bp6: 0, bp7: 0, bp8: 0, bp9: 0 });
+                    }
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(0, 0.9999, c);
+                    const fb = r + r / (1 - cc);
+                    const f = d;
+                    let out = 0;
+
+                    //z4S[callCount].bp3 += (f - z4S[callCount].bp3) * cc * (4 + cc * 1) / 5;
+                    z4S[callCount].bp1 += (f - z4S[callCount].bp3 - z4S[callCount].bp1 + fb * (z4S[callCount].bp1 - z4S[callCount].bp2)) * cc;
+                    z4S[callCount].bp2 += (z4S[callCount].bp1 - z4S[callCount].bp2) * cc;
+
+                    out = z4S[callCount].bp1 - z4S[callCount].bp2;
+
+                    return out;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function bp5(dd, c, r = 0, dbv = 2, dww = 0, call) {
+                const d = bp4(dd, c, r, dbv, call);
+
+                // Frequency spread
+                const c1 = c * 2 ** (+dww);
+                const c2 = c * 2 ** (-dww);
+                const rl = c1>0.9999?0:r;
+
+                // Filter chain
+                const low = lp(d, c1, rl, dbv, call);
+                const high = hp(low, c2, r, dbv, call);
+
+                // === Shape-based gain adjustment ===
+                const norm = dbv / 8;
+                const power = 2 + 2 * (1 - dww);
+                const mult = 10 * 2 ** (4 * (1 - dww));
+                const shapeFactor = 1 + norm ** power * mult;
+
+                return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32;
+            }
+
+            const canvas = document.getElementById('filterView');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Get analog control values
+            const n = parseInt(document.getElementById('TotalBands').value) || 40;
+            const resonance = parseFloat(document.getElementById('Resonance').value);
+            const db = parseInt(document.getElementById('DBperOct').value);
+            const bpwidth = parseFloat(document.getElementById('BPwidth').value);
+            const altBP = parseInt(document.getElementById('Alt_BP').value) || 0;
+
+            // Frequency range (log scale)
+            const minFreq = 20, maxFreq = 20000;
+            const sampleRate = 44100;
+            const points = canvas.width;
+            let testInput = 0;
+
+            // Prepare for drawing
+            ctx.save();
+            ctx.strokeStyle = "#4af";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            // For each frequency, compute filter response
+            // Smoothing window size (must be odd)
+            const SMOOTH_WINDOW = 9;
+            const halfWindow = Math.floor(SMOOTH_WINDOW / 2);
+            const dbVals = [];
+
+            // First, calculate all dB values (unsmoothed)
+            for (let x = 0; x < points; x++) {
+                // Logarithmic frequency mapping
+                const freq = minFreq * Math.pow(maxFreq / minFreq, x / (points - 1));
+                const FLTcutoff = .1;
+
+                // Reset filter state for each frequency
+                let z2S = [{lp6:0,lp12:0,lp18:0,lp24:0,lp30:0,lp36:0,lp42:0,lp48:0}];
+                let z3S = [{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}];
+                let z4S = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
+                let z8S = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
+                //console.log(altBP)
+
+                // Sine wave test: run for several cycles and measure output amplitude
+                const cycles = 2;
+                const samplesPerCycle = Math.round(sampleRate / freq);
+                const totalSamples = cycles * samplesPerCycle;
+                let maxOut = 0;
+
+                for (let t = 0; t < totalSamples; t++) {
+                    const testInput = Math.sin(2 * Math.PI * freq * t / sampleRate);
+                    let out = 0;
+                    
+                    switch (altBP) {
+                        case 0:
+                            out = bp(testInput, FLTcutoff, resonance, db, bpwidth, 0);
+                            break;
+                        case 1:
+                            out = bp2(testInput, FLTcutoff, resonance, db, 0);
+                            break;
+                        case 2:
+                            out = bp3(testInput*4, FLTcutoff, resonance, db, 0);
+                            break;
+                        case 3:
+                            out = bp4(testInput, FLTcutoff, resonance, db, 0);
+                            break;
+                        case 4:
+                            out = bp5(testInput, FLTcutoff, resonance, db, bpwidth, 0);
+                            break;
+                        default:
+                            out = bp(testInput, FLTcutoff, resonance, db, bpwidth, 0);
+                            break;
+                    }
+                    // Use peak amplitude (or accumulate RMS if you prefer)
+                    if (t > totalSamples - samplesPerCycle) { // Only last cycle for steady-state
+                        maxOut = Math.max(maxOut, Math.abs(out));
+                    }
+                }
+
+                // Convert to dB
+                let dbVal = 20 * Math.log10(maxOut + 1e-8);
+                dbVals[x] = dbVal-20;   //it goes off grapth so i subtract it by 20
+            }
+
+            // Now, smooth the dB values using a moving average
+            const smoothedDbVals = [];
+            for (let x = 0; x < points; x++) {
+                let sum = 0, count = 0;
+                for (let k = -halfWindow; k <= halfWindow; k++) {
+                    const idx = x + k;
+                    if (idx >= 0 && idx < points) {
+                        sum += dbVals[idx];
+                        count++;
+                    }
+                }
+                smoothedDbVals[x] = sum / count;
+            }
+
+            // Draw the smoothed graph
+            for (let x = 0; x < points; x++) {
+                // Normalize to canvas height (0 dB at 1/4 from top, -60 dB at bottom)
+                const y = canvas.height * 0.25 + (canvas.height * 0.75) * (1 - (smoothedDbVals[x] + 60) / 60);
+
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw frequency grid
+            ctx.save();
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 1;
+            ctx.font = "10px Arial";
+            ctx.fillStyle = "#aaa";
+            for (let f of [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]) {
+                const x = Math.log(f / minFreq) / Math.log(maxFreq / minFreq) * (canvas.width - 1);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+                ctx.fillText(f + "Hz", x + 2, canvas.height - 2);
+            }
+            ctx.restore();
+        }
+
+        // Attach to analog controls for live update
+        ['TotalBands', 'Resonance', 'DBperOct', 'BPwidth', 'Alt_BP'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', studyAnalogFilters);
+                el.addEventListener('change', studyAnalogFilters);
+            }
+        });
+
+        // Draw on page load
+        document.addEventListener('DOMContentLoaded', studyAnalogFilters);
+
         function applyAnalogLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
             // Helper functions and state
             const min = Math.min, max = Math.max, abs = Math.abs, pow = Math.pow, sqrt = Math.sqrt, sin = Math.sin, cos = Math.cos, PI = Math.PI;
@@ -1206,36 +1519,14 @@
             let z2 = [{lp6:0,lp12:0,lp18:0,lp24:0,lp30:0,lp36:0,lp42:0,lp48:0}];
             let z3 = [{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}];
             let z4 = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
+            let z8 = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
             let z5 = [{var1:0}];
-
-            // UI values
-            const sel = parseInt(document.getElementById('decayType').value)-1;
-            const rel = parseFloat(document.getElementById('release').value);
-            const fb = parseFloat(document.getElementById('Resonance').value);
-            const db = parseInt(document.getElementById('DBperOct').value);
-            const dw = parseFloat(document.getElementById('BPwidth').value);
-            const vol = parseFloat(document.getElementById('Volboost').value);
-            const n = parseInt(document.getElementById('TotalBands').value) || 40;
-            const flip = document.getElementById('FreqFlip').checked;
-            const pitch = parseFloat(document.getElementById('pitch').value);
-
-            // Envelope followers
-            function peak(a, decayF, call) {
-                z5[call] ??= { var1: 0 };
-                z5[call].var1 = Math.max(abs(a), z5[call].var1 - sqrt(decayF) / 2);
-                return z5[call].var1 / 3;
-            }
-            function rms(a, decayF, call) {
-                z5[call] ??= { var1: 0 };
-                z5[call].var1 = (1 - decayF) * z5[call].var1 + decayF * a * a;
-                return sqrt(z5[call].var1);
-            }
 
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2[callCount]) {
                     z2[callCount] = {lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0};
                 }
-                const cc = clamp(0, 0.99, c);
+                const cc = clamp(0, 0.9999, c);
                 const fbv = r + r / (1 - cc);
                 const f = d;
                 z2[callCount].lp6 += cc * (f - z2[callCount].lp6 + fbv * (z2[callCount].lp6 - z2[callCount].lp12));
@@ -1263,7 +1554,7 @@
                 if (!z3[callCount]) {
                     z3[callCount] = {hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0};
                 }
-                const cc = clamp(0, 0.99, c);
+                const cc = clamp(0, 0.9999, c);
                 const fbv = r + r / (1 - cc);
                 const f = input;
                 let x = f;
@@ -1281,46 +1572,146 @@
             }
 
             function bp(d, c, r = 0, dbv = 2, dww = 0, call) {
-                return hp(lp(d, c + dww, r, dbv, call), c - dww, r, dbv, call);
+                return hp(lp(d, c*2**(dww/1), r, dbv, call), c*2**(-dww/1), r, dbv, call)/2*dbv;
             }
 
-            function bp2(d,c,r=0,db=2, callCount) {
+            function bp2(d, c, r = 0, db = 2, callCount) {
                 try {
-                    if(!z4[callCount]) {
-                        z4.push({bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0})
-                    }
-                    const clamp=(minn,maxx,value)=>min(max(value,minn),maxx)
-                    const cc=clamp(0,0.99,c)
-                    const fb=r+r/(1-cc)
-                    const f=d
-                    let out=0
-                    
-                    z4[callCount].bp1+=cc*(f-z4[callCount].bp1+fb*(z4[callCount].bp1-z4[callCount].bp2))
-                    z4[callCount].bp2+=cc*(z4[callCount].bp1-z4[callCount].bp2)
-                    z4[callCount].bp3+=cc*(z4[callCount].bp2-z4[callCount].bp3)
-                    z4[callCount].bp4+=cc*(z4[callCount].bp3-z4[callCount].bp4)
-                    z4[callCount].bp5+=cc*(z4[callCount].bp4-z4[callCount].bp5)
-                    z4[callCount].bp6+=cc*(z4[callCount].bp5-z4[callCount].bp6)
-                    z4[callCount].bp7+=cc*(z4[callCount].bp6-z4[callCount].bp7)
-                    z4[callCount].bp8+=cc*(z4[callCount].bp7-z4[callCount].bp8)
-                    z4[callCount].bp9+=cc*(z4[callCount].bp8-z4[callCount].bp9)
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(0.001, 0.9999, c);
+                    const fb = r + r / (1.0 - cc)
+                    const f = d;
 
+                    if (!z4[callCount]) {
+                        z4.push({ bp1: 0, bp2: 0, bp3: 0, bp4: 0, bp5: 0, bp6: 0, bp7: 0, bp8: 0, bp9: 0 });
+                    }
+
+                    z4[callCount].bp1 += cc * (f - z4[callCount].bp1 + fb * (z4[callCount].bp1 - z4[callCount].bp2));
+                    z4[callCount].bp2 += cc * (z4[callCount].bp1 - z4[callCount].bp2);
+                    z4[callCount].bp3 += cc * (z4[callCount].bp2 - z4[callCount].bp3);
+                    z4[callCount].bp4 += cc * (z4[callCount].bp3 - z4[callCount].bp4);
+                    z4[callCount].bp5 += cc * (z4[callCount].bp4 - z4[callCount].bp5);
+                    z4[callCount].bp6 += cc * (z4[callCount].bp5 - z4[callCount].bp6);
+                    z4[callCount].bp7 += cc * (z4[callCount].bp6 - z4[callCount].bp7);
+                    z4[callCount].bp8 += cc * (z4[callCount].bp7 - z4[callCount].bp8);
+                    z4[callCount].bp9 += cc * (z4[callCount].bp8 - z4[callCount].bp9);
+
+                    let out;
                     switch (db) {
-                        case 1:  out=z4[callCount].bp1-z4[callCount].bp2; break;
-                        case 2: out=z4[callCount].bp2-z4[callCount].bp3; break;
-                        case 3: out=z4[callCount].bp3-z4[callCount].bp4; break;
-                        case 4: out=z4[callCount].bp4-z4[callCount].bp5; break;
-                        case 5: out=z4[callCount].bp5-z4[callCount].bp6; break;
-                        case 6: out=z4[callCount].bp6-z4[callCount].bp7; break;
-                        case 7: out=z4[callCount].bp7-z4[callCount].bp8; break;
-                        case 8: out=z4[callCount].bp8-z4[callCount].bp9; break;
-                        default: out=z4[callCount].bp2-z4[callCount].bp3;  // Default: 12 dB
+                        case 1: out = z4[callCount].bp1 - z4[callCount].bp2; break;
+                        case 2: out = z4[callCount].bp2 - z4[callCount].bp3; break;
+                        case 3: out = z4[callCount].bp3 - z4[callCount].bp4; break;
+                        case 4: out = z4[callCount].bp4 - z4[callCount].bp5; break;
+                        case 5: out = z4[callCount].bp5 - z4[callCount].bp6; break;
+                        case 6: out = z4[callCount].bp6 - z4[callCount].bp7; break;
+                        case 7: out = z4[callCount].bp7 - z4[callCount].bp8; break;
+                        case 8: out = z4[callCount].bp8 - z4[callCount].bp9; break;
+                        default: out = z4[callCount].bp2 - z4[callCount].bp3;
                     }
 
                     return out;
                 } catch (e) {
                     return 0;
                 }
+            }
+
+            function bp3(d, c, r = 0, w = 1,callCount) {
+                try {
+                    if (!z4[callCount]) {
+                        z4.push({ bp1: 0, bp2: 0, bp3: 0, bp4: 0, bp5: 0, bp6: 0, bp7: 0, bp8: 0, bp9: 0 });
+                    }
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(0, 0.9999, c);
+                    const fb = r + r / (1 - cc);
+                    const f = d;
+                    let out = 0;
+                    w = clamp(1, 2, w);
+
+                    switch (w) {
+                        case 1:
+                            z4[callCount].bp3 += clamp(-1, 1, f - z4[callCount].bp3) * cc;
+                            z4[callCount].bp1 += clamp(-1, 1, (f - z4[callCount].bp3 - z4[callCount].bp1 + fb * (z4[callCount].bp1 - z4[callCount].bp2))) * cc;
+                            break;
+                        case 2:
+                            z4[callCount].bp3 += clamp(-cc, cc, f - z4[callCount].bp3);
+                            z4[callCount].bp1 += clamp(-cc, cc, (f - z4[callCount].bp3 - z4[callCount].bp1 + fb * (z4[callCount].bp1 - z4[callCount].bp2)));
+                            break;
+                    }
+                    z4[callCount].bp2 += clamp(-1, 1, z4[callCount].bp1 - z4[callCount].bp2) * cc;
+
+                    out = z4[callCount].bp1;
+
+                    return out;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function bp4(d, c, r = 0, w = 1, callCount) {
+                try {
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(0.001, 0.9999, c);
+                    const fb = r + r / (1.0 - cc)
+                    const f = d;
+
+                    if (!z4[callCount]) {
+                        z4.push({ bp1: 0, bp2: 0, bp3: 0});
+                    }
+
+                    z4[callCount].bp1 += cc * (f - z4[callCount].bp1 + fb * (z4[callCount].bp1 - z4[callCount].bp2));
+                    z4[callCount].bp2 += cc * (z4[callCount].bp1 - z4[callCount].bp2);
+
+                    let out=0;
+                    out = z4[callCount].bp1 - z4[callCount].bp2;
+
+                    return out;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function bp5(dd, c, r = 0, dbv = 2, dww = 0, call) {
+                const d = bp4(dd, c, r, dbv, call);
+
+                // Frequency spread
+                const c1 = c * 2 ** (+dww);
+                const c2 = c * 2 ** (-dww);
+                const rl = c1>0.9999?0:r;
+
+                // Filter chain
+                const low = lp(d, c1, rl, dbv, call);
+                const high = hp(low, c2, r, dbv, call);
+
+                // === Shape-based gain adjustment ===
+                const norm = dbv / 8;
+                const power = 2 + 2 * (1 - dww);
+                const mult = 10 * 2 ** (4 * (1 - dww));
+                const shapeFactor = 1 + norm ** power * mult;
+
+                return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32;
+            }
+
+            // UI values
+            const sel = parseInt(document.getElementById('decayType').value)-1;
+            const rel = parseFloat(document.getElementById('release').value);
+            const fb = parseFloat(document.getElementById('Resonance').value);
+            const db = parseInt(document.getElementById('DBperOct').value);
+            const dw = parseFloat(document.getElementById('BPwidth').value);
+            const vol = parseFloat(document.getElementById('Volboost').value);
+            const n = parseInt(document.getElementById('TotalBands').value) || 40;
+            const flip = document.getElementById('FreqFlip').checked;
+            const pitch = parseFloat(document.getElementById('pitch').value);
+
+            // Envelope followers
+            function peak(a, decayF, call) {
+                z5[call] ??= { var1: 0 };
+                z5[call].var1 = Math.max(abs(a), z5[call].var1 - sqrt(decayF) / 2);
+                return z5[call].var1 / 3;
+            }
+            function rms(a, decayF, call) {
+                z5[call] ??= { var1: 0 };
+                z5[call].var1 = (1 - decayF) * z5[call].var1 + decayF * a * a;
+                return sqrt(z5[call].var1);
             }
             
             let modulatedValue = 1
@@ -1332,7 +1723,7 @@
                 let p = [rms, peak][max(min(selv, 2), 0)];
                 let result = 0;
                 let carrierSum = 0, modSum = 0;
-                const Alt_BP=document.getElementById('Alt_BP').checked;
+                const Alt_BP=parseInt(document.getElementById('Alt_BP').value) || 0;
 
                 let timer = currentTime; // Timer value between 0 and 1
                 const speedType = parseInt(document.getElementById('speedType').value)
@@ -1371,11 +1762,24 @@
 
                     const g = i / nv * 2**(pitch/12);
                     // Filter input (modulator) and carrier
-                    const filter = (v, m, f = 0) => Alt_BP
-                        ? bp2(v * 64, (f ? 1 - g : g), fbv, dbv, m)
-                        : bp(v, (f ? 1 - g : g), fbv, dbv, dww / nv, m) * (max(dbv - 1, 0) ** 2.5 * 2 + 1) / dd;
-                    const modFiltered = filter(inp, i, flip);
-                    const carFiltered = filter(car, i + n, false);
+                    const filter = (v, m, f = 0, dwo) => {
+                        switch (Alt_BP) {
+                            case 0:
+                                return bp(v * 64, (f ? 1 - g : g), fbv, dbv, dwo, m);
+                            case 1:
+                                return bp2(v * 64, (f ? 1 - g : g), fbv, dbv, m);
+                            case 2:
+                                return bp3(v * 256, (f ? 1 - g : g), fbv, dbv, m);
+                            case 3:
+                                return bp4(v * 64, (f ? 1 - g : g), fbv, dbv, m);
+                            case 4:
+                                return bp5(v * 64, (f ? 1 - g : g), fbv, dbv, dwo, m);
+                            default:
+                                return bp(v * 64, (f ? 1 - g : g), fbv, dbv, dwo, m);
+                        } 
+                    };
+                    const modFiltered = filter(inp, i, flip, dww);
+                    const carFiltered = filter(car, i + n, false, dww);
 
                     const absFilterX = abs(modFiltered);
                     const mod = p(absFilterX, 2**-((rel*3)**2)/800, i)*modulatedValue;
@@ -1387,6 +1791,8 @@
                     // If mod is always zero, you will only hear silence or the modular
                     const combined = mod * carFiltered * (1 - fbv) / sqrt(nv * 10) * (1 - g);
                     result += combined * volv*8;
+
+                    //console.log(result, mod, carFiltered, combined, inp, car, i, nv, modulatedValue);
                 }
 
                 // Prevent NaN/Infinity

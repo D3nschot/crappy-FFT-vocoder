@@ -336,6 +336,24 @@
             <label for="SoundGoodizer">SoundGoodizer? OFF:</label>
             <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01"/>
             <br>
+            <label for="simpleChorus">simple Chorus</label>
+            <select id="simpleChorus">
+                <option value="0">OFF</option>
+                <option value="1">sin</option>
+                <option value="2">cos</option>
+                <option value="3">asin</option>
+                <option value="4">acos</option>
+            </select>
+            |
+            <label for="speedType">speed</label>
+            <select id="speedType">
+                <option value="0">Auto</option>
+                <option value="1">file length</option>
+                <option value="2">user</option>
+            </select>
+            <label for="userSpeed">| speed: 1.00 Hz</label>
+            <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01"/>
+            <br>
         </div>
         <div id="analogControls" style="display: none;">
             <canvas id="filterView" width="700" height="100"></canvas>
@@ -343,7 +361,7 @@
             <label for="TotalBands">Total Bands: 40</label>
             <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1"/>
             |
-            <label for="Resonance">Resonance: 0.92</label>
+            <label for="Resonance">Resonance: 0.920</label>
             <input type="range" id="Resonance" value=".92" min="0" max=".999" step="0.001"/>
             <br>
             <label for="BPwidth">Bandpass Width: 0.00</label>
@@ -364,23 +382,6 @@
                 <option value="4">3FLT</option>
             </select>
         </div>
-        <label for="simpleChorus">simple Chorus</label>
-        <select id="simpleChorus">
-            <option value="0">OFF</option>
-            <option value="1">sin</option>
-            <option value="2">cos</option>
-            <option value="3">asin</option>
-            <option value="4">acos</option>
-        </select>
-        |
-        <label for="speedType">speed</label>
-        <select id="speedType">
-            <option value="0">Auto</option>
-            <option value="1">file length</option>
-            <option value="2">user</option>
-        </select>
-        <label for="userSpeed">| speed: 1.00 Hz</label>
-        <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01"/>
         <br>
         <button id="playButton" disabled>Play Audio</button>
         <button id="pauseButton" disabled>Pause Audio</button>
@@ -468,7 +469,7 @@
             <li><strong>Speed:</strong> Choose the speed type for the chorus effect.</li>
             <li><strong>User Speed:</strong> Adjust the user-defined speed for the chorus effect.</li>
             <br>
-            <div id="version">version 1.2.1</div> <!--current version-->
+            <div id="version">version 1.2</div> <!--current version-->
             Made by D3nschot (DX3050)
             </ul>
             <button id="closeHelpButton">Close</button>
@@ -476,11 +477,13 @@
         </div>
 
         <script>
-            let mode = 0; // 0 for FFT, 1 for analog
+            let Vmode=0; // 0 for FFT, 1 for analog
 
             document.getElementById('changeBackButton').addEventListener('click', function() {
-                mode=(mode+1)%2; // Toggle between 0 (FFT) and 1 (analog)
-                if (mode === 0) {
+                // Toggle between 0 (FFT) and 1 (analog)
+                Vmode = ((Number(Vmode) || 0) + 1) % 2;
+
+                if (Vmode === 0) {
                     document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
                     document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
                     document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
@@ -495,7 +498,47 @@
                     document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
                     document.getElementById('changeBack').style.display = 'block';
                 }
-                //console.log(mode);
+
+                // Update the URL with the new Vmode
+                const params = new URLSearchParams(window.location.search);
+                params.set('Vmode', Vmode);
+                const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                window.history.replaceState({}, '', newUrl);
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const params = new URLSearchParams(window.location.search);
+                Vmode = Number(params.get('Vmode')) || 0; // Default to 0 if not set
+
+                if (Vmode === 0) {
+                    document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
+                    document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
+                    document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
+                    document.getElementById('FFTcontrols').style.display = 'block';
+                    document.getElementById('analogControls').style.display = 'none';
+                    document.getElementById('changeBack').style.display = 'block';
+                } else {
+                    document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
+                    document.getElementById('what_is').textContent = 'an Analog Vocoder';
+                    document.getElementById('FFTcontrols').style.display = 'none';
+                    document.getElementById('analogControls').style.display = 'block';
+                    document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
+                    document.getElementById('changeBack').style.display = 'block';
+                }
+
+                
+                const userSpeedLabel = document.querySelector('label[for="userSpeed"]');
+                const userSpeedSlider = document.getElementById('userSpeed');
+                const speedTypeSelect = new URLSearchParams(window.location.search).get('speedType') || '0';
+
+                if (speedTypeSelect == '2') {
+                    userSpeedLabel.style.display = 'inline';
+                    userSpeedSlider.style.display = 'inline';
+                } else {
+                    userSpeedLabel.style.display = 'none';
+                    userSpeedSlider.style.display = 'none';
+                }
+            
             });
         </script>
         
@@ -571,6 +614,7 @@
             document.getElementById('speedType').dispatchEvent(new Event('change'));
 
             // Function to update the URL with the current state
+
             function updateURLParams() {
                 const params = new URLSearchParams();
 
@@ -583,16 +627,23 @@
                     }
                 });
 
+                params.set('Vmode', Vmode);
+
                 // Update the URL without reloading the page
                 const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
                 window.history.replaceState({}, '', newUrl);
             }
+
 
             // Function to load state from the URL
             function loadStateFromURL() {
                 const params = new URLSearchParams(window.location.search);
 
                 params.forEach((value, key) => {
+                    if (key === 'Vmode') {
+                        window.Vmode = value;
+                        return;
+                    }
                     const input = document.getElementById(key);
                     if (input) {
                         if (input.type === 'checkbox') {
@@ -628,7 +679,7 @@
                         properties.push(`${input.id}: ${input.value}`);
                     }
                 });
-
+                properties.push(`Mode: ${Vmode ? 'Analog Mode' : 'FFT Mode'}`); // Add Vmode as a property
                 // Collect file input details
                 fileInputs.forEach(fileInput => {
                     const file = fileInput.files[0];
@@ -668,10 +719,15 @@
                                     document.getElementById('ExportJSON').addEventListener('click', function() {
                                         const jsonObject = {};
                                         inputs.forEach(input => {
-                                            if (input.type === 'range' || input.type === 'number' || input.type === 'checkbox' || input.tagName === 'SELECT') {
+                                            if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
                                                 jsonObject[input.id] = input.value;
+                                            } else if (input.type === 'checkbox') {
+                                                jsonObject[input.id] = input.checked;
                                             }
                                         });
+
+                                        // Add Vmode as a property
+                                        jsonObject.Mode = Vmode ? 'Analog Mode' : 'FFT Mode';
 
                                         const jsonBlob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
                                         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -747,12 +803,15 @@
                 document.getElementById('ExportJSON').addEventListener('click', function() {
                     const jsonObject = {};
                     inputs.forEach(input => {
-                        if (input.type === 'checkbox') {
-                            jsonObject[input.id] = input.checked ? 'true' : 'false';
-                        } else if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
+                        if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
                             jsonObject[input.id] = input.value;
+                        } else if (input.type === 'checkbox') {
+                            jsonObject[input.id] = input.checked;
                         }
                     });
+
+                    // Add Vmode as a property
+                    jsonObject.Mode = Vmode ? 'Analog Mode' : 'FFT Mode';
 
                     const jsonBlob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
                     const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -775,10 +834,16 @@
                                 try {
                                     const jsonObject = JSON.parse(e.target.result);
                                     Object.keys(jsonObject).forEach(key => {
+                                        if (key === 'Mode' || key === 'Vmode') {
+                                            // Handle Vmode/Mode property
+                                            window.Vmode = jsonObject[key];
+                                            // Optionally update UI if needed
+                                            return;
+                                        }
                                         const inputElement = document.getElementById(key);
                                         if (inputElement) {
                                             if (inputElement.type === 'checkbox') {
-                                                inputElement.checked = jsonObject[key] === 'true' || jsonObject[key] === true || jsonObject[key] === true;
+                                                inputElement.checked = jsonObject[key] === true || jsonObject[key] === 'true';
                                             } else {
                                                 inputElement.value = jsonObject[key];
                                             }
@@ -796,7 +861,7 @@
                         }
                     });
                     input.click();
-                });
+                });;
             });
         </script>
     <script>
@@ -1081,7 +1146,7 @@
                 // Pause for 10ms (adjust as needed)
                 await new Promise(resolve => setTimeout(resolve, 10));
 
-                if (mode==0){
+                if (Vmode==0){
                     // Apply the provided logic to process the audio
                     processedBuffer = applyFFTLogic(
                         offlineContext,
@@ -1097,7 +1162,7 @@
                     carrierRight = processedBuffer.numberOfChannels > 1
                         ? processedBuffer.getChannelData(1)
                         : processedBuffer.getChannelData(0);
-                } else if (mode==1) {
+                } else if (Vmode==1) {
                     // Analog mode processing logic
                     processedBuffer = applyAnalogLogic(
                         offlineContext,
@@ -1252,8 +1317,25 @@
                 return x;
             }
 
-            function bp(d, c, r = 0, dbv = 2, dww = 0, call) {
-                return hp(lp(d, c*2**(dww/1), r, dbv, call), c*2**(-dww/1), r, dbv, call)/2*dbv;
+            function bp(dd, c, r = 0, dbv = 2, dww = 0, call) {
+                const d = dd;
+
+                // Frequency spread
+                const c1 = c * 2 ** (+dww);
+                const c2 = c * 2 ** (-dww);
+                const rl = c1>0.9999?0:r;
+
+                // Filter chain
+                const low = lp(d, c1, rl, dbv, call);
+                const high = hp(low, c2, r, dbv, call);
+
+                // === Shape-based gain adjustment ===
+                const norm = dbv / 8;
+                const power = 2 + 2 * (1 - dww);
+                const mult = 10 * 2 ** (4 * (1 - dww));
+                const shapeFactor = 1 + norm ** power * mult;
+
+                return (high * shapeFactor * (1+dww*6))/16;
             }
 
             function bp2(d, c, r = 0, db = 2, callCount) {
@@ -1417,7 +1499,7 @@
                 //console.log(altBP)
 
                 // Sine wave test: run for several cycles and measure output amplitude
-                const cycles = 2;
+                const cycles = 1;
                 const samplesPerCycle = Math.round(sampleRate / freq);
                 const totalSamples = cycles * samplesPerCycle;
                 let maxOut = 0;
@@ -1571,8 +1653,25 @@
                 return x;
             }
 
-            function bp(d, c, r = 0, dbv = 2, dww = 0, call) {
-                return hp(lp(d, c*2**(dww/1), r, dbv, call), c*2**(-dww/1), r, dbv, call)/2*dbv;
+            function bp(dd, c, r = 0, dbv = 2, dww = 0, call) {
+                const d = dd;
+
+                // Frequency spread
+                const c1 = c * 2 ** (+dww);
+                const c2 = c * 2 ** (-dww);
+                const rl = c1>0.9999?0:r;
+
+                // Filter chain
+                const low = lp(d, c1, rl, dbv, call);
+                const high = hp(low, c2, r, dbv, call);
+
+                // === Shape-based gain adjustment ===
+                const norm = dbv / 8;
+                const power = 2 + 2 * (1 - dww);
+                const mult = 10 * 2 ** (4 * (1 - dww));
+                const shapeFactor = 1 + norm ** power * mult;
+
+                return (high * shapeFactor * (1+dww*6))/16;
             }
 
             function bp2(d, c, r = 0, db = 2, callCount) {
@@ -1716,6 +1815,7 @@
             
             let modulatedValue = 1
             const simpleChorus = parseInt(document.getElementById('simpleChorus').value);
+            const duration = inputLeft.length / sampleRate;
             // Vocoder function
             function vocoder(inp, car) {
                 let relv = rel, nv = n, volv = vol, fbv = fb, dbv = db, dww = dw, selv = sel;
@@ -1725,40 +1825,7 @@
                 let carrierSum = 0, modSum = 0;
                 const Alt_BP=parseInt(document.getElementById('Alt_BP').value) || 0;
 
-                let timer = currentTime; // Timer value between 0 and 1
-                const speedType = parseInt(document.getElementById('speedType').value)
-
-                switch (speedType) {
-                    case 0:
-                        timer = currentTime / 8;
-                        break;
-                    case 1:
-                        timer = currentTime / duration;
-                        break;
-                    case 2:
-                        timer = currentTime * parseFloat(document.getElementById('userSpeed').value);
-                        break;
-                }
-
                 for (let i = 1; i <= nv; i++) {
-                    const modulatedInput = i*((timer*256|0)/256);
-                    switch (simpleChorus) {
-                        case 0:
-                            modulatedValue = 1;
-                            break;
-                        case 1:
-                            modulatedValue = sin(modulatedInput*PI);
-                            break;
-                        case 2:
-                            modulatedValue = cos(modulatedInput*PI);
-                            break;
-                        case 3:
-                            modulatedValue = asin(sin(modulatedInput*PI));
-                            break;
-                        case 4:
-                            modulatedValue = asin(cos(modulatedInput*PI));
-                            break;
-                    }
 
                     const g = i / nv * 2**(pitch/12);
                     // Filter input (modulator) and carrier
@@ -1782,7 +1849,7 @@
                     const carFiltered = filter(car, i + n, false, dww);
 
                     const absFilterX = abs(modFiltered);
-                    const mod = p(absFilterX, 2**-((rel*3)**2)/800, i)*modulatedValue;
+                    const mod = p(absFilterX, 2**-((rel*3)**2)/800, i);
 
                     // For debugging: sum up mod and carrier
                     //modSum += mod;
@@ -1805,10 +1872,8 @@
             const outputBuffer = context.createBuffer(2, bufferLen, sampleRate);
             const outputLeft = outputBuffer.getChannelData(0);
             const outputRight = outputBuffer.getChannelData(1);
-            let startTime = performance.now();
             // Analog vocoder processing
             for (let idx = 0; idx < bufferLen; idx++) {
-                currentTime = (performance.now() - startTime) / 1000
                 const idxL = idx % carrierLeft.length;
                 const idxR = idx % carrierRight.length;
                 outputLeft[idx] = vocoder(carrierLeft[idxL], inputLeft[idx]);

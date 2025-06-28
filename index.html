@@ -362,43 +362,6 @@
         <input type="checkbox" id="AutoUpdateFilters" checked>
         <button id="ManualStudyFilters" style="display: none; margin-left: 10px;">Update Study Filters</button>
         </div>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                // Reference to checkbox and button
-                const autoUpdateCheckbox = document.getElementById('AutoUpdateFilters');
-                const manualStudyButton = document.getElementById('ManualStudyFilters');
-
-                // Watch checkbox toggle to show/hide the manual update button
-                autoUpdateCheckbox.addEventListener('change', () => {
-                    manualStudyButton.style.display = autoUpdateCheckbox.checked ? 'none' : 'inline-block';
-                });
-
-                // Attach event listener to the manual button
-                manualStudyButton.addEventListener('click', () => {
-                    if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
-                });
-
-                // Attach to analog controls for live update if auto-update is enabled
-                ['TotalBands', 'Resonance', 'DBperOct', 'BPwidth', 'Alt_BP'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        const handler = () => {
-                            const autoUpdate = document.getElementById('AutoUpdateFilters');
-                            if (!autoUpdate || autoUpdate.checked) {
-                                studyAnalogFilters();
-                                el.addEventListener('input', handler);
-                                el.addEventListener('change', handler);
-                            }
-                        };
-                    }
-                });
-
-                // Call studyAnalogFilters once on page load if available
-                if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
-            });
-            </script>
-
             <canvas id="filterView" width="700" height="100"></canvas>
             <br>
             <label for="TotalBands">Total Bands: 40</label>
@@ -424,6 +387,42 @@
                 <option value="3">fast</option>
                 <option value="4">3FLT</option>
             </select>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Reference to checkbox and button
+                const autoUpdateCheckbox = document.getElementById('AutoUpdateFilters');
+                const manualStudyButton = document.getElementById('ManualStudyFilters');
+
+                // Watch checkbox toggle to show/hide the manual update button
+                autoUpdateCheckbox.addEventListener('change', () => {
+                    manualStudyButton.style.display = autoUpdateCheckbox.checked ? 'none' : 'inline-block';
+                });
+
+                // Attach event listener to the manual button
+                manualStudyButton.addEventListener('click', () => {
+                    if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
+                });
+
+                // Attach to analog controls for live update if auto-update is enabled
+                ['TotalBands', 'Resonance', 'DBperOct', 'BPwidth', 'Alt_BP', 'AutoUpdateFilters'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const handler = () => {
+                            const autoUpdate = document.getElementById('AutoUpdateFilters');
+                            if (!autoUpdate || autoUpdate.checked) {
+                                studyAnalogFilters();
+                            }
+                        };
+                        el.addEventListener('input', handler);
+                        el.addEventListener('change', handler);
+                    }
+                });
+
+                // Call studyAnalogFilters once on page load if available
+                if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
+            });
+            </script>
         </div>
         <br>
         <button id="playButton" disabled>Play Audio</button>

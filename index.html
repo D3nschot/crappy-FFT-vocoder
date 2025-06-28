@@ -1877,26 +1877,27 @@
 
                 for (let i = 1; i <= nv; i++) {
 
-                    const g = i / nv * 2**(pitch/12);
+                    const g = i / nv / 2**(pitch/12);
                     // Filter input (modulator) and carrier
-                    const filter = (v, m, f = 0, dwo) => {
+                    const filter = (v, m, f = 0, dwo, FRQ) => {
+			FRQ=f?1-FRQ:FRQ
                         switch (Alt_BP) {
                             case 0:
-                                return bp(v * 64, (f ? 1 - g : g), fbv, dbv, dwo, m);
+                                return bp(v * 64, FRQ, fbv, dbv, dwo, m);
                             case 1:
-                                return bp2(v * 64, (f ? 1 - g : g), fbv, dbv, m);
+                                return bp2(v * 64, FRQ, fbv, dbv, m);
                             case 2:
-                                return bp3(v * 256, (f ? 1 - g : g), fbv, dbv, m);
+                                return bp3(v * 256, FRQ, fbv, dbv, m);
                             case 3:
-                                return bp4(v * 64, (f ? 1 - g : g), fbv, dbv, m);
+                                return bp4(v * 64, FRQ, fbv, dbv, m);
                             case 4:
-                                return bp5(v * 64, (f ? 1 - g : g), fbv, dbv, dwo, m);
+                                return bp5(v * 64, FRQ, fbv, dbv, dwo, m);
                             default:
-                                return bp(v * 64, (f ? 1 - g : g), fbv, dbv, dwo, m);
+                                return bp(v * 64, FRQ, fbv, dbv, dwo, m);
                         } 
                     };
-                    const modFiltered = filter(inp, i, flip, dww);
-                    const carFiltered = filter(car, i + n, false, dww);
+                    const modFiltered = filter(inp, i, flip, dww, g);
+                    const carFiltered = filter(car, i + n, false, dww, i/nv);
 
                     const absFilterX = abs(modFiltered);
                     const mod = p(absFilterX, 2**-((rel*3)**2)/800, i);
@@ -2102,7 +2103,7 @@
 
                         // divide bands
                         for (let j = 0; j <= divbands; j++) {
-                            ip = (i * 2 ** (-pitch / 12) | 0);
+                            ip = (i / 2 ** (pitch / 12) | 0);
                             const weight = 1 - abs(j - divbands / 2) / divbands;
                             
                             ip_ = Math.round(ip + (j - divbands / 2) + Shift);

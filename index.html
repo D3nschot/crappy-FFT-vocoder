@@ -523,13 +523,17 @@
             function CleanUpLink() {
                 const DisAllowsCharacters = '(|^*%$#@!<>,/\\:\';\"{}[]~+")';
                 const regex = new RegExp('[' + DisAllowsCharacters.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ']', 'g');
+            
                 const url = window.location.href;
-                if (regex.test(url)) {
-                    const newurl = url.replace(regex, '');
-                    window.history.replaceState({}, '', newurl);
+                const [base, query] = url.split('?');
+            
+                if (query) {
+                    const cleanedQuery = query.replace(regex, '');
+                    const newUrl = `${base}?${cleanedQuery}`;
+                    window.history.replaceState({}, '', newUrl);
                 }
             }
-
+            
             document.addEventListener('DOMContentLoaded', CleanUpLink);
 
             let Vmode=0; // 0 for FFT, 1 for analog

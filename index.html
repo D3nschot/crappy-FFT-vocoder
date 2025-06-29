@@ -6,6 +6,48 @@
     <link rel="icon" type="image/png" href="IconCFFTV.png">
     <title>Crappy FFT Vocoder</title>
     <style>
+        /* Base text styling */
+        label, span, p, h1, h2, h3, h4, h5, h6 {
+            color: #ddd;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            user-select: none;
+        }
+
+        /* Bold or strong text */
+        strong, b {
+            color: #fff;
+        }
+
+        /* Headings */
+        h1, h2, h3 {
+            color: #fff;
+            margin: 0.5em 0;
+            font-weight: bold;
+        }
+
+        /* Subtle/inactive or muted text */
+        .text-muted {
+            color: #888;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        /* Informational (e.g. helper text) */
+        .text-info {
+            color: #5ac8fa;
+            font-size: 0.95em;
+        }
+
+        /* For sliders and live values */
+        .value-label {
+            margin-left: 6px;
+            color: #aaa;
+            font-family: monospace;
+            font-size: 0.95em;
+        }
+
         body {
             display: flex;
             flex-direction: column;
@@ -183,6 +225,31 @@
             transform: scale(1.1);
             transition: transform 0.3s ease;
         }
+
+        input[type="file"][draggable="true"] {
+            cursor: grab;
+        }
+
+        input[type="text"],
+        textarea {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 6px 10px;
+            margin: 5px;
+            border-radius: 5px;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            width: 100%;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #5ac8fa;
+            background-color: #111;
+        }
     </style>
 </head>
 <body>
@@ -194,6 +261,7 @@
           <div style="color: #aaa; font-size: 10px;">by DX3050/D3nschot</div>
             <div id="randomQuote" style="display: none;"></div>
         </div>
+	<!--quote block-->
         <script>
             const quotes = [
                 "FFT? I only know it as Functional Family Therapy", //found this while searching for FFT (fast fourier transform)
@@ -221,9 +289,10 @@
             </div>
         <button id="ViewProperties">View properties</button>
         |
-        <input type="file" id="carrierInput" accept="audio/*,video/*" title="Choose an Input audio or video file" placeholder="Select Input audio or video file" />
+        <input type="file" id="carrierInput">
         |
-        <input type="file" id="audioInput" accept="audio/*,video/*" title="Choose an Carrier file for input" placeholder="Select Carrier audio file" />
+        <input type="file" id="audioInput">
+
         <br>
         <label for="decayType">Decay Type:</label>
         <select id="decayType">
@@ -356,7 +425,6 @@
             <br>
         </div>
         <div id="analogControls" style="display: none;">
-        <!-- Add this inside the #analogControls section -->
         <div style="margin-top: 10px;">
         <label for="Auto-update Filters">Auto-update Filters:</label>
         <input type="checkbox" id="AutoUpdateFilters" checked>
@@ -386,8 +454,9 @@
                 <option value="2">weird</option>
                 <option value="3">fast</option>
                 <option value="4">3FLT</option>
+                <option value="5">ApLp</option>
             </select>
-
+	    <!--filter analize block-->
             <script>
             document.addEventListener('DOMContentLoaded', () => {
                 // Reference to checkbox and button
@@ -423,6 +492,26 @@
                 if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
             });
             </script>
+        </div>
+        <div id="4ormClone" style="display: block;">
+            <div id="apControls" style="display: block; margin-bottom: 1em;">
+            <label for="Ag">Base frequency: <span id="AgValue">1</span></label>
+            <input type="range" id="Ag" value="1" min="0" max="1" step="0.001" />
+            |
+            <label for="Resonance4orm">Resonance: <span id="ResonanceVal">0.999</span></label>
+            <input type="range" id="Resonance4orm" value="0.999" min="0" max="0.999" step="0.001" />
+            <br>
+            <label for="UseArrLength">Use Array Length:</label>
+            <input type="checkbox" id="UseArrLength">
+            |
+            <label for="MaxHarm">Max Harmonics: <span id="MaxHarmVal">100</span></label>
+            <input type="range" id="MaxHarm" value="16" min="1" max="1000" step="1" />
+            <br>
+            <label for="Harmonics">Offsets (Array only)</label>
+            <br>
+            <input type="text" id="Harmonics" value="[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/48000*2048*440)" style="width: 500px;" />
+        </div>
+
         </div>
         <br>
         <button id="playButton" disabled>Play Audio</button>
@@ -503,6 +592,7 @@
                     <li>Weird: non-linear filter.</li>
                     <li>Fast: A faster bandpass filter with less processing time.</li>
                     <li>3FLT: A bandpass filter that uses three filters for better sound.</li>
+                    <li>ApBp: uses an allpass to make lp by adding the original input to the output</li>
                 </ul>
             
             <p>just another way of vocoding</p>
@@ -510,6 +600,13 @@
             <li><strong>Simple Chorus:</strong> Choose the type of simple chorus effect.</li>
             <li><strong>Speed:</strong> Choose the speed type for the chorus effect.</li>
             <li><strong>User Speed:</strong> Adjust the user-defined speed for the chorus effect.</li>
+
+
+            <p><strong>4ormulator Mode:</strong></p>
+            <li><strong>Base frequency:</strong> Sets the base frquency of Offsets.</li>
+            <li><strong>Use Array Length:</strong> option for either use Max Harmonics or the length of offsets.</li>
+            <li><strong>Max Harmonics:</strong> Sets the maximum about of harmonics</li>
+            <li><strong>Offsets:</strong> Sets the offset (shift) for the filter.</li>
             <br>
             <div id="version">version 1.2</div> <!--current version-->
             Made by D3nschot (DX3050)
@@ -518,6 +615,126 @@
             </div>
         </div>
 
+	<script>
+        let dragSourceInput = null;
+        let draggingInputId = null;
+
+        ['carrierInput', 'audioInput'].forEach(id => {
+            const input = document.getElementById(id);
+            if (!input) return; // ✅ Skip if the element isn't found
+
+            input.setAttribute('draggable', 'true');
+
+            input.addEventListener('dragstart', e => {
+                draggingInputId = id;
+            });
+
+            input.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+
+            input.addEventListener('drop', e => {
+                e.preventDefault();
+                const targetId = id;
+                const sourceId = draggingInputId;
+
+                const sourceInput = document.getElementById(sourceId);
+                const targetInput = document.getElementById(targetId);
+
+                // ✅ Extra safety check
+                if (!sourceInput || !sourceInput.files || sourceId === targetId) return;
+
+                if (!targetInput.files.length) {
+                    targetInput.files = sourceInput.files;
+                    targetInput.dispatchEvent(new Event('change'));
+                    return;
+                }
+
+                showSwapPopup(sourceInput, targetInput);
+            });
+        });
+
+        function updateFilePreview(input) {
+            const preview = document.getElementById(`${input.id}Preview`);
+            if (!preview) return;
+
+            const file = input.files[0];
+            if (file) {
+                preview.textContent = `Selected: ${file.name}`;
+            } else {
+                preview.textContent = `No file selected`;
+            }
+        }
+
+
+
+        const fileA=null
+        const fileB=null
+        const bufferSwap=null
+
+        function replaceFiles(fromInput, toInput) {
+            const file = fromInput.files[0];
+            if (!file) return;
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+
+            toInput.files = dt.files;
+            toInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            updateFilePreview(toInput);
+        }
+
+
+
+        function showSwapPopup(sourceInput, targetInput) {
+            let popup = document.getElementById('swapPopup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'swapPopup';
+                popup.style.position = 'fixed';
+                popup.style.top = '50%';
+                popup.style.left = '50%';
+                popup.style.transform = 'translate(-50%, -50%)';
+                popup.style.background = '#333';
+                popup.style.color = '#fff';
+                popup.style.padding = '20px';
+                popup.style.borderRadius = '10px';
+                popup.style.zIndex = '2000';
+                popup.style.textAlign = 'center';
+                popup.style.boxShadow = '0 0 10px #000';
+                document.body.appendChild(popup);
+            }
+
+            popup.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    Replace files between:<br><strong>${sourceInput.id}</strong> and <strong>${targetInput.id}</strong>?
+                </div>
+                <button id="replaceConfirm">Replace</button>
+                <button id="cancelPopup">Cancel</button>
+            `;
+
+            popup.style.display = 'block';
+
+        document.getElementById('replaceConfirm').onclick = () => {
+            replaceFiles(sourceInput, targetInput);
+            popup.style.display = 'none';
+        };
+
+
+            document.getElementById('cancelPopup').onclick = () => {
+                popup.style.display = 'none';
+            };
+        }
+
+
+        document.getElementById('carrierInput').setAttribute('draggable', 'true');
+        document.getElementById('audioInput').setAttribute('draggable', 'true');
+
+
+	</script>
+	<!--vmode block-->
         <script>
             // Function to clean up the URL by removing disallowed characters
             function CleanUpLink() {
@@ -534,29 +751,51 @@
                 }
             }
             
-            document.addEventListener('DOMContentLoaded', CleanUpLink);
+            //document.addEventListener('DOMContentLoaded', CleanUpLink);
 
             let Vmode=0; // 0 for FFT, 1 for analog
 
-            document.getElementById('changeBackButton').addEventListener('click', function() {
-                // Toggle between 0 (FFT) and 1 (analog)
-                Vmode = ((Number(Vmode) || 0) + 1) % 2;
-
+            function SetUpUI(){
                 if (Vmode === 0) {
                     document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
                     document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
                     document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
                     document.getElementById('FFTcontrols').style.display = 'block';
                     document.getElementById('analogControls').style.display = 'none';
+                    document.getElementById('4ormClone').style.display = 'none';
                     document.getElementById('changeBack').style.display = 'block';
-                } else {
+                } else if (Vmode === 1) {
                     document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
                     document.getElementById('what_is').textContent = 'an Analog Vocoder';
                     document.getElementById('FFTcontrols').style.display = 'none';
                     document.getElementById('analogControls').style.display = 'block';
+                    document.getElementById('changeBackButton').textContent = 'Change to 4ormulator Mode';
+                    document.getElementById('4ormClone').style.display = 'none';
+                    document.getElementById('changeBack').style.display = 'block';
+                } else if (Vmode === 2) {
+                    document.getElementById('Title').textContent = 'Crappy 4ormulator clone';
+                    document.getElementById('what_is').textContent = 'an 4ormulator clone';
                     document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
+                    document.getElementById('FFTcontrols').style.display = 'none';
+                    document.getElementById('analogControls').style.display = 'none';
+                    document.getElementById('4ormClone').style.display = 'block';
+                    document.getElementById('changeBack').style.display = 'block';
+                } else {
+                    document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
+                    document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
+                    document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
+                    document.getElementById('FFTcontrols').style.display = 'block';
+                    document.getElementById('analogControls').style.display = 'none';
+                    document.getElementById('4ormClone').style.display = 'none';
                     document.getElementById('changeBack').style.display = 'block';
                 }
+            }
+
+            document.getElementById('changeBackButton').addEventListener('click', function() {
+                // Toggle between 0 (FFT) and 1 (analog)
+                Vmode = ((Number(Vmode) || 0) + 1) % 3;
+
+                SetUpUI()
 
                 // Update the URL with the new Vmode
                 const params = new URLSearchParams(window.location.search);
@@ -569,22 +808,7 @@
                 const params = new URLSearchParams(window.location.search);
                 Vmode = Number(params.get('Vmode')) || 0; // Default to 0 if not set
 
-                if (Vmode === 0) {
-                    document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
-                    document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
-                    document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
-                    document.getElementById('FFTcontrols').style.display = 'block';
-                    document.getElementById('analogControls').style.display = 'none';
-                    document.getElementById('changeBack').style.display = 'block';
-                } else {
-                    document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
-                    document.getElementById('what_is').textContent = 'an Analog Vocoder';
-                    document.getElementById('FFTcontrols').style.display = 'none';
-                    document.getElementById('analogControls').style.display = 'block';
-                    document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
-                    document.getElementById('changeBack').style.display = 'block';
-                }
-
+                SetUpUI()
                 
                 const userSpeedLabel = document.querySelector('label[for="userSpeed"]');
                 const userSpeedSlider = document.getElementById('userSpeed');
@@ -677,24 +901,28 @@
             function updateURLParams() {
                 const params = new URLSearchParams();
 
-                // Collect all slider, select, and checkbox values
-                document.querySelectorAll(inputs).forEach(input => {
+                document.querySelectorAll('input, select, textarea').forEach(input => {
+                    const id = input.id;
+                    if (!id) return;
+
                     if (input.type === 'checkbox') {
-                        params.set(input.id, input.checked ? 'true' : 'false');
+                        params.set(id, input.checked ? 'true' : 'false');
+                    } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
+                        // Encode text and tag with base64#
+                        const encoded = btoa(unescape(encodeURIComponent(input.value)));
+                        params.set(id, `base64#${encoded}`);
                     } else {
-                        params.set(input.id, input.value);
+                        params.set(id, input.value);
                     }
                 });
 
                 params.set('Vmode', Vmode);
 
-                // Update the URL without reloading the page
                 const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
                 window.history.replaceState({}, '', newUrl);
             }
 
 
-            // Function to load state from the URL
             function loadStateFromURL() {
                 const params = new URLSearchParams(window.location.search);
 
@@ -703,15 +931,28 @@
                         window.Vmode = value;
                         return;
                     }
+
                     const input = document.getElementById(key);
-                    if (input) {
-                        if (input.type === 'checkbox') {
-                            input.checked = value === 'true';
+                    if (!input) return;
+
+                    if (input.type === 'checkbox') {
+                        input.checked = value === 'true';
+                    } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
+                        if (value.startsWith('base64#')) {
+                            try {
+                                const b64 = value.slice(7);
+                                input.value = decodeURIComponent(escape(atob(b64)));
+                            } catch (e) {
+                                input.value = ''; // fallback on failure
+                            }
                         } else {
-                            input.value = value;
+                            input.value = value; // fallback: plain text
                         }
-                        input.dispatchEvent(new Event('input'));
+                    } else {
+                        input.value = value;
                     }
+
+                    input.dispatchEvent(new Event('input'));
                 });
             }
 
@@ -738,7 +979,7 @@
                         properties.push(`${input.id}: ${input.value}`);
                     }
                 });
-                properties.push(`Mode: ${Vmode ? 'Analog Mode' : 'FFT Mode'}`); // Add Vmode as a property
+                properties.push(`Mode: ${['FFT Mode','Analog Mode','4orm Mode'][Vmode]}`); // Add Vmode as a property
                 // Collect file input details
                 fileInputs.forEach(fileInput => {
                     const file = fileInput.files[0];
@@ -1091,6 +1332,41 @@
             document.querySelector('label[for="DBperOct"]').textContent = `dB per Octave: ${parseFloat(event.target.value)*6}`;
         });
 
+        const agSlider = document.getElementById('Ag');
+        const resonanceSlider = document.getElementById('Resonance4orm');
+        const harmonicsInput = document.getElementById('Harmonics');
+
+        agSlider.addEventListener('input', (e) => {
+            document.getElementById('AgValue').textContent = e.target.valueAsNumber.toFixed(3);
+        });
+
+        resonanceSlider.addEventListener('input', () => {
+            document.getElementById('ResonanceVal').textContent = resonanceSlider.value;
+        });
+
+        document.getElementById('MaxHarm').addEventListener('input', e => {
+            document.getElementById('MaxHarmVal').textContent = e.target.value;
+        });
+
+        document.getElementById('Harmonics').addEventListener('input', (e) => {
+            /*const text = e.target.value;
+            let parsed = [];
+
+            try {
+                const result = eval(text);
+                if (Array.isArray(result)) {
+                    parsed = result;
+                    console.log("Harmonics array:", parsed);
+                } else {
+                    console.warn("Harmonics input did not return an array.");
+                }
+            } catch (err) {
+                console.error("Failed to evaluate harmonics:", err);
+            }*/
+
+            updateURLParams()
+        })
+
         function createLoopedBuffer(buffer, targetLength) {
             const sampleRate = buffer.sampleRate;
             const numberOfChannels = buffer.numberOfChannels;
@@ -1237,10 +1513,110 @@
                     carrierRight = processedBuffer.numberOfChannels > 1
                         ? processedBuffer.getChannelData(1)
                         : processedBuffer.getChannelData(0);
+                } else if (Vmode==2) {
+                    // Analog mode processing logic
+                    processedBuffer = apply4ormLogic(
+                        offlineContext,
+                        inputLeft,
+                        inputRight,
+                        buffer.sampleRate
+                    );
+
+                    // Use the processed buffer as the new carrier for the next iteration
+                    carrierLeft = processedBuffer.getChannelData(0);
+                    carrierRight = processedBuffer.numberOfChannels > 1
+                        ? processedBuffer.getChannelData(1)
+                        : processedBuffer.getChannelData(0);
                 }
             }
             // Hide popup when done
             showProcessPOP_UP('', false);
+        }
+
+        function apply4ormLogic(context, inputLeft, inputRight, sampleRate) {
+            const outputBuffer = context.createBuffer(2, inputLeft.length, sampleRate);
+            const outL = outputBuffer.getChannelData(0);
+            const outR = outputBuffer.getChannelData(1);
+
+            // UI Parameters
+            const ag = parseFloat(document.getElementById('Ag')?.value || 0.1);
+            const res = parseFloat(document.getElementById('Resonance4orm')?.value || 0.999);
+            const useArrLength = document.getElementById('UseArrLength')?.checked;
+            const maxHarmonics = parseInt(document.getElementById('MaxHarm')?.value || 100);
+            const harmExpr = document.getElementById('Harmonics')?.value || '[0,2,3,7].map(i => 2**(i/12))';
+
+            // Parse harmonic array
+            let harmonics;
+            try {
+                harmonics = eval(harmExpr);
+                if (!Array.isArray(harmonics)) throw 'Not an array';
+            } catch (e) {
+                harmonics = [0, 2, 3, 7].map(i => 2 ** (i / 12));
+            }
+
+            // Clamp and slice harmonics to MaxHarm
+            const harmonicList = harmonics;
+
+            // Use array length as number of stages or default to 8
+            const stages = useArrLength ? harmonicList.length : maxHarmonics;
+
+            // Clear previous state
+            z9 = [];
+
+            // Helper function: Repeats & wraps harmonic array with scaled octave down
+            function repeatArr(inp, i) {
+                return inp[i % inp.length] * 2 ** (-Math.floor(i / inp.length));
+            }
+
+            // Local filter function
+            function $ap(inputY, ag = 0, res = 0, stages = 8, arr, callCount = 0) {
+                if (callCount >= z9.length || !z9[callCount]?.ap?.[0]) {
+                    z9[callCount] = {
+                        ap: Array.from({ length: stages }, () => ({ p1: 0, p2: 0, p3: 0, p4: 0, pi: 0 }))
+                    };
+                }
+
+                const state = z9[callCount].ap;
+                const nres = 1 - res;
+                const mr = 1 - nres * (0.5 + nres / 2);
+
+                let out = 0;
+                for (let i = 0; i < stages; i++) {
+                    const stageAg = ag * repeatArr(arr, i);
+                    const a = Math.min(Math.max(1 - (stageAg * stageAg / 4), 0), 0.9999);
+                    const s = state[i];
+
+                    const input = inputY - s.pi * mr;
+
+                    const y1 = -a * input + s.p1 + a * s.p2;
+                    s.p1 = input;
+                    s.p2 = y1;
+
+                    const y2 = -a * y1 + s.p3 + a * s.p4;
+                    s.p3 = y1;
+                    s.p4 = y2;
+
+                    s.pi = -y2;
+
+                    out += (s.pi + input) / stages;
+                }
+
+                return out;
+            }
+
+            // Apply processing
+            for (let t = 0; t < inputLeft.length; t++) {
+                const inL = inputLeft[t];
+                const inR = inputRight[t];
+
+                const valL = $ap(inL, ag, res, stages, harmonicList, 0) / 8;
+                const valR = $ap(inR, ag, res, stages, harmonicList, 1) / 8;
+
+                outL[t] = valL;
+                outR[t] = valR;
+            }
+
+            return outputBuffer;
         }
 
         function processAudio(buffer) {
@@ -1326,6 +1702,7 @@
             let z3S=[{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}]
             let z4S=[{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}]
             let z8S=[{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}]
+            let z7S=[{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
 
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2S[callCount]) {
@@ -1514,6 +1891,43 @@
                 return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32;
             }
 
+            ap = (inputY, ag = 0, res = 0, callCount = 1) => {
+                try {
+                    if (callCount >= z7S.length) {
+                        z7S.push({
+                            p1: 0, p2: 0, p3: 0, p4: 0,
+                            p5: 0, p6: 0, p7: 0, p8: 0,
+                            pi: 0
+                        });
+                    }
+                    const s = z7S[callCount];
+
+                    const nres = 1 - res;
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const mr = 1 - nres * (0.5 + nres / 2);
+                    const a = clamp(0, 0.9999, 1 - (ag*ag / 4));
+
+                    const input = inputY - s.pi * mr;
+                    // 1st all-pass
+                    const y1 = -a * input + s.p1 + a * s.p2;
+                    s.p1 = input ;
+                    s.p2 = y1;
+
+                    // 2nd all-pass
+                    const y2 = -a * y1 + s.p3 + a * s.p4;
+                    s.p3 = y1;
+                    s.p4 = y2;
+                
+
+                    s.pi = -y2;  // You can choose [y2, y4] for smoother vs sharper
+
+                    callCount++;
+                    return (y2+input)/8
+                } catch (e) {
+                    throw e;
+                }
+            }
+
             const canvas = document.getElementById('filterView');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
@@ -1555,6 +1969,8 @@
                 let z3S = [{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}];
                 let z4S = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
                 let z8S = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
+                let z7S = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
+
                 //console.log(altBP)
 
                 // Sine wave test: run for several cycles and measure output amplitude
@@ -1582,6 +1998,9 @@
                             break;
                         case 4:
                             out = bp5(testInput, FLTcutoff, resonance, db, bpwidth, 0);
+                            break;
+                        case 5:
+                            out = ap(testInput, FLTcutoff, resonance, 0);
                             break;
                         default:
                             out = bp(testInput, FLTcutoff, resonance, db, bpwidth, 0);
@@ -1653,6 +2072,7 @@
             let z4 = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
             let z8 = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
             let z5 = [{var1:0}];
+            let z7 = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
 
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2[callCount]) {
@@ -1840,6 +2260,39 @@
                 return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32;
             }
 
+            ap = (inputY, ag = 0, res = 0, callCount = 1) => {
+                try {
+                    if (!z7[callCount]) {
+                        z7[callCount] = {p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0};
+                    }
+                    const s = z7[callCount];
+
+                    const nres = 1 - res;
+                    const mr = 1 - nres * (0.5 + nres / 2);
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+
+                    const a = clamp(0, 0.9999, 1 - (ag * ag / 4));
+
+                    const input = inputY - s.pi * mr;
+
+                    // 1st all-pass
+                    const y1 = -a * input + s.p1 + a * s.p2;
+                    s.p1 = input;
+                    s.p2 = y1;
+
+                    // 2nd all-pass
+                    const y2 = -a * y1 + s.p3 + a * s.p4;
+                    s.p3 = y1;
+                    s.p4 = y2;
+
+                    s.pi = -y2;
+
+                    return (y2 + input) / 8;
+                } catch (e) {
+                    throw e;
+                }
+            };
+
             // UI values
             const sel = parseInt(document.getElementById('decayType').value)-1;
             const rel = parseFloat(document.getElementById('release').value);
@@ -1880,7 +2333,7 @@
                     const g = i / nv / 2**(pitch/12);
                     // Filter input (modulator) and carrier
                     const filter = (v, m, f = 0, dwo, FRQ) => {
-			FRQ=f?1-FRQ:FRQ
+			            FRQ=f?1-FRQ:FRQ
                         switch (Alt_BP) {
                             case 0:
                                 return bp(v * 64, FRQ, fbv, dbv, dwo, m);
@@ -1892,6 +2345,8 @@
                                 return bp4(v * 64, FRQ, fbv, dbv, m);
                             case 4:
                                 return bp5(v * 64, FRQ, fbv, dbv, dwo, m);
+                            case 5:
+                                return ap(v * 64, FRQ, fbv, m);
                             default:
                                 return bp(v * 64, FRQ, fbv, dbv, dwo, m);
                         } 

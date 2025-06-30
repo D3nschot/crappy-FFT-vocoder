@@ -935,6 +935,9 @@
                     const id = input.id;
                     if (!id) return;
 
+                    // Skip file inputs
+                    if (input.type === 'file') return;
+
                     if (input.type === 'checkbox') {
                         params.set(id, input.checked ? 'true' : 'false');
                     } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {

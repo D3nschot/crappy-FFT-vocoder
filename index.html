@@ -509,7 +509,17 @@
             <br>
             <label for="Harmonics">Offsets (Array only)</label>
             <br>
-            <input type="text" id="Harmonics" value="[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/48000*2048*440)" style="width: 500px;" />
+            <textarea id="Harmonics"
+            value="[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/48000*2048*440)"
+            style="
+                box-sizing: border-box;
+                resize: vertical;
+                max-width: 800px;
+                max-height: 200px;
+                min-width: 100px;
+                min-height: 40px;
+            ">
+            </textarea>
         </div>
 
         </div>
@@ -1517,8 +1527,8 @@
                     // Analog mode processing logic
                     processedBuffer = apply4ormLogic(
                         offlineContext,
-                        carrierLeft,
-                        carrierRight,
+                        inputLeft,
+                        inputRight,
                         buffer.sampleRate
                     );
 

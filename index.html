@@ -940,7 +940,7 @@
                     } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
                         // Encode text and tag with base64#
                         const encoded = btoa(unescape(encodeURIComponent(input.value)));
-                        params.set(id, `base64#${encoded}`);
+                        params.set(id, `base64~${encoded}`);
                     } else {
                         params.set(id, input.value);
                     }
@@ -968,7 +968,7 @@
                     if (input.type === 'checkbox') {
                         input.checked = value === 'true';
                     } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
-                        if (value.startsWith('base64#')) {
+                        if (value.startsWith('base64~')) {
                             try {
                                 const b64 = value.slice(7);
                                 input.value = decodeURIComponent(escape(atob(b64)));

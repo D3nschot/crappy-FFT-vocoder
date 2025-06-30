@@ -12,7 +12,6 @@
             font-family: 'Arial', sans-serif;
             font-size: 14px;
             line-height: 1.4;
-            user-select: none;
         }
 
         /* Bold or strong text */
@@ -351,10 +350,6 @@
                 <option value="3">Carrier</option>
             </select>
             <br>
-            <label for="iterations">Iterations:</label>
-            <input type="number" id="iterations" value="1" min="1" />
-            it may get loud (or not, i don't recomend using this with long audio files)
-            <br>
             <label for="volume">volume: 1.00</label>
             <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
             |
@@ -500,17 +495,26 @@
             |
             <label for="Resonance4orm">Resonance: <span id="ResonanceVal">0.999</span></label>
             <input type="range" id="Resonance4orm" value="0.999" min="0" max="0.999" step="0.001" />
+            |
+            <label for="4ormFilterType">Filter Type:</label>
+            <select id="4ormFilterType">
+                <option value="0">ApLp</option>
+                <option value="1">Lp12</option>
+            </select>
             <br>
             <label for="UseArrLength">Use Array Length:</label>
             <input type="checkbox" id="UseArrLength">
             |
             <label for="MaxHarm">Max Harmonics: <span id="MaxHarmVal">100</span></label>
             <input type="range" id="MaxHarm" value="16" min="1" max="1000" step="1" />
+            |
+            <label for="4ormVolume">Volume: <span id="4ormVolumeVal">1.00</span></label>
+            <input type="range" id="4ormVolume" value="1" min="0" max="10" step="0.01" />
             <br>
             <label for="Harmonics">Offsets (Array only)</label>
             <br>
             <textarea id="Harmonics"
-            value="[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/48000*2048*440)"
+            value="[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/HZ*2048*440)"
             style="
                 box-sizing: border-box;
                 resize: vertical;
@@ -518,10 +522,31 @@
                 max-height: 200px;
                 min-width: 100px;
                 min-height: 40px;
-            "></textarea>
+            ">[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/HZ*2048*440)</textarea>
+            <!--textarea stuff-->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const harmonicsTextarea = document.getElementById('Harmonics');
+                    if (harmonicsTextarea) {
+                        harmonicsTextarea.addEventListener('keydown', function(e) {
+                            if (e.key === 'Tab') {
+                                e.preventDefault();
+                                const start = this.selectionStart;
+                                const end = this.selectionEnd;
+                                // Insert tab character at cursor
+                                this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
+                                // Move cursor after the tab
+                                this.selectionStart = this.selectionEnd = start + 1;
+                            }
+                        });
+                    }
+                });
+            </script>
+        </div> 
         </div>
-
-        </div>
+            <label for="iterations">Iterations:</label>
+            <input type="number" id="iterations" value="1" min="1" />
+            it may get loud (or not, i don't recomend using this with long audio files)
         <br>
         <button id="playButton" disabled>Play Audio</button>
         <button id="pauseButton" disabled>Pause Audio</button>
@@ -630,7 +655,7 @@
 
         ['carrierInput', 'audioInput'].forEach(id => {
             const input = document.getElementById(id);
-            if (!input) return; // ✅ Skip if the element isn't found
+            if (!input) return;
 
             input.setAttribute('draggable', 'true');
 
@@ -651,7 +676,6 @@
                 const sourceInput = document.getElementById(sourceId);
                 const targetInput = document.getElementById(targetId);
 
-                // ✅ Extra safety check
                 if (!sourceInput || !sourceInput.files || sourceId === targetId) return;
 
                 if (!targetInput.files.length) {
@@ -668,15 +692,12 @@
             const preview = document.getElementById(`${input.id}Preview`);
             if (!preview) return;
 
-            const file = input.files[0];
-            if (file) {
-                preview.textContent = `Selected: ${file.name}`;
+            if (input.files && input.files.length > 0) {
+                preview.textContent = `Selected: ${input.files[0].name}`;
             } else {
                 preview.textContent = `No file selected`;
             }
         }
-
-
 
         const fileA=null
         const fileB=null
@@ -1357,6 +1378,10 @@
             document.getElementById('MaxHarmVal').textContent = e.target.value;
         });
 
+        document.getElementById('4ormVolume').addEventListener('input', e => {
+            document.getElementById('4ormVolumeVal').textContent = e.target.value;
+        });
+
         document.getElementById('Harmonics').addEventListener('input', (e) => {
             /*const text = e.target.value;
             let parsed = [];
@@ -1490,54 +1515,42 @@
                 // Pause for 10ms (adjust as needed)
                 await new Promise(resolve => setTimeout(resolve, 10));
 
-                if (Vmode==0){
-                    // Apply the provided logic to process the audio
-                    processedBuffer = applyFFTLogic(
-                        offlineContext,
-                        inputLeft,
-                        inputRight,
-                        carrierLeft,
-                        carrierRight,
-                        buffer.sampleRate
-                    );
+                    if (Vmode == 0) {
+                        processedBuffer = applyFFTLogic(
+                            offlineContext,
+                            inputLeft,
+                            inputRight,
+                            carrierLeft,
+                            carrierRight,
+                            buffer.sampleRate
+                        );
+                    } else if (Vmode == 1) {
+                        processedBuffer = applyAnalogLogic(
+                            offlineContext,
+                            inputLeft,
+                            inputRight,
+                            carrierLeft,
+                            carrierRight,
+                            buffer.sampleRate
+                        );
+                    } else if (Vmode == 2) {
+                        processedBuffer = apply4ormLogic(
+                            offlineContext,
+                            carrierLeft,
+                            carrierRight,
+                            buffer.sampleRate
+                        );
+                    }
 
-                    // Use the processed buffer as the new carrier for the next iteration
-                    carrierLeft = processedBuffer.getChannelData(0);
-                    carrierRight = processedBuffer.numberOfChannels > 1
+                    // For all modes, update input and carrier for next iteration
+                    inputLeft = processedBuffer.getChannelData(0);
+                    inputRight = processedBuffer.numberOfChannels > 1
                         ? processedBuffer.getChannelData(1)
                         : processedBuffer.getChannelData(0);
-                } else if (Vmode==1) {
-                    // Analog mode processing logic
-                    processedBuffer = applyAnalogLogic(
-                        offlineContext,
-                        inputLeft,
-                        inputRight,
-                        carrierLeft,
-                        carrierRight,
-                        buffer.sampleRate
-                    );
 
-                    // Use the processed buffer as the new carrier for the next iteration
-                    carrierLeft = processedBuffer.getChannelData(0);
-                    carrierRight = processedBuffer.numberOfChannels > 1
-                        ? processedBuffer.getChannelData(1)
-                        : processedBuffer.getChannelData(0);
-                } else if (Vmode==2) {
-                    // Analog mode processing logic
-                    processedBuffer = apply4ormLogic(
-                        offlineContext,
-                        inputLeft,
-                        inputRight,
-                        buffer.sampleRate
-                    );
-
-                    // Use the processed buffer as the new carrier for the next iteration
-                    carrierLeft = processedBuffer.getChannelData(0);
-                    carrierRight = processedBuffer.numberOfChannels > 1
-                        ? processedBuffer.getChannelData(1)
-                        : processedBuffer.getChannelData(0);
+                    carrierLeft = inputLeft;
+                    carrierRight = inputRight;
                 }
-            }
             // Hide popup when done
             showProcessPOP_UP('', false);
         }
@@ -1553,6 +1566,9 @@
             const useArrLength = document.getElementById('UseArrLength')?.checked;
             const maxHarmonics = parseInt(document.getElementById('MaxHarm')?.value || 100);
             const harmExpr = document.getElementById('Harmonics')?.value || '[0,2,3,7].map(i => 2**(i/12))';
+            const volume = parseFloat(document.getElementById('4ormVolume')?.value || 1.0);
+            const _4ormFilterType = parseInt(document.getElementById('4ormFilterType')?.value || 0);
+            const HZ = context.sampleRate
 
             // Parse harmonic array
             let harmonics;
@@ -1571,13 +1587,14 @@
 
             // Clear previous state
             z9 = [];
+            z10 = [];
 
             // Helper function: Repeats & wraps harmonic array with scaled octave down
             function repeatArr(inp, i) {
                 return inp[i % inp.length] * 2 ** (-Math.floor(i / inp.length));
             }
 
-            // Local filter function
+            // Local filter function (special porpose)
             function $ap(inputY, ag = 0, res = 0, stages = 8, arr, callCount = 0) {
                 if (callCount >= z9.length || !z9[callCount]?.ap?.[0]) {
                     z9[callCount] = {
@@ -1613,13 +1630,39 @@
                 return out;
             }
 
+            function $lp(d, c, r = 0, stages = 8, arr, callCount = 1) {
+                if (!z10[callCount]) {
+                    z10[callCount] = {lp: new Array(stages + 1).fill(0),fp: new Array(stages + 1).fill(0) };
+                }
+
+
+                const z = z10[callCount];
+                let y=0
+                let cc=0
+
+
+
+                for (let i = 1; i <= stages; i++) {
+                    cc=clamp(0, 0.9999, c * repeatArr(arr, i-1))
+                    const fbv = r + r / (1 - cc);
+                    z.lp[i] += cc * (d - z.lp[i] + fbv * (z.lp[i] - z.fp[i]));
+                    z.fp[i] += cc * (z.lp[i] - z.fp[i])
+                    y+=z.fp[i]/stages
+                }
+
+
+                return y;
+            }
+
             // Apply processing
             for (let t = 0; t < inputLeft.length; t++) {
                 const inL = inputLeft[t];
                 const inR = inputRight[t];
 
-                const valL = $ap(inL, ag, res, stages, harmonicList, 0) / 8;
-                const valR = $ap(inR, ag, res, stages, harmonicList, 1) / 8;
+                const $FUNC = [$lp, $ap][_4ormFilterType];
+
+                const valL = $FUNC(inL*volume, ag, res, stages, harmonicList, 0) / 8;
+                const valR = $FUNC(inR*volume, ag, res, stages, harmonicList, 1) / 8;
 
                 outL[t] = valL;
                 outR[t] = valR;
@@ -2796,17 +2839,27 @@
         });
 
         document.getElementById('downloadButton').addEventListener('click', function() {
-            const carrierName = document.getElementById('carrierInput').files[0].name.split('.').slice(0, -1).join('.');
-            const modularName = document.getElementById('audioInput').files[0].name.split('.').slice(0, -1).join('.');
+            const carrierInput = document.getElementById('carrierInput');
+            const audioInput = document.getElementById('audioInput');
+            let carrierName = 'No name';
+            let modularName = 'No name';
+
+            if (carrierInput.files.length > 0) {
+                carrierName = carrierInput.files[0].name.split('.').slice(0, -1).join('.');
+            }
+            if (audioInput.files.length > 0) {
+                modularName = audioInput.files[0].name.split('.').slice(0, -1).join('.');
+            }
+
             if (processedBuffer) {
-            const wavBuffer = bufferToWav(processedBuffer);
-            const blob = new Blob([wavBuffer], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${carrierName} (${modularName}).wav`;
-            a.click();
-            URL.revokeObjectURL(url);
+                const wavBuffer = bufferToWav(processedBuffer);
+                const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${carrierName} (${modularName}).wav`;
+                a.click();
+                URL.revokeObjectURL(url);
             }
         });
 

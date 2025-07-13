@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+<!-- saved from url=(0543)https://d3nschot.github.io/crappy-FFT-vocoder/?decayType=1&release=0&pitch=0&BandShift=0&FreqFlip=false&BandBreak=false&BR_voc_Type=0&BR_out=1&volume=1&clamp_output=0&threshold=1&divbands=1&FFTsize=10&BassBoost=0&BassCurve=0&EQType=0&steps=0&RoundType=0&SoundGoodizer=0&simpleChorus=0&speedType=0&userSpeed=1&AutoUpdateFilters=true&TotalBands=40&Resonance=0.92&BPwidth=0&Volboost=1&DBperOct=2&Alt_BP=0&Ag=1&Resonance4orm=0.999&4ormFilterType=0&UseArrLength=false&MaxHarm=16&4ormVolume=1&Harmonics=base64%7EYmFzZTY0Iw%3D%3D&iterations=1&Vmode=2 -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="IconCFFTV.png">
+    <link rel="icon" type="image/png" href="https://d3nschot.github.io/crappy-FFT-vocoder/IconCFFTV.png">
     <title>Crappy FFT Vocoder</title>
     <style>
         /* Base text styling */
@@ -250,17 +250,17 @@
             background-color: #111;
         }
     </style>
-</head>
+<style type="text/css" id="operaUserStyle"></style><style type="text/css"></style></head>
 <body>
     <div id="controls" style="overflow-y: auto; max-height: 80vh;">
 
         <div style="text-align: center; line-height: 1.5;">
-          <div id="Title" style="font-size: 35px;">Crappy FFT Vocoder</div>
-            <div id="what_is">a Fast Fourier Transform vocoder</div>
+          <div id="Title" style="font-size: 35px;">Crappy 4ormulator clone</div>
+            <div id="what_is">an 4ormulator clone</div>
           <div style="color: #aaa; font-size: 10px;">by DX3050/D3nschot</div>
-            <div id="randomQuote" style="display: none;"></div>
+            <div id="randomQuote" style="display: none;">FFT? I only know it as Functional Family Therapy</div>
         </div>
-	<!--quote block-->
+    <!--quote block-->
         <script>
             const quotes = [
                 "FFT? I only know it as Functional Family Therapy", //found this while searching for FFT (fast fourier transform)
@@ -280,17 +280,121 @@
             })
             document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
         </script>
+
+        <!--UI controls for acomidtion for mobile users-->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // IDs to skip
+                const skipIds = ['FFTsize', 'DBperOct'];
+                // IDs that should display "OFF" when value is 0
+                const offWhenZero = ['steps', 'SoundGoodizer'];
+
+                document.querySelectorAll('input[type="range"]').forEach(slider => {
+                    // Find the label for this slider
+                    let label = document.querySelector(`label[for="${slider.id}"]`);
+                    if (!label) return;
+
+                    // Create span if not present
+                    let span = label.parentNode.querySelector(`.auto-value-span[data-for="${slider.id}"]`);
+                    if (!span) {
+                        span = document.createElement('span');
+                        span.className = 'auto-value-span';
+                        span.dataset.for = slider.id;
+                        // Insert span after the label
+                        if (label.nextSibling) {
+                            label.parentNode.insertBefore(span, label.nextSibling);
+                        } else {
+                            label.parentNode.appendChild(span);
+                        }
+                    }
+
+                    // Add click-to-edit for value spans (skip skipIds)
+                    if (!skipIds.includes(slider.id)) {
+                        span.style.cursor = 'pointer';
+                        span.title = 'Click to edit value';
+                        span.addEventListener('click', function(e) {
+                            // Only allow if not already editing
+                            if (span.querySelector('input')) return;
+                            // Create input
+                            const input = document.createElement('input');
+                            input.type = 'number';
+                            input.value = slider.value;
+                            input.style.width = '60px';
+                            input.style.fontSize = 'inherit';
+                            // Replace span text with input
+                            span.textContent = '';
+                            span.appendChild(input);
+                            input.focus();
+                            input.select();
+                            // On blur or Enter, update slider and restore span
+                            function finishEdit() {
+                                let val = input.value;
+                                // Clamp value
+                                if (slider.min !== '') val = Math.max(Number(slider.min), val);
+                                if (slider.max !== '') val = Math.min(Number(slider.max), val);
+                                slider.value = val;
+                                slider.dispatchEvent(new Event('input'));
+                                span.textContent = ' ' + val;
+                            }
+                            input.addEventListener('blur', finishEdit);
+                            input.addEventListener('keydown', function(e) {
+                                if (e.key === 'Enter') finishEdit();
+                                else if (e.key === 'Escape') span.textContent = ' ' + slider.value;
+                            });
+                        });
+                    }
+
+                    // Function to check if the slider is hidden
+                    function isSliderHidden(slider) {
+                        if (!slider || slider.offsetParent === null) return true;
+                        const style = getComputedStyle(slider);
+                        return style.visibility === 'hidden' || style.display === 'none';
+                    }
+
+                    // Function to update span text
+                    function updateSpan() {
+                        let val = slider.value;
+                        if (offWhenZero.includes(slider.id) && (val === "0" || val === 0)) {
+                            span.textContent = ' OFF';
+                        } else {
+                            if (skipIds.includes(slider.id)) {
+                                //span.textContent = '';
+                                switch (slider.id) {
+                                    case 'FFTsize':
+                                        span.textContent = ' ' + (Math.pow(2, val)).toFixed(0);
+                                        break;
+                                    case 'DBperOct':
+                                        span.textContent = ' 12';
+                                        break;
+                                    default:
+                                        span.textContent = '';
+                                }
+                            } else {
+                                //if (!isSliderHidden(slider)) 
+                                span.textContent = ' ' + val;
+                            }
+                        }
+                    }
+
+                    // Initial value
+                    updateSpan();
+
+                    // Update on slider input
+                    slider.addEventListener('input', updateSpan);
+                });
+            });
+        </script>
         <br>
         <canvas id="visualizer" width="800" height="400"></canvas>
         <div id="controls2">
             <div id="changeBack" style="display: block;">
-                <button id="changeBackButton">Change to Analog Mode</button>
+                <button id="changeBackButton">Change to FFT Mode</button>
             </div>
         <button id="ViewProperties">View properties</button>
         |
-        <input type="file" id="carrierInput">
+        <input type="file" id="carrierInput" draggable="true">
         |
-        <input type="file" id="audioInput">
+        <input type="file" id="audioInput" draggable="true">
 
         <br>
         <label for="decayType">Decay Type:</label>
@@ -300,18 +404,18 @@
         </select>
         |
         <label for="release">Release:</label>
-        <input type="range" id="release" value="0" min="0" max="0.99" step="0.01" />
+        <input type="range" id="release" value="0" min="0" max="0.99" step="0.01">
         <br>
-        <label for="pitch">Pitch: 000</label>
-        <input type="range" id="pitch" value="0" min="-24" max="24" step="1" />
+        <label for="pitch">Pitch: </label>
+        <input type="range" id="pitch" value="0" min="-24" max="24" step="1">
         |
-        <label for="BandShift">Shift: 000</label>
-        <input type="range" id="BandShift" value="0" min="-100" max="100" step="1" />
+        <label for="BandShift">Shift: </label>
+        <input type="range" id="BandShift" value="0" min="-100" max="100" step="1">
         |
         <label for="FreqFlip">Flip:</label>
         <input type="checkbox" id="FreqFlip">
         
-        <div id="FFTcontrols" style="display: block;">
+        <div id="FFTcontrols" style="display: none;">
             <label for="BandBreak">Band Break:</label>
             <input type="checkbox" id="BandBreak">
             <br>
@@ -350,8 +454,8 @@
                 <option value="3">Carrier</option>
             </select>
             <br>
-            <label for="volume">volume: 1.00</label>
-            <input type="range" id="volume" value="1" min="0" max="2" step="0.01" />
+            <label for="volume">volume: </label>
+            <input type="range" id="volume" value="1" min="0" max="2" step="0.01">
             |
             <label for="clamp_output">Clamp out</label>
             <select id="clamp_output">
@@ -362,17 +466,17 @@
                 <option value="4">individual (soft)</option>
             </select>
             |
-            <label for="threshold">Clamp Threshold: 1.00</label>
-            <input type="range" id="threshold" value="1" min="0" max="1" step="0.01"/>
+            <label for="threshold">Clamp Threshold: </label>
+            <input type="range" id="threshold" value="1" min="0" max="1" step="0.01">
             <br>
-            <label for="divbands">Divide bands: 1</label>
-            <input type="range" id="divbands" value="1" min="1" max="64"/>
+            <label for="divbands">Divide bands: </label>
+            <input type="range" id="divbands" value="1" min="1" max="64">
             |
-            <label for="FFTsize">FFT size: 2^10 (1024)</label>
-            <input type="range" id="FFTsize" value="10" min="2" max="14" step="1"/>
+            <label for="FFTsize">FFT size: </label>
+            <input type="range" id="FFTsize" value="10" min="2" max="14" step="1">
             <br>
-            <label for="BassBoost">Bass Boost: 0.00</label>
-            <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01"/>
+            <label for="BassBoost">Bass Boost: </label>
+            <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01">
             |
             <label for="BassCurve">Bass Curve</label>
             <select id="BassCurve">
@@ -387,18 +491,18 @@
                 <option value="1">sin</option>
             </select>
             <br>
-            <label for="steps">Steps: OFF</label>
-            <input type="range" id="steps" value="0" min="0" max="16" step="1"/>
+            <label for="steps">Steps: </label>
+            <input type="range" id="steps" value="0" min="0" max="16" step="1">
             |
-            <label for ="RoundType">Round Type</label>
+            <label for="RoundType">Round Type</label>
             <select id="RoundType">
                 <option value="0">Floor</option>
                 <option value="1">Round</option>
                 <option value="2">Ceil</option>
             </select>
             |
-            <label for="SoundGoodizer">SoundGoodizer? OFF:</label>
-            <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01"/>
+            <label for="SoundGoodizer">SoundGoodizer? </label>
+            <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01">
             <br>
             <label for="simpleChorus">simple Chorus</label>
             <select id="simpleChorus">
@@ -415,32 +519,32 @@
                 <option value="1">file length</option>
                 <option value="2">user</option>
             </select>
-            <label for="userSpeed">| speed: 1.00 Hz</label>
-            <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01"/>
+            <label for="userSpeed" style="display: none;">| speed: </label>
+            <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01" style="display: none;">
             <br>
         </div>
         <div id="analogControls" style="display: none;">
         <div style="margin-top: 10px;">
         <label for="Auto-update Filters">Auto-update Filters:</label>
-        <input type="checkbox" id="AutoUpdateFilters" checked>
+        <input type="checkbox" id="AutoUpdateFilters" checked="">
         <button id="ManualStudyFilters" style="display: none; margin-left: 10px;">Update Study Filters</button>
         </div>
             <canvas id="filterView" width="700" height="100"></canvas>
             <br>
-            <label for="TotalBands">Total Bands: 40</label>
-            <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1"/>
+            <label for="TotalBands">Total Bands: </label>
+            <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1">
             |
-            <label for="Resonance">Resonance: 0.920</label>
-            <input type="range" id="Resonance" value=".92" min="0" max=".999" step="0.001"/>
+            <label for="Resonance">Resonance: </label>
+            <input type="range" id="Resonance" value=".92" min="0" max=".999" step="0.001">
             <br>
-            <label for="BPwidth">Bandpass Width: 0.00</label>
-            <input type="range" id="BPwidth" value="0" min="0" max="1" step="0.01"/>
+            <label for="BPwidth">Bandpass Width: </label>
+            <input type="range" id="BPwidth" value="0" min="0" max="1" step="0.01">
             |
-            <label for="Volboost">Volume Boost: 1.00</label>
-            <input type="range" id="Volboost" value="1" min="0" max="10" step="0.01"/>
+            <label for="Volboost">Volume Boost: </label>
+            <input type="range" id="Volboost" value="1" min="0" max="10" step="0.01">
             <br>
             <label for="DBperOct">dB per Octave: 12</label>
-            <input type="range" id="DBperOct" value="2" min="1" max="8" step="1"/>
+            <input type="range" id="DBperOct" value="2" min="1" max="8" step="1">
             |
             <label for="Alt_BP">Alt Bandpass:</label>
             <select id="Alt_BP">
@@ -451,7 +555,7 @@
                 <option value="4">3FLT</option>
                 <option value="5">ApLp</option>
             </select>
-	    <!--filter analize block-->
+        <!--filter analize block-->
             <script>
             document.addEventListener('DOMContentLoaded', () => {
                 // Reference to checkbox and button
@@ -490,39 +594,65 @@
         </div>
         <div id="4ormClone" style="display: block;">
             <div id="apControls" style="display: block; margin-bottom: 1em;">
-            <label for="Ag">Base frequency: <span id="AgValue">1</span></label>
-            <input type="range" id="Ag" value="1" min="0" max="1" step="0.001" />
+            <label for="Ag">Base frequency: </label>
+            <input type="range" id="Ag" value=".125" min="0" max="1" step="0.001">
             |
-            <label for="Resonance4orm">Resonance: <span id="ResonanceVal">0.999</span></label>
-            <input type="range" id="Resonance4orm" value="0.999" min="0" max="0.999" step="0.001" />
+            <label for="Resonance4orm">Resonance: </label>
+            <input type="range" id="Resonance4orm" value="0.999" min="0" max="0.999" step="0.001">
             |
             <label for="4ormFilterType">Filter Type:</label>
             <select id="4ormFilterType">
                 <option value="0">ApLp</option>
                 <option value="1">Lp12</option>
+                <option value="2">BP12</option>
             </select>
             <br>
             <label for="UseArrLength">Use Array Length:</label>
             <input type="checkbox" id="UseArrLength">
             |
-            <label for="MaxHarm">Max Harmonics: <span id="MaxHarmVal">100</span></label>
-            <input type="range" id="MaxHarm" value="16" min="1" max="1000" step="1" />
+            <label for="MaxHarm">Max Harmonics: </label>
+            <input type="range" id="MaxHarm" value="16" min="1" max="1000" step="1">
             |
-            <label for="4ormVolume">Volume: <span id="4ormVolumeVal">1.00</span></label>
-            <input type="range" id="4ormVolume" value="1" min="0" max="10" step="0.01" />
+            <label for="4ormVolume">Volume: </label>
+            <input type="range" id="4ormVolume" value="1" min="0" max="10" step="0.01">
+            <br>
+            <label for="4ormFilterType">Osc Filter Type:</label>
+            <select id="4ormFilter2Type">
+                <option value="0">None</option>
+                <option value="1">ApLp</option>
+                <option value="2">Lp12</option>
+                <option value="3">BP12</option>
+            </select>
+            |
+            <label for="use_gen">use generator</label>
+            <input type="checkbox" id="use_gen">
+            |
+            <label for="gen_type">generator (filtered):<label>
+            <select id="gen_type">
+                <option value="0">Input 2</option>
+                <option valuw="1">sine</option>
+                <option value="2">triangle</option>
+                <option value="3">sawtooth</option>
+                <option value="4">PWM</option>
+                <option value="5">noise</option>
+            </select>
+            <br>
+            <label for="PWMwidth">PWM width: </label>
+            <input type="range" id="PWMwidth" value="0.5" min="0" max="1" step="0.01">
+            |
+            <label for="resonance2">Resonance 2: </label>
+            <input type="range" id="resonance2" value="0.99" min="0" max="0.999" step="0.001">
             <br>
             <label for="Harmonics">Offsets (Array only)</label>
             <br>
-            <textarea id="Harmonics"
-            value="[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/HZ*2048*440)"
-            style="
+            <textarea id="Harmonics" value="[-5,2,7,10].map((i)=&gt;2**((i+3)/12)*Math.PI/128/HZ*2048*440)" style="
                 box-sizing: border-box;
                 resize: vertical;
                 max-width: 800px;
                 max-height: 200px;
                 min-width: 100px;
                 min-height: 40px;
-            ">[-5,2,7,10].map((i)=>2**((i+3)/12)*Math.PI/128/HZ*2048*440)</textarea>
+            ">[-5,2,7,10].map((i)=&gt;2**((i+3)/12)*Math.PI/128/HZ*2048*440)</textarea>
             <!--textarea stuff-->
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -542,17 +672,204 @@
                     }
                 });
             </script>
+            <div id="harm">
+                <h3>Harmonics</h3>
+                <!-- This will be populated with buttons H1-H12 -->
+            </div>
+            <script>
+            // Function to create 12 buttons labeled H1-H12 and append to #harm
+            function createHarmonicButtons() {
+                const harmDiv = document.getElementById('harm');
+                if (!harmDiv) return;
+                // Use a global array for selected harmonics
+                window.harmString = window.harmString || [];
+                // Remove old buttons if any
+                Array.from(harmDiv.querySelectorAll('button.harm-btn')).forEach(btn => btn.remove());
+                for (let i = 1; i <= 12; i++) {
+                    const btn = document.createElement('button');
+                    btn.textContent = `H${i}`;
+                    btn.className = 'harm-btn';
+                    btn.style.margin = '2px';
+                    btn.dataset.harmonic = i;
+                    // Set initial color if selected
+                    if (window.harmString.includes(i)) {
+                        btn.style.backgroundColor = "#0055ff";
+                        btn.style.color = "#fff";
+                    }
+                    btn.addEventListener("click", () => {
+                        const idx = window.harmString.indexOf(i);
+                        if (idx !== -1) {
+                            window.harmString.splice(idx, 1);
+                            btn.style.backgroundColor = "";
+                            btn.style.color = "";
+                        } else {
+                            window.harmString.push(i);
+                            btn.style.backgroundColor = "#0055ff";
+                            btn.style.color = "#fff";
+                        }
+                        if (typeof updateHarmonicsText === 'function') updateHarmonicsText();
+                    });
+                    harmDiv.appendChild(btn);
+                }
+            }
+            // Call it on DOMContentLoaded and after heldNotes is initialized
+            document.addEventListener('DOMContentLoaded', createHarmonicButtons);
+            // Also re-create buttons if heldNotes changes (optional, for sync)
+            window.createHarmonicButtons = createHarmonicButtons;
+            </script>
+            <div id="easyKeyboard">
+                <h3>Easy Mode Keyboard</h3>
+            </div>
+            <script>
+                // Example: Simulate adding/removing notes to trigger updates
+                // In your actual application, these would be called on noteOn/noteOff events
+                function addNote(note) {
+                    heldNotes.add(note);
+                    updateHarmonicsText();
+                }
+
+                function removeNote(note) {
+                    heldNotes.delete(note);
+                    updateHarmonicsText();
+                }
+
+                // Initial call to set the text area when the page loads
+                document.addEventListener('DOMContentLoaded', () => {
+                    updateHarmonicsText(); // Initialize with the default .map() if nothing is present
+                });
+
+                const semitoneNames = [
+                    { name: 'C', black: false },
+                    { name: 'C#', black: true },
+                    { name: 'D', black: false },
+                    { name: 'D#', black: true },
+                    { name: 'E', black: false },
+                    { name: 'F', black: false },
+                    { name: 'F#', black: true },
+                    { name: 'G', black: false },
+                    { name: 'G#', black: true },
+                    { name: 'A', black: false },
+                    { name: 'A#', black: true },
+                    { name: 'B', black: false },
+                ];
+
+                // Initialize heldNotes from localStorage
+                const storedNotes = localStorage.getItem('heldNotes');
+                const heldNotes = new Set(storedNotes ? JSON.parse(storedNotes) : []);
+
+                const keyboard = document.getElementById("easyKeyboard");
+                const totalKeys = 60; // C0 to B4 (C5 excluded)
+                const base = -24;     // makes C2 = 0
+
+                // Function to save heldNotes to localStorage
+                function saveHeldNotes() {
+                    localStorage.setItem('heldNotes', JSON.stringify(Array.from(heldNotes)));
+                }
+
+                function updateHarmonicsText() {
+                    const harmonicsArea = document.getElementById("Harmonics");
+                    if (!harmonicsArea) return;
+
+                    // Use heldNotes for keyboard, harmString for harmonics
+                    const arr = Array.from(heldNotes).sort((a, b) => a - b);
+                    const harmArr = (window.harmString || []).slice().sort((a, b) => a - b);
+                    const arrString = `[${arr.join(",")}]`;
+                    const harmString = `[${harmArr.join(",")}]`;
+                    // Compose a .flatMap string using the dedicated harmonics array
+                    const mapFunctionString = `.flatMap((i)=>{\n    f=2**((i+3)/12)*Math.PI/128/HZ*2048*440;\n    return ${harmString}.map(a=>a*f);\n})`;
+                    harmonicsArea.value = arrString + mapFunctionString;
+                }
+
+                // Responsive split logic
+                function renderKeyboard() {
+                    keyboard.innerHTML = '';
+                    // Check if the keyboard container is too small
+                    let split = false;
+                    if (keyboard.offsetWidth < 600 || window.innerWidth < 700) {
+                        split = true;
+                    }
+                    let keysPerRow = split ? 12 : 24;
+                    let rows = split ? 5 : 3; // 60/12=5, 60/24=2.5 (so 3 rows for large screens)
+
+                    for (let k = 0; k < totalKeys; k++) {
+                        if (k % keysPerRow === 0) {
+                            var rowDiv = document.createElement("div");
+                            rowDiv.style.display = "flex";
+                            rowDiv.style.position = "relative";
+                            rowDiv.style.marginBottom = "8px";
+                            keyboard.appendChild(rowDiv);
+                        }
+
+                        const intVal = k + base;
+                        const name = semitoneNames[k % 12];
+                        const isBlack = name.black;
+
+                        const btn = document.createElement("button");
+                        const octave = Math.floor((k + base) / 12);
+                        btn.dataset.note = intVal;
+                        btn.style.position = "relative";
+                        btn.style.zIndex = isBlack ? 2 : 1;
+                        btn.style.paddingTop = "30px";
+                        btn.style.width = isBlack ? "3px" : "40px";
+                        btn.style.height = isBlack ? "60px" : "120px";
+                        if (isBlack) {
+                            btn.style.marginLeft = "-21px";
+                            btn.style.marginRight = "-21px";
+                        } else {
+                            btn.style.marginLeft = "0";
+                            btn.style.marginRight = "0";
+                        }
+
+                        btn.style.backgroundColor = isBlack ? "#222" : "#fff";
+                        btn.style.color = isBlack ? "#ccc" : "#000";
+                        btn.style.border = "1px solid #444";
+                        btn.style.borderRadius = "3px";
+                        btn.style.display = "inline-block";
+
+                        const activeColor = "#0055ff"; // blue
+
+                        // Check if this note was previously held (from localStorage)
+                        if (heldNotes.has(intVal)) {
+                            btn.style.backgroundColor = activeColor;
+                            btn.style.color = "#fff";
+                        }
+
+                        btn.addEventListener("click", () => {
+                            if (heldNotes.has(intVal)) {
+                                heldNotes.delete(intVal);
+                                btn.style.backgroundColor = isBlack ? "#222" : "#fff";
+                                btn.style.color = isBlack ? "#ccc" : "#000";
+                            } else {
+                                heldNotes.add(intVal);
+                                btn.style.backgroundColor = activeColor;
+                                btn.style.color = "#fff";
+                            }
+                            updateHarmonicsText();
+                        });
+
+                        rowDiv.appendChild(btn);
+                    }
+                }
+
+                // Initial render and update on resize
+                window.addEventListener('resize', renderKeyboard);
+                document.addEventListener('DOMContentLoaded', () => {
+                    renderKeyboard();
+                    //updateHarmonicsText();
+                });
+            </script>
+
         </div> 
         </div>
             <label for="iterations">Iterations:</label>
-            <input type="number" id="iterations" value="1" min="1" />
+            <input type="number" id="iterations" value="1" min="1">
             it may get loud (or not, i don't recomend using this with long audio files)
         <br>
-        <button id="playButton" disabled>Play Audio</button>
-        <button id="pauseButton" disabled>Pause Audio</button>
-        <button id="stopButton" disabled>Stop Audio</button>
-        <button id="downloadButton" disabled>Download Audio</button>
-        <button id="reprocessButton" disabled>Reprocess Audio</button>
+        <button id="playButton" disabled="">Play Audio</button>
+        <button id="pauseButton" disabled="">Pause Audio</button>
+        <button id="stopButton" disabled="">Stop Audio</button>
+        <button id="downloadButton" disabled="">Download Audio</button>
+        <button id="reprocessButton" disabled="">Reprocess Audio</button>
         <button id="helpButton">Help</button>
         </div>
         
@@ -567,7 +884,7 @@
             <p>this is why it's taking so long to process</p>
 
             <p>fun fact: dividing the FFT index by 2 will multiply the pitch by 2, multiplying it will do the opposite
-            <p>Here are some instructions and information to get you started:</p>
+            </p><p>Here are some instructions and information to get you started:</p>
             <ul>
             <li><strong>Decay Type:</strong> Choose between RMS and Peak for the decay type.</li>
             <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
@@ -649,7 +966,7 @@
             </div>
         </div>
 
-	<script>
+    <script>
         let dragSourceInput = null;
         let draggingInputId = null;
 
@@ -763,8 +1080,8 @@
         document.getElementById('audioInput').setAttribute('draggable', 'true');
 
 
-	</script>
-	<!--vmode block-->
+    </script>
+    <!--vmode block-->
         <script>
             // Function to clean up the URL by removing disallowed characters
             function CleanUpLink() {
@@ -941,7 +1258,7 @@
                     if (input.type === 'checkbox') {
                         params.set(id, input.checked ? 'true' : 'false');
                     } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
-                        // Encode text and tag with base64#
+                        // Encode text and tag with base64~
                         const encoded = btoa(unescape(encodeURIComponent(input.value)));
                         params.set(id, `base64~${encoded}`);
                     } else {
@@ -1309,82 +1626,6 @@
             }
         });
 
-        document.getElementById('pitch').addEventListener('input', function(event) {
-            document.querySelector('label[for="pitch"]').textContent = `Pitch: ${(parseFloat(event.target.value)<=0?parseFloat(event.target.value)==0?'0':'-':'+')+Math.abs(parseFloat(event.target.value)).toString().padStart(2, '0')}`;
-        });
-
-        document.getElementById('BandShift').addEventListener('input',function(event) {
-            document.querySelector('label[for="BandShift"]').textContent = `Shift: ${(parseFloat(event.target.value)<=0?parseFloat(event.target.value)==0?'0':'-':'+')+Math.abs(parseFloat(event.target.value)).toString().padStart(2, '0')}`;
-        })
-
-        document.getElementById('volume').addEventListener('input', function(event) {
-            document.querySelector('label[for="volume"]').textContent = `volume: ${parseFloat(event.target.value).toFixed(2)}`;
-        });
-        
-        document.getElementById('divbands').addEventListener('input', function(event) {
-            document.querySelector('label[for="divbands"]').textContent = `Divide bands: ${parseFloat(event.target.value)}`;
-        });
-
-        document.getElementById('FFTsize').addEventListener('input', function(event) {
-            document.querySelector('label[for="FFTsize"]').textContent = `FFT size: 2^${parseFloat(event.target.value)} (${2**parseFloat(event.target.value)})`;
-        });
-        
-        document.getElementById('BassBoost').addEventListener('input', function(event) {
-            document.querySelector('label[for="BassBoost"]').textContent = `Bass Boost: ${parseFloat(event.target.value).toFixed(2)}`;
-        });
-
-        document.getElementById('steps').addEventListener('input', function(event) {
-            document.querySelector('label[for="steps"]').textContent = `Steps: ${parseFloat(event.target.value)?parseFloat(event.target.value).toFixed(2):'OFF'}`;
-        });
-        
-        document.getElementById('threshold').addEventListener('input', function(event) {
-            document.querySelector('label[for="threshold"]').textContent = `Clamp Threshold: ${parseFloat(event.target.value).toFixed(2)}`;
-        });
-
-        document.getElementById('userSpeed').addEventListener('input', function(event) {
-            document.querySelector('label[for="userSpeed"]').textContent = `| speed: ${parseFloat(event.target.value).toFixed(2)} Hz`;
-        });
-
-        document.getElementById('SoundGoodizer').addEventListener('input', function(event) {
-            document.querySelector('label[for="SoundGoodizer"]').textContent = `SoundGoodizer? ${parseFloat(event.target.value)!==0?parseFloat(event.target.value).toFixed(2):'OFF'}`;
-        });
-
-        document.getElementById('Resonance').addEventListener('input', function(event) {
-            document.querySelector('label[for="Resonance"]').textContent = `Resonance: ${parseFloat(event.target.value).toFixed(3)}`;
-        });
-        document.getElementById('BPwidth').addEventListener('input', function(event) {
-            document.querySelector('label[for="BPwidth"]').textContent = `Bandpass Width: ${parseFloat(event.target.value).toFixed(2)}`;
-        });
-        document.getElementById('TotalBands').addEventListener('input', function(event) {
-            document.querySelector('label[for="TotalBands"]').textContent = `Total Bands: ${parseInt(event.target.value)}`;
-        });
-        document.getElementById('Volboost').addEventListener('input', function(event) {
-            document.querySelector('label[for="Volboost"]').textContent = `Volume Boost: ${parseFloat(event.target.value).toFixed(2)}`;
-        });
-        document.getElementById('DBperOct').addEventListener('input', function(event) {
-            document.querySelector('label[for="DBperOct"]').textContent = `dB per Octave: ${parseFloat(event.target.value)*6}`;
-        });
-
-        const agSlider = document.getElementById('Ag');
-        const resonanceSlider = document.getElementById('Resonance4orm');
-        const harmonicsInput = document.getElementById('Harmonics');
-
-        agSlider.addEventListener('input', (e) => {
-            document.getElementById('AgValue').textContent = e.target.valueAsNumber.toFixed(3);
-        });
-
-        resonanceSlider.addEventListener('input', () => {
-            document.getElementById('ResonanceVal').textContent = resonanceSlider.value;
-        });
-
-        document.getElementById('MaxHarm').addEventListener('input', e => {
-            document.getElementById('MaxHarmVal').textContent = e.target.value;
-        });
-
-        document.getElementById('4ormVolume').addEventListener('input', e => {
-            document.getElementById('4ormVolumeVal').textContent = e.target.value;
-        });
-
         document.getElementById('Harmonics').addEventListener('input', (e) => {
             /*const text = e.target.value;
             let parsed = [];
@@ -1539,6 +1780,8 @@
                     } else if (Vmode == 2) {
                         processedBuffer = apply4ormLogic(
                             offlineContext,
+                            inputLeft,
+                            inputRight,
                             carrierLeft,
                             carrierRight,
                             buffer.sampleRate
@@ -1558,7 +1801,7 @@
             showProcessPOP_UP('', false);
         }
 
-        function apply4ormLogic(context, inputLeft, inputRight, sampleRate) {
+        function apply4ormLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
             const outputBuffer = context.createBuffer(2, inputLeft.length, sampleRate);
             const outL = outputBuffer.getChannelData(0);
             const outR = outputBuffer.getChannelData(1);
@@ -1591,17 +1834,31 @@
             // Clear previous state
             z9 = [];
             z10 = [];
+            z11 = []
+
+            z5_4 = [];
+
+            function peak(a, decayF, call) {
+                z5_4[call] ??= { var1: 0 };
+                z5_4[call].var1 = Math.max(Math.abs(a), z5_4[call].var1 - Math.sqrt(decayF) / 2);
+                return z5_4[call].var1 / 3;
+            }
+            function rms(a, decayF, call) {
+                z5_4[call] ??= { var1: 0 };
+                z5_4[call].var1 = (1 - decayF) * z5_4[call].var1 + decayF * a * a;
+                return Msth.sqrt(z5_4[call].var1);
+            }
 
             // Helper function: Repeats & wraps harmonic array with scaled octave down
             function repeatArr(inp, i) {
                 return inp[i % inp.length] * 2 ** (-Math.floor(i / inp.length));
             }
 
-            // Local filter function (special porpose)
-            function $ap(inputY, ag = 0, res = 0, stages = 8, arr, callCount = 0) {
+            // Local filter function (special purpose)
+            function $ap(inputY, ag = 0, res = 0, callCount = 0) {
                 if (callCount >= z9.length || !z9[callCount]?.ap?.[0]) {
                     z9[callCount] = {
-                        ap: Array.from({ length: stages }, () => ({ p1: 0, p2: 0, p3: 0, p4: 0, pi: 0 }))
+                        ap: Array.from({ length: 1 }, () => ({ p1: 0, p2: 0, p3: 0, p4: 0, pi: 0 }))
                     };
                 }
 
@@ -1610,62 +1867,140 @@
                 const mr = 1 - nres * (0.5 + nres / 2);
 
                 let out = 0;
-                for (let i = 0; i < stages; i++) {
-                    const stageAg = ag * repeatArr(arr, i);
-                    const a = Math.min(Math.max(1 - (stageAg * stageAg / 4), 0), 0.9999);
-                    const s = state[i];
+                let i = 0;
+                const stageAg = ag;
+                const a = Math.min(Math.max(1 - (stageAg * stageAg / 4), 0), 0.9999);
+                const s = state[i];
 
-                    const input = inputY - s.pi * mr;
+                const input = inputY - s.pi * mr;
 
-                    const y1 = -a * input + s.p1 + a * s.p2;
-                    s.p1 = input;
-                    s.p2 = y1;
+                const y1 = -a * input + s.p1 + a * s.p2;
+                s.p1 = input;
+                s.p2 = y1;
 
-                    const y2 = -a * y1 + s.p3 + a * s.p4;
-                    s.p3 = y1;
-                    s.p4 = y2;
+                const y2 = -a * y1 + s.p3 + a * s.p4;
+                s.p3 = y1;
+                s.p4 = y2;
 
-                    s.pi = -y2;
+                s.pi = -y2;
 
-                    out += (s.pi + input) / stages;
-                }
+                out = (s.pi + input);
 
                 return out;
             }
 
-            function $lp(d, c, r = 0, stages = 8, arr, callCount = 1) {
+            function $lp(d, c, r = 0, callCount = 0) {
                 if (!z10[callCount]) {
-                    z10[callCount] = {lp: new Array(stages + 1).fill(0),fp: new Array(stages + 1).fill(0) };
+                    z10[callCount] = { lp: new Array(1).fill(0), fp: new Array(1).fill(0) };
                 }
-
 
                 const z = z10[callCount];
-                let y=0
-                let cc=0
-
-
-
-                for (let i = 1; i <= stages; i++) {
-                    cc=clamp(0, 0.9999, c * repeatArr(arr, i-1))
-                    const fbv = r + r / (1 - cc);
-                    z.lp[i] += cc * (d - z.lp[i] + fbv * (z.lp[i] - z.fp[i]));
-                    z.fp[i] += cc * (z.lp[i] - z.fp[i])
-                    y+=z.fp[i]/stages
-                }
-
+                let y = 0;
+                let i = 0;
+                let cc = Math.min(Math.max(c, 0), 0.9999);
+                const fbv = r + r / (1 - cc);
+                z.lp[i] += cc * (d - z.lp[i] + fbv * (z.lp[i] - z.fp[i]));
+                z.fp[i] += cc * (z.lp[i] - z.fp[i]);
+                y = z.fp[i];
 
                 return y;
             }
 
+            function $bp(d, c, r = 0, callCount = 0) {
+                if (!z11[callCount]) {
+                    z11[callCount] = { lp: new Array(1).fill(0), fp: new Array(1).fill(0) };
+                }
+
+                const z = z11[callCount];
+                let y = 0;
+                let i = 0;
+                let cc = Math.min(Math.max(c, 0), 0.9999);
+                const fbv = r + r / (1 - cc);
+                z.lp[i] += cc * (d - z.lp[i] + fbv * (z.lp[i] - z.fp[i]));
+                z.fp[i] += cc * (z.lp[i] - z.fp[i]);
+                y = (z.fp[i] - z.lp[i]);
+
+                return y;
+            }
+
+            let tt = 0;
+            const PWMwidth = parseFloat(document.getElementById('PWMwidth')?.value || 0.5);
+            function generator(p, inp) {
+                const gen_type = parseInt(document.getElementById('gen_type')?.value || 0);
+                let wave = null;
+                switch (gen_type) {
+                    case 0: // input 2
+                        wave = (t) => inp;
+                        break;
+                    case 1: // Sine wave
+                        wave = (t) => Math.sin(2 * Math.PI * t );
+                        break;
+                    case 4: // Square wave
+                        wave = (t) => (t % 1 < PWMwidth ? 1 : -1);
+                        break;
+                    case 3: // Sawtooth wave
+                        wave = (t) => (t % 1) - 1;
+                        break;
+                    case 2: // Triangle wave
+                        wave = (t) => Math.abs((t % 1)*2-1) * 2 - 1;
+                        break;
+                    case 5: // Noise
+                        wave = (t) => Math.random() * 2 - 1;
+                        break;
+                    default:
+                        wave = (t) => Math.sin(2 * Math.PI * t);
+                        break;
+                }
+                tt += 1;
+                return wave(tt*p/Math.PI/4);
+            }
+            const rel = parseFloat(document.getElementById('release')?.value || 0.0);
+            const pitch = parseFloat(document.getElementById('pitch')?.value || 0.0);
+            const pitchV = 2 ** (-pitch / 12);
+            const resonance2 = parseFloat(document.getElementById('resonance2')?.value || 0.999);
+            const $FUNC = (IP, c, r, stages, arr, call , IP2) => {
+                let F;
+                switch (_4ormFilterType) {
+                    case 0: F = $lp; break;
+                    case 1: F = $ap; break;
+                    case 2: F = $bp; break;
+                    default: F = $lp;
+                }
+                let out = 0;
+                for (let i = 0; i < stages; i++) {
+                    let tt=0
+                    const Fcall = call * stages*2 + i
+                    const stageAg = ag * repeatArr(arr, i);
+                    if (document.getElementById('use_gen')?.checked) {
+                        const GENi = generator(stageAg/stages, IP2)*stages;
+                        let GEN = 0
+                        if (resonance2 == 0) {
+                            GEN = GENi;
+                        } else {
+                            GEN = F(GENi, stageAg, resonance2, Fcall+stages)/2;
+                        }
+
+
+                        out += GEN*peak(Math.abs(F(IP, stageAg*pitchV, res, Fcall))/2,2**-((rel*5)**2)/800,Fcall);
+                    } else {
+                        // Use the input directly
+                        out += F(IP, stageAg, res, Fcall);
+                    }
+                }
+                return out/stages;
+            }
             // Apply processing
             for (let t = 0; t < inputLeft.length; t++) {
-                const inL = inputLeft[t];
-                const inR = inputRight[t];
+                const inL = carrierLeft[t];
+                const inR = carrierRight[t];
 
-                const $FUNC = [$lp, $ap][_4ormFilterType];
+                const inCL = inputLeft[t];
+                const inCR = inputRight[t];
 
-                const valL = $FUNC(inL*volume, ag, res, stages, harmonicList, 0) / 8;
-                const valR = $FUNC(inR*volume, ag, res, stages, harmonicList, 1) / 8;
+                //const $FUNC = [$lp, $ap, $bp][_4ormFilterType];
+
+                const valL = $FUNC(inL*volume, ag, res, stages, harmonicList, 0, inCL) / 8;
+                const valR = $FUNC(inR*volume, ag, res, stages, harmonicList, 1, inCR) / 8;
 
                 outL[t] = valL;
                 outR[t] = valR;
@@ -2388,7 +2723,7 @@
                     const g = i / nv / 2**(pitch/12);
                     // Filter input (modulator) and carrier
                     const filter = (v, m, f = 0, dwo, FRQ) => {
-			            FRQ=f?1-FRQ:FRQ
+                        FRQ=f?1-FRQ:FRQ
                         switch (Alt_BP) {
                             case 0:
                                 return bp(v * 64, FRQ, fbv, dbv, dwo, m);
@@ -2906,5 +3241,6 @@
             }
         }
     </script>
-</body>
-</html>
+
+
+</div><a href="https://github.com/D3nschot/crappy-FFT-vocoder" style="position: fixed; bottom: 10px; right: 10px; background-color: rgb(68, 68, 68); color: rgb(255, 255, 255); padding: 10px; border-radius: 5px; z-index: 1000;">Fork me on GitHub :)</a></body></html>

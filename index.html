@@ -876,8 +876,8 @@
                     <lebel for="freqCurve">Frequency Curve:</lebel>
                     <select id="freqCurve" class="form-control">
                         <option value="0">linear</option>
-                        <option value="1">logarithmic</option>
-                        <option value="2">exponential</option>
+                        <!--option value="1">logarithmic</option>
+                        <option value="2">exponential</option-->
                         <option value="3">exponential (base2)</option>
                         <option value="4">squared</option>
                         <option value="5">Audaciy aproxinarion</option>
@@ -3396,13 +3396,13 @@
                         distance = (Math.log((i+1)/nv+1)/Math.LOG2E) - ic;
                         break;
                     case 2:
-                        ic = Math.exp(i/nv*Math.LN2)-1;
+                        ic = Math.exp(i/nv)-1;
                         EQvol = .9+ic/10;
-                        distance = (Math.exp((i+1)/nv*Math.LN2)-1) - ic;
+                        distance = (Math.exp((i+1)/nv)-1) - ic;
                         break;
                     case 3:
                         ic = 2**(i/nv*8-8);
-                        EQvol = .5+ic*2;
+                        EQvol = 3-ic*2.5;
                         distance = 2**((i+1)/nv*8-8) - ic
                         break;
                     case 4:
@@ -3470,7 +3470,7 @@
 
 
                     //console.log(i, ic, distance)
-                    if (UseResBasedOnDistance && (freqCurve==5 || freqCurve==6 || freqCurve==7)) {
+                    if (UseResBasedOnDistance && (freqCurve==5 || freqCurve==4 || freqCurve==3)) {
                         fbv = fb * (1 - distance*1.75);
                         //EQvol = 1
                     }

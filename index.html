@@ -881,7 +881,6 @@
                         <option value="3">exponential (base2)</option>
                         <option value="4">squared</option>
                         <option value="5">Audaciy aproxinarion</option>
-                        <option value="6">Square root</option>
                     </select>
                 </div>
 
@@ -3332,7 +3331,7 @@
                         o=f
                     }
 
-                    return o*(.25+cc*2)*8// Output of last stage
+                    return o*(.25+cc)*8// Output of last stage
                 } catch (e) {
                     return 0;
                 }
@@ -3413,13 +3412,8 @@
                         break;
                     case 5:
                         ic = bandFrequency(nv,i,48000)**.5
-                        EQvol = 2
+                        EQvol = 1+4*(1-i/nv)
                         distance = bandFrequency(nv,i+1,48000)**.5 - ic;
-                        break;
-                    case 6:
-                        ic = Math.sin((i/nv-.5)*PI)/2.01+.5;
-                        EQvol = ic*8;
-                        distance = Math.sin(((i+1)/nv-.5)*PI)/2.01+.5 - ic;
                         break;
                     default:
                         ic = i/nv;
@@ -3472,7 +3466,7 @@
                     let vol = 1;
 
                     // Get curve values
-                    let { ic, distance, EQvol: eqv } = curve(i, nv);
+                    let { ic, distance, EQvol} = curve(i, nv);
 
 
                     //console.log(i, ic, distance)
@@ -3497,10 +3491,10 @@
 
                     const g = ic / 2**(pitch/12);
 
-                    const modFiltered = filter(inp, i + 0 + bool*n*3, flip, dww, g);
-                    const carFiltered = filter(car, i + n + bool*n*3, false, dww, ic);
+                    const modFiltered = filter(inp, i + 0 + bool*n*3, flip, dww, g)*EQvol;
+                    const carFiltered = filter(car, i + n + bool*n*3, false, dww, ic)*EQvol;
 
-                    const absFilterX = abs(modFiltered)*EQvol;
+                    const absFilterX = abs(modFiltered);
                     const mod = p(absFilterX, 2**-((relv*3)**2)/400, i + bool*n*3);
 
                     // For debugging: sum up mod and carrier

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="https://d3nschot.github.io/crappy-FFT-vocoder/IconCFFTV.png">
     <title>Crappy FFT Vocoder</title>
@@ -8,7 +9,7 @@
         /* Base text styling */
         label, span, p, h1, h2, h3, h4, h5, h6 {
             color: #ddd;
-            font-family: 'Arial', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             font-size: 14px;
             line-height: 1.4;
         }
@@ -46,927 +47,1335 @@
             font-size: 0.95em;
         }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #000;
-            color: #fff;
-            font-family: 'Arial', sans-serif;
-        }
-        canvas {
-            border: 1px solid #fff;
-        }
-        #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #111;
-            border-radius: 10px;
+        * {
+            box-sizing: border-box;
         }
 
-        @media (max-width: 600px) {
-            #controls {
-                width: 90%;
-            }
-            canvas {
-                width: 100%;
-                height: auto;
-            }
-        }
-        #controls2 {
-            width: 96%;
-            margin-top: 20px;
+        body {
+            margin: 0;
             padding: 10px;
-            background-color: #222;
-            border-radius: 10px;
-            text-align: center;
-            align-items: center;
-            gap: 10px;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
         }
-        #controls2 > * {
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        #iterations {
-            width: 50px;
-        }
-        #helpPopup {
-            display: none;
-            position: fixed;
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header Section */
+        .header-section {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #Title {
+            font-size: clamp(24px, 5vw, 48px);
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #5ac8fa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        #Title:hover {
+            transform: scale(1.05);
+        }
+
+        #what_is {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .author {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        #randomQuote {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(90, 200, 250, 0.1);
+            border-radius: 8px;
+            font-style: italic;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #randomQuote:hover {
+            background: rgba(90, 200, 250, 0.2);
+        }
+
+        /* Canvas and Visualizer */
+        .visualizer-section {
+            display: flex;
             justify-content: center;
+            padding: 20px;
         }
+
+        #visualizer, #filterView {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Controls Layout */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .control-panel h3 {
+            margin: 0 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(90, 200, 250, 0.3);
+            font-size: 18px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-group:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group label {
+            min-width: 120px;
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        .form-control {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        /* Buttons */
         button {
-            background-color: #444;
+            background: linear-gradient(135deg, #444 0%, #666 100%);
             color: #fff;
             border: none;
-            padding: 5px 20px;
-            margin: 2px;
-            border-radius: 5px;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
+
         button:hover {
-            background-color: #666;
+            background: linear-gradient(135deg, #666 0%, #888 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
+
+        button:active {
+            transform: translateY(0);
+        }
+
         button:disabled {
-            background-color: #333;
+            background: #333;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
+
+        /* File Inputs */
         input[type="file"] {
-            background-color: #444;
+            background: rgba(68, 68, 68, 0.8);
             color: #fff;
-            border: none;
-            padding: 2px 3px;
-            margin: 2px;
-            border-radius: 5px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
         }
+
+        input[type="file"]:hover {
+            border-color: #5ac8fa;
+            background: rgba(90, 200, 250, 0.1);
+        }
+
         input[type="file"]::file-selector-button {
-            background-color: #444;
+            background: linear-gradient(135deg, #5ac8fa 0%, #007acc 100%);
             color: #fff;
             border: none;
-            padding: 3px 10px;
-            margin: 2px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin-right: 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
+
         input[type="file"]::file-selector-button:hover {
-            background-color: #666;
+            background: linear-gradient(135deg, #007acc 0%, #005999 100%);
+            transform: scale(1.05);
         }
+
+        /* Select Dropdowns */
         select {
-            background-color: #444;
+            background: rgba(68, 68, 68, 0.9);
             color: #fff;
-            border: none;
-            padding: 5px 10px;
-            margin: 2px;
-            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            font-size: 14px;
+            min-width: 120px;
         }
-        select:hover {
-            background-color: #666;
+
+        select:hover, select:focus {
+            border-color: #5ac8fa;
+            outline: none;
         }
+
+        /* Range Sliders */
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
-            width: 125px;
-            margin: 10px 0;
-            background-color: #444;
-            border-radius: 5px;
-            height: 5px;
+            width: 100%;
+            min-width: 120px;
+            height: 6px;
+            background: rgba(68, 68, 68, 0.8);
+            border-radius: 3px;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 15px;
-            height: 15px;
-            background-color: #fff;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #5ac8fa 0%, #007acc 100%);
             border-radius: 50%;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 15px;
-            height: 15px;
-            background-color: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover,
-        input[type="range"]::-moz-range-thumb:hover {
-            background-color: #666;
-        }
-
-        input[type="range"]::-webkit-slider-runnable-track,
-        input[type="range"]::-moz-range-track {
-            background-color: #444;
-            border-radius: 5px;
-            height: 5px;
-        }
-        input[type="number"] {
-            background-color: #444;
-            color: #fff;
-            border: none;
-            padding: 4px 5px;
-            margin: 2px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        
-        .drag-over {
-            border: 2px dashed #fff;
-            background-color: #333;
-            padding: 20px;
+            box-shadow: 0 2px 10px rgba(90, 200, 250, 0.3);
             transition: all 0.3s ease;
         }
 
-        .expanded {
-            transform: scale(1.1);
-            transition: transform 0.3s ease;
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 15px rgba(90, 200, 250, 0.5);
         }
 
-        input[type="file"][draggable="true"] {
-            cursor: grab;
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #5ac8fa 0%, #007acc 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(90, 200, 250, 0.3);
         }
 
-        input[type="text"],
-        textarea {
-            background-color: #222;
+        /* Number Inputs */
+        input[type="number"] {
+            background: rgba(68, 68, 68, 0.8);
             color: #fff;
-            border: 1px solid #444;
-            padding: 6px 10px;
-            margin: 5px;
-            border-radius: 5px;
-            font-family: 'Arial', sans-serif;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
             font-size: 14px;
-            width: 100%;
-            transition: border-color 0.3s, background-color 0.3s;
+            width: 80px;
         }
 
-        input[type="text"]:focus,
-        textarea:focus {
+        input[type="number"]:focus {
+            border-color: #5ac8fa;
+            outline: none;
+        }
+
+        /* Text Inputs and Textareas */
+        input[type="text"], textarea {
+            background: rgba(34, 34, 34, 0.9);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            width: 100%;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        input[type="text"]:focus, textarea:focus {
             outline: none;
             border-color: #5ac8fa;
-            background-color: #111;
+            box-shadow: 0 0 10px rgba(90, 200, 250, 0.2);
+        }
+
+        /* Checkboxes */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #5ac8fa;
+        }
+
+        /* Keyboard Section */
+        .keyboard-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .keyboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .key-button {
+            position: relative;
+            border: 1px solid #444;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 11px;
+            text-align: center;
+            padding-top: 30px;
+        }
+
+        .key-button.white {
+            background: #fff;
+            color: #000;
+            width: 40px;
+            height: 120px;
+        }
+
+        .key-button.black {
+            background: #222;
+            color: #ccc;
+            width: 25px;
+            height: 80px;
+            z-index: 2;
+            margin-left: -12px;
+            margin-right: -12px;
+        }
+
+        .key-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .key-button.active {
+            background: #0055ff !important;
+            color: #fff !important;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            min-width: 120px;
+        }
+
+        /* Drag and Drop */
+        .drag-over {
+            border-color: #5ac8fa !important;
+            background: rgba(90, 200, 250, 0.1) !important;
+            transform: scale(1.02);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-group label {
+                min-width: unset;
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .form-control {
+                width: 100%;
+            }
+
+            input[type="range"] {
+                min-width: unset;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons button {
+                min-width: unset;
+                width: 100%;
+            }
+
+            #visualizer {
+                width: 100%;
+                height: 200px;
+            }
+
+            .keyboard-row {
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+
+            .key-button.white {
+                width: 35px;
+                height: 100px;
+            }
+
+            .key-button.black {
+                width: 20px;
+                height: 65px;
+                margin-left: -10px;
+                margin-right: -10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .control-panel {
+                padding: 15px;
+            }
+
+            #Title {
+                font-size: 24px;
+            }
+
+            button {
+                padding: 12px 16px;
+                font-size: 16px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Large screen optimizations */
+        @media (min-width: 1200px) {
+            .controls-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .main-container {
+                padding: 20px;
+            }
+        }
+
+        /* Dark mode enhancements */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            }
+        }
+
+        /* Animation keyframes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .control-panel {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Utility classes */
+        .hidden { display: none !important; }
+        .visible { display: block !important; }
+        
+        /* Separator */
+        .separator {
+            display: inline-block;
+            margin: 0 10px;
+            color: #666;
+        }
+
+        /* Value display */
+        .auto-value-span {
+            color: #5ac8fa;
+            font-family: monospace;
+            font-weight: 500;
+        }
+
+        /* Corner GitHub link */
+        .github-corner {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #444 0%, #666 100%);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .github-corner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #666 0%, #888 100%);
+        }
+
+        @media (max-width: 768px) {
+            .github-corner {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 12px;
+                font-size: 12px;
+            }
         }
     </style>
-<style type="text/css" id="operaUserStyle"></style><style type="text/css"></style></head>
+</head>
 <body>
-    <div id="controls" style="overflow-y: auto; max-height: 80vh;">
-
-        <div style="text-align: center; line-height: 1.5;">
-          <div id="Title" style="font-size: 35px;">Crappy 4ormulator clone</div>
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div id="Title">Crappy 4ormulator clone</div>
             <div id="what_is">an 4ormulator clone</div>
-          <div style="color: #aaa; font-size: 10px;">by DX3050/D3nschot</div>
+            <div class="author">by DX3050/D3nschot</div>
             <div id="randomQuote" style="display: none;">FFT? I only know it as Functional Family Therapy</div>
         </div>
-    <!--quote block-->
-        <script>
-            const quotes = [
-                "FFT? I only know it as Functional Family Therapy", //found this while searching for FFT (fast fourier transform)
-                "I love math -D3nschot",
-                "I love math -DX3050",
-                "probably gonna make Crappy Analog Vocoder",
-                "A fast Fourier transform (FFT) is an algorithm \n that computes the discrete Fourier transform (DFT) of a sequence, or its inverse (IDFT). \n A Fourier transform converts a signal from its original domain (often time or space)\n to a representation in the frequency domain and vice versa. -wikipedia",
-                "Don't we love how long it takes to process audio files? :D",
-            ];
-            document.getElementById('Title').addEventListener('click', function() {
-                document.getElementById('randomQuote').style.display = 'block';
-                document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
-            });
-            document.getElementById('randomQuote').addEventListener('click', function() {
-                document.getElementById('randomQuote').style.display = 'block';
-                document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
-            })
-            document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
-        </script>
 
-        <!--UI controls for acomidtion for mobile users-->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // IDs to skip
-                const skipIds = ['FFTsize', 'DBperOct'];
-                // IDs that should display "OFF" when value is 0
-                const offWhenZero = ['steps', 'SoundGoodizer'];
+        <!-- Visualizer Section -->
+        <div class="visualizer-section">
+            <canvas id="visualizer" width="800" height="400"></canvas>
+        </div>
 
-                document.querySelectorAll('input[type="range"]').forEach(slider => {
-                    // Find the label for this slider
-                    let label = document.querySelector(`label[for="${slider.id}"]`);
-                    if (!label) return;
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button id="playButton" disabled>Play Audio</button>
+            <button id="pauseButton" disabled>Pause Audio</button>
+            <button id="stopButton" disabled>Stop Audio</button>
+            <button id="downloadButton" disabled>Download Audio</button>
+            <button id="reprocessButton" disabled>Reprocess Audio</button>
+            <button id="helpButton">Help</button>
+        </div>
 
-                    // Create span if not present
-                    let span = label.parentNode.querySelector(`.auto-value-span[data-for="${slider.id}"]`);
-                    if (!span) {
-                        span = document.createElement('span');
-                        span.className = 'auto-value-span';
-                        span.dataset.for = slider.id;
-                        // Insert span after the label
-                        if (label.nextSibling) {
-                            label.parentNode.insertBefore(span, label.nextSibling);
-                        } else {
-                            label.parentNode.appendChild(span);
-                        }
-                    }
+        <!-- Controls Grid -->
+        <div class="controls-grid">
+            <!-- Mode Control Panel -->
+            <div class="control-panel">
+                <h3>Mode & Files</h3>
+                
+                <div class="form-group">
+                    <button id="changeBackButton">Change to FFT Mode</button>
+                    <button id="ViewProperties">View Properties</button>
+                </div>
 
-                    // Add click-to-edit for value spans (skip skipIds)
-                    if (!skipIds.includes(slider.id)) {
-                        span.style.cursor = 'pointer';
-                        span.title = 'Click to edit value';
-                        span.addEventListener('click', function(e) {
-                            // Only allow if not already editing
-                            if (span.querySelector('input')) return;
-                            // Create input
-                            const input = document.createElement('input');
-                            input.type = 'number';
-                            input.value = slider.value;
-                            input.style.width = '60px';
-                            input.style.fontSize = 'inherit';
-                            // Replace span text with input
-                            span.textContent = '';
-                            span.appendChild(input);
-                            input.focus();
-                            input.select();
-                            // On blur or Enter, update slider and restore span
-                            function finishEdit() {
-                                let val = input.value;
-                                // Clamp value
-                                if (slider.min !== '') val = Math.max(Number(slider.min), val);
-                                if (slider.max !== '') val = Math.min(Number(slider.max), val);
-                                slider.value = val;
-                                slider.dispatchEvent(new Event('input'));
-                                span.textContent = ' ' + val;
-                            }
-                            input.addEventListener('blur', finishEdit);
-                            input.addEventListener('keydown', function(e) {
-                                if (e.key === 'Enter') finishEdit();
-                                else if (e.key === 'Escape') span.textContent = ' ' + slider.value;
-                            });
-                        });
-                    }
+                <!--it's swaped, i ain't gonna fix it-->
+                <div class="form-group">
+                    <label>Audio Input:</label>
+                    <input type="file" id="carrierInput" class="form-control" draggable="true">
+                </div>
 
-                    // Function to check if the slider is hidden
-                    function isSliderHidden(slider) {
-                        if (!slider || slider.offsetParent === null) return true;
-                        const style = getComputedStyle(slider);
-                        return style.visibility === 'hidden' || style.display === 'none';
-                    }
-
-                    // Function to update span text
-                    function updateSpan() {
-                        let val = slider.value;
-                        if (offWhenZero.includes(slider.id) && (val === "0" || val === 0)) {
-                            span.textContent = ' OFF';
-                        } else {
-                            if (skipIds.includes(slider.id)) {
-                                //span.textContent = '';
-                                switch (slider.id) {
-                                    case 'FFTsize':
-                                        span.textContent = ' ' + (Math.pow(2, val)).toFixed(0);
-                                        break;
-                                    case 'DBperOct':
-                                        span.textContent = ' 12';
-                                        break;
-                                    default:
-                                        span.textContent = '';
-                                }
-                            } else {
-                                //if (!isSliderHidden(slider)) 
-                                span.textContent = ' ' + val;
-                            }
-                        }
-                    }
-
-                    // Initial value
-                    updateSpan();
-
-                    // Update on slider input
-                    slider.addEventListener('input', updateSpan);
-                });
-            });
-        </script>
-        <br>
-        <canvas id="visualizer" width="800" height="400"></canvas>
-        <div id="controls2">
-            <div id="changeBack" style="display: block;">
-                <button id="changeBackButton">Change to FFT Mode</button>
+                <div class="form-group">
+                    <label>Carrier Input:</label>
+                    <input type="file" id="audioInput" class="form-control" draggable="true">
+                </div>
             </div>
-        <button id="ViewProperties">View properties</button>
-        |
-        <input type="file" id="carrierInput" draggable="true">
-        |
-        <input type="file" id="audioInput" draggable="true">
 
-        <br>
-        <label for="decayType">Decay Type:</label>
-        <select id="decayType">
-            <option value="1">RMS</option>
-            <option value="2">Peak</option>
-        </select>
-        |
-        <label for="release">Release:</label>
-        <input type="range" id="release" value="0" min="0" max="0.99" step="0.01">
-        <br>
-        <label for="pitch">Pitch: </label>
-        <input type="range" id="pitch" value="0" min="-24" max="24" step="1">
-        |
-        <label for="BandShift">Shift: </label>
-        <input type="range" id="BandShift" value="0" min="-100" max="100" step="1">
-        |
-        <label for="FreqFlip">Flip:</label>
-        <input type="checkbox" id="FreqFlip">
-        
-        <div id="FFTcontrols" style="display: none;">
-            <label for="BandBreak">Band Break:</label>
-            <input type="checkbox" id="BandBreak">
-            <br>
-            <label for="BR_voc_Type">Broken vocoder:</label>
-            <select id="BR_voc_Type"> <!--anything with F  L  A  T, i don't recomend using for vocoding -->
-                <option value="0">OFF</option>
-                <!--waveforms-->
-                <option value="1">Triangle</option> <!--Best sounding (sounds like it's bit-crushed)-->
-                <option value="5">Square</option> <!--F  L  A  T-->
-                <option value="6">Sawtooth</option> <!--F  L  A  T  2-->
-                <option value="11">semi-sine</option> <!--0 bass at all it's all treble (don't recomend for vocoding)-->
-                <!--repeated functions-->
-                <option value="2">double sine</option> <!--no bass (still good tho)-->
-                <option value="7">triple sine</option> <!--same as double sine-->
-                <option value="8">half sine</option> <!--it sounds like the bands are wide-->
-                <option value="10">sine squared</option> <!--F  L  A  T  3-->
-                <option value="14">sine cubed</option> <!--kinda like the trianle one-->
-                <!--multiplication (sin(o*2))-->
-                <option value="3">2 sine</option> <!--it's half sine but with more bass and it's wider-->
-                <option value="4">3 sine</option> <!--B  A  S  S-->
-                <option value="9">squared sine</option> <!--F  L  A  T  4-->
-                <!--Special waves-->
-                <option value="12">IDK</option> <!--i genuinely have no idea what this is but it sounds like a retro game comming from an old TV-->
-                <option value="13">Noise</option> <!--F  L  A  T  5-->
-                <option value="15">sine sine</option> <!--this is a joke, sin(o*sin(o))-->
-                <option value="16">harmonics sq</option> <!--harmonic serries-->
-                <option value="17">harmonics saw</option> <!--harmonic serries-->
-                <option value="18">Bitwise</option> <!--sounds like Triangle but more bit-crushed-->
-                <option value="19">Floor</option> <!--sounds like Triangle but more bit-crushed-->
-            </select>
-            |
-            <label for="BR_out">Broken vocoder out</label>
-            <select id="BR_out">
-                <option value="1">Both</option>
-                <option value="2">Input</option>
-                <option value="3">Carrier</option>
-            </select>
-            <br>
-            <label for="volume">volume: </label>
-            <input type="range" id="volume" value="1" min="0" max="2" step="0.01">
-            |
-            <label for="clamp_output">Clamp out</label>
-            <select id="clamp_output">
-                <option value="0">Off</option>
-                <option value="1">On</option>
-                <option value="2">individual</option>
-                <!--option value="3">Compressor</option-->
-                <option value="4">individual (soft)</option>
-            </select>
-            |
-            <label for="threshold">Clamp Threshold: </label>
-            <input type="range" id="threshold" value="1" min="0" max="1" step="0.01">
-            <br>
-            <label for="divbands">Divide bands: </label>
-            <input type="range" id="divbands" value="1" min="1" max="64">
-            |
-            <label for="FFTsize">FFT size: </label>
-            <input type="range" id="FFTsize" value="10" min="2" max="14" step="1">
-            <br>
-            <label for="BassBoost">Bass Boost: </label>
-            <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01">
-            |
-            <label for="BassCurve">Bass Curve</label>
-            <select id="BassCurve">
-                <option value="0">+1</option>
-                <option value="1">x/i</option>
-                <option value="2">quadratic</option>
-            </select>
-            |
-            <label for="EQType">Norm EQ type</label>
-            <select id="EQType">
-                <option value="0">original</option>
-                <option value="1">sin</option>
-            </select>
-            <br>
-            <label for="steps">Steps: </label>
-            <input type="range" id="steps" value="0" min="0" max="16" step="1">
-            |
-            <label for="RoundType">Round Type</label>
-            <select id="RoundType">
-                <option value="0">Floor</option>
-                <option value="1">Round</option>
-                <option value="2">Ceil</option>
-            </select>
-            |
-            <label for="SoundGoodizer">SoundGoodizer? </label>
-            <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01">
-            <br>
-            <label for="simpleChorus">simple Chorus</label>
-            <select id="simpleChorus">
-                <option value="0">OFF</option>
-                <option value="1">sin</option>
-                <option value="2">cos</option>
-                <option value="3">asin</option>
-                <option value="4">acos</option>
-            </select>
-            |
-            <label for="speedType">speed</label>
-            <select id="speedType">
-                <option value="0">Auto</option>
-                <option value="1">file length</option>
-                <option value="2">user</option>
-            </select>
-            <label for="userSpeed" style="display: none;">| speed: </label>
-            <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01" style="display: none;">
-            <br>
+            <!-- Basic Controls Panel -->
+            <div class="control-panel">
+                <h3>Basic Controls</h3>
+                
+                <div class="form-group">
+                    <label for="decayType">Decay Type:</label>
+                    <select id="decayType" class="form-control">
+                        <option value="1">RMS</option>
+                        <option value="2">Peak</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="release">Release:</label>
+                    <input type="range" id="release" value="0" min="0" max="0.99" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="pitch">Pitch:</label>
+                    <input type="range" id="pitch" value="0" min="-24" max="24" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="BandShift">Shift:</label>
+                    <input type="range" id="BandShift" value="0" min="-100" max="100" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="FreqFlip">Flip:</label>
+                    <input type="checkbox" id="FreqFlip">
+                </div>
+            </div>
+
+            <!-- FFT Controls Panel -->
+            <div id="FFTcontrols" class="control-panel hidden">
+                <h3>FFT Vocoder Settings</h3>
+                
+                <div class="form-group">
+                    <label for="BandBreak">Band Break:</label>
+                    <input type="checkbox" id="BandBreak">
+                </div>
+
+                <div class="form-group">
+                    <label for="BR_voc_Type">Broken vocoder:</label>
+                    <select id="BR_voc_Type" class="form-control">
+                        <option value="0">OFF</option>
+                        <option value="1">Triangle</option>
+                        <option value="5">Square</option>
+                        <option value="6">Sawtooth</option>
+                        <option value="11">semi-sine</option>
+                        <option value="2">double sine</option>
+                        <option value="7">triple sine</option>
+                        <option value="8">half sine</option>
+                        <option value="10">sine squared</option>
+                        <option value="14">sine cubed</option>
+                        <option value="3">2 sine</option>
+                        <option value="4">3 sine</option>
+                        <option value="9">squared sine</option>
+                        <option value="12">IDK</option>
+                        <option value="13">Noise</option>
+                        <option value="15">sine sine</option>
+                        <option value="16">harmonics sq</option>
+                        <option value="17">harmonics saw</option>
+                        <option value="18">Bitwise</option>
+                        <option value="19">Floor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="BR_out">Broken vocoder out:</label>
+                    <select id="BR_out" class="form-control">
+                        <option value="1">Both</option>
+                        <option value="2">Input</option>
+                        <option value="3">Carrier</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="volume">Volume:</label>
+                    <input type="range" id="volume" value="1" min="0" max="2" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="clamp_output">Clamp out:</label>
+                    <select id="clamp_output" class="form-control">
+                        <option value="0">Off</option>
+                        <option value="1">On</option>
+                        <option value="2">individual</option>
+                        <!--option value="4">individual (soft)</option-->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="threshold">Clamp Threshold:</label>
+                    <input type="range" id="threshold" value="1" min="0" max="1" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="divbands">Divide bands:</label>
+                    <input type="range" id="divbands" value="1" min="1" max="64" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="FFTsize">FFT size:</label>
+                    <input type="range" id="FFTsize" value="10" min="2" max="14" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="BassBoost">Bass Boost:</label>
+                    <input type="range" id="BassBoost" value="0" min="-4" max="4" step=".01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="BassCurve">Bass Curve:</label>
+                    <select id="BassCurve" class="form-control">
+                        <option value="0">+1</option>
+                        <option value="1">x/i</option>
+                        <option value="2">quadratic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="EQType">Norm EQ type:</label>
+                    <select id="EQType" class="form-control">
+                        <option value="0">original</option>
+                        <option value="1">sin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="steps">Steps:</label>
+                    <input type="range" id="steps" value="0" min="0" max="16" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="RoundType">Round Type:</label>
+                    <select id="RoundType" class="form-control">
+                        <option value="0">Floor</option>
+                        <option value="1">Round</option>
+                        <option value="2">Ceil</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="SoundGoodizer">SoundGoodizer:</label>
+                    <input type="range" id="SoundGoodizer" value="0" min="0" max="1" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="simpleChorus">Simple Chorus:</label>
+                    <select id="simpleChorus" class="form-control">
+                        <option value="0">OFF</option>
+                        <option value="1">sin</option>
+                        <option value="2">cos</option>
+                        <option value="3">asin</option>
+                        <option value="4">acos</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="speedType">Speed:</label>
+                    <select id="speedType" class="form-control">
+                        <option value="0">Auto</option>
+                        <option value="1">file length</option>
+                        <option value="2">user</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden">
+                    <label for="userSpeed">Speed:</label>
+                    <input type="range" id="userSpeed" value="1" min="0" max="100" step="0.01" class="form-control">
+                </div>
+            </div>
+
+            <!-- Analog Controls Panel -->
+            <div id="analogControls" class="control-panel hidden">
+                <h3>Analog Vocoder Settings</h3>
+
+                <div class="form-group">
+                    <label for="AutoUpdateFilters">Auto-update Filters:</label>
+                    <input type="checkbox" id="AutoUpdateFilters" checked>
+                    <button id="ManualStudyFilters" class="hidden">Update Study Filters</button>
+                </div>
+
+                <div class="visualizer-section">
+                    <canvas id="filterView" width="700" height="100"></canvas>
+                </div>
+
+                <div class="form-group">
+                    <label for="TotalBands">Total Bands:</label>
+                    <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="Resonance">Resonance:</label>
+                    <input type="range" id="Resonance" value=".92" min="0" max=".9999" step="0.0001" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="BPwidth">Bandpass Width:</label>
+                    <input type="range" id="BPwidth" value="0" min="0" max="1" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="Volboost">Volume Boost:</label>
+                    <input type="range" id="Volboost" value="1" min="0" max="10" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="DBperOct">dB per Octave: 12</label>
+                    <input type="range" id="DBperOct" value="2" min="1" max="8" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="Alt_BP">Alt Bandpass:</label>
+                    <select id="Alt_BP" class="form-control">
+                        <option value="0">Default</option>
+                        <option value="1">normal</option>
+                        <option value="2">weird</option>
+                        <option value="3">fast</option>
+                        <option value="4">3FLT</option>
+                        <option value="5">ApLp</option>
+                        <option value="6">True Cascade (slow)</option>
+                        <option value="7">True Cascade2 (slow)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="decayByFreq">Decay by Frequency:</label>
+                    <select id="decayByFreq" class="form-control">
+                        <option value="0">fixed</option>
+                        <option value="1">High priority</option>
+                        <option value="2">Low priority</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <lebel for="freqCurve">Frequency Curve:</lebel>
+                    <select id="freqCurve" class="form-control">
+                        <option value="0">linear</option>
+                        <option value="1">logarithmic</option>
+                        <option value="2">exponential</option>
+                        <option value="3">exponential (base2)</option>
+                        <option value="4">squared</option>
+                        <option value="5">Audaciy aproxinarion</option>
+                        <option value="6">Square root</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <lebel for="UseResBasedOnDistance">Use Resonance Based on Distance (Audaciy aproxinarion):</lebel>
+                    <input type="checkbox" id="UseResBasedOnDistance">
+                </div>
+
+                <!--adds -->
+                <div class="form-group">
+                    <label for="addLPtoLowEnd">Add LP to Low End:</label>
+                    <input type="checkbox" id="addLPtoLowEnd" checked>
+                </div>
+            </div>
+
+            <!-- 4ormulator Controls Panel -->
+            <div id="4ormClone" class="control-panel hidden">
+                <h3>4ormulator Settings</h3>
+
+                <div class="form-group">
+                    <label for="Ag">Base frequency:</label>
+                    <input type="range" id="Ag" value=".125" min="0" max="1" step="0.001" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="Resonance4orm">Resonance:</label>
+                    <input type="range" id="Resonance4orm" value="0.999" min="0" max="0.999" step="0.001" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="4ormFilterType">Filter Type:</label>
+                    <select id="4ormFilterType" class="form-control">
+                        <option value="0">ApLp</option>
+                        <option value="1">Lp12</option>
+                        <option value="2">BP12</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="UseArrLength">Use Array Length:</label>
+                    <input type="checkbox" id="UseArrLength">
+                </div>
+
+                <div class="form-group">
+                    <label for="MaxHarm">Max Harmonics:</label>
+                    <input type="range" id="MaxHarm" value="16" min="1" max="1000" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="4ormVolume">Volume:</label>
+                    <input type="range" id="4ormVolume" value="1" min="0" max="10" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="use_gen">Use generator:</label>
+                    <input type="checkbox" id="use_gen">
+                </div>
+
+                <div class="form-group">
+                    <label for="gen_type">Generator (filtered):</label>
+                    <select id="gen_type" class="form-control">
+                        <option value="0">Input 2</option>
+                        <option value="1">sine</option>
+                        <option value="2">triangle</option>
+                        <option value="3">sawtooth</option>
+                        <option value="4">PWM</option>
+                        <option value="5">noise</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="PWMwidth">PWM width:</label>
+                    <input type="range" id="PWMwidth" value="0.5" min="0" max="1" step="0.01" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="resonance2">Resonance 2:</label>
+                    <input type="range" id="resonance2" value="0.99" min="0" max="0.999" step="0.001" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="Harmonics">Offsets (Array only):</label>
+                    <textarea id="Harmonics" class="form-control">[-5,2,7,10].map((i)=&gt;2**((i+3)/12)*Math.PI/128/HZ*2048*440)</textarea>
+                </div>
+
+                <!-- Harmonics Buttons -->
+                <div class="keyboard-section">
+                    <div id="harm">
+                        <h3>Harmonics</h3>
+                        <!-- This will be populated with buttons H1-H12 -->
+                    </div>
+                </div>
+
+                <!-- Easy Mode Keyboard -->
+                <div class="keyboard-section">
+                    <div id="easyKeyboard">
+                        <h3>Easy Mode Keyboard</h3>
+                        <div class="keyboard-container" id="keyboardContainer">
+                            <!-- Keyboard will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Controls Panel -->
+            <div class="control-panel">
+                <h3>Processing</h3>
+                
+                <div class="form-group">
+                    <label for="iterations">Iterations:</label>
+                    <input type="number" id="iterations" value="1" min="1" class="form-control">
+                    <small class="text-muted">It may get loud (or not, I don't recommend using this with long audio files)</small>
+                </div>
+            </div>
         </div>
-        <div id="analogControls" style="display: none;">
-        <div style="margin-top: 10px;">
-        <label for="Auto-update Filters">Auto-update Filters:</label>
-        <input type="checkbox" id="AutoUpdateFilters" checked="">
-        <button id="ManualStudyFilters" style="display: none; margin-left: 10px;">Update Study Filters</button>
+
+        <!-- Help Popup -->
+        <div id="helpPopup" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: #333; padding: 30px; border-radius: 15px; color: #fff; max-width: 90vw; max-height: 90vh; overflow-y: auto; width: 600px;">
+                <h2>Help</h2>
+                <p>Welcome to the Crappy FFT Vocoder!</p>
+                <p>This is a Fast Fourier Transform based vocoder that uses a lot of math to process audio files.</p>
+                <p><strong>What is FFT?</strong></p>
+                <p>The Fast Fourier Transform (FFT) is an algorithm that quickly converts a signal from its original time domain into a frequency domain. This allows the vocoder to analyze and manipulate the different frequency components of audio, enabling effects like filtering, modulation, and vocoding.</p>
+                <p>Learn more about the <a href="https://en.wikipedia.org/wiki/Fast_Fourier_transform" target="_blank" rel="noopener noreferrer" style="color:#4af;">Fast Fourier Transform (FFT)</a> on Wikipedia.</p>
+                <p>This is why it's taking so long to process</p>
+                <p>Fun fact: dividing the FFT index by 2 will multiply the pitch by 2, multiplying it will do the opposite</p>
+                <p>Here are some instructions and information to get you started:</p>
+                
+                <h3>Basic Controls:</h3>
+                <ul>
+                    <li><strong>Decay Type:</strong> Choose between RMS and Peak for the decay type.</li>
+                    <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
+                    <li><strong>Pitch:</strong> Adjust the pitch of the vocoded audio (input only).</li>
+                    <li><strong>Shift:</strong> Shifts the FFT bands of the vocoded audio (input only)</li>
+                </ul>
+
+                <h3>FFT Vocoder Mode:</h3>
+                <ul>
+                    <li><strong>Band Break:</strong> This shifts the bands a couple of times</li>
+                    <li><strong>Flip:</strong> Self explanatory, it flips the bands</li>
+                    <li><strong>Broken Vocoder Type:</strong> Select the type of broken vocoder effect.</li>
+                    <li><strong>Volume:</strong> Adjust the volume of the output audio.</li>
+                    <li><strong>FFT Size:</strong> Adjust the size of the FFT used for processing.</li>
+                </ul>
+
+                <h3>Analog Vocoder Mode:</h3>
+                <ul>
+                    <li><strong>Total Bands:</strong> Sets the number of filter bands (more bands = more detailed vocoding).</li>
+                    <li><strong>Resonance:</strong> Controls the sharpness of the bandpass filters.</li>
+                    <li><strong>Volume Boost:</strong> Increases the output volume after processing.</li>
+                </ul>
+
+                <h3>4ormulator Mode:</h3>
+                <ul>
+                    <li><strong>Base frequency:</strong> Sets the base frequency of Offsets.</li>
+                    <li><strong>Max Harmonics:</strong> Sets the maximum amount of harmonics</li>
+                    <li><strong>Offsets:</strong> Sets the offset (shift) for the filter.</li>
+                </ul>
+
+                <div style="margin-top: 20px; font-size: 12px; color: #aaa;">
+                    Version 1.2<br>
+                    Made by D3nschot (DX3050)
+                </div>
+                
+                <button id="closeHelpButton" style="margin-top: 20px;">Close</button>
+            </div>
         </div>
-            <canvas id="filterView" width="700" height="100"></canvas>
-            <br>
-            <label for="TotalBands">Total Bands: </label>
-            <input type="range" id="TotalBands" value="40" min="1" max="1024" step="1">
-            |
-            <label for="Resonance">Resonance: </label>
-            <input type="range" id="Resonance" value=".92" min="0" max=".999" step="0.001">
-            <br>
-            <label for="BPwidth">Bandpass Width: </label>
-            <input type="range" id="BPwidth" value="0" min="0" max="1" step="0.01">
-            |
-            <label for="Volboost">Volume Boost: </label>
-            <input type="range" id="Volboost" value="1" min="0" max="10" step="0.01">
-            <br>
-            <label for="DBperOct">dB per Octave: 12</label>
-            <input type="range" id="DBperOct" value="2" min="1" max="8" step="1">
-            |
-            <label for="Alt_BP">Alt Bandpass:</label>
-            <select id="Alt_BP">
-                <option value="0">Default</option>
-                <option value="1">normal</option>
-                <option value="2">weird</option>
-                <option value="3">fast</option>
-                <option value="4">3FLT</option>
-                <option value="5">ApLp</option>
-            </select>
-        <!--filter analize block-->
-            <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                // Reference to checkbox and button
-                const autoUpdateCheckbox = document.getElementById('AutoUpdateFilters');
-                const manualStudyButton = document.getElementById('ManualStudyFilters');
+    </div>
 
-                // Watch checkbox toggle to show/hide the manual update button
-                autoUpdateCheckbox.addEventListener('change', () => {
-                    manualStudyButton.style.display = autoUpdateCheckbox.checked ? 'none' : 'inline-block';
-                });
+    <!-- GitHub Corner Link -->
+    <a href="https://github.com/D3nschot/crappy-FFT-vocoder" class="github-corner">Fork me on GitHub :)</a>
 
-                // Attach event listener to the manual button
-                manualStudyButton.addEventListener('click', () => {
-                    if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
-                });
+    <script>
+        // Quote system
+        const quotes = [
+            "FFT? I only know it as Functional Family Therapy",
+            "I love math -D3nschot",
+            "I love math -DX3050",
+            "probably gonna make Crappy Analog Voc- oh wait, I already did",
+            "A fast Fourier transform (FFT) is an algorithm that computes the discrete Fourier transform (DFT) of a sequence, or its inverse (IDFT).",
+            "Don't we love how long it takes to process audio files? :D",
+            "new ui? because why not?"
+        ];
 
-                // Attach to analog controls for live update if auto-update is enabled
-                ['TotalBands', 'Resonance', 'DBperOct', 'BPwidth', 'Alt_BP', 'AutoUpdateFilters'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        const handler = () => {
-                            const autoUpdate = document.getElementById('AutoUpdateFilters');
-                            if (!autoUpdate || autoUpdate.checked) {
-                                studyAnalogFilters();
+        document.getElementById('Title').addEventListener('click', function() {
+            const quoteEl = document.getElementById('randomQuote');
+            quoteEl.style.display = 'block';
+            quoteEl.innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        });
+
+        document.getElementById('randomQuote').addEventListener('click', function() {
+            this.innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        });
+
+        // Initialize quote
+        document.getElementById('randomQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+
+        // Auto-value span system for sliders
+        document.addEventListener('DOMContentLoaded', function() {
+            const skipIds = ['FFTsize', 'DBperOct'];
+            const offWhenZero = ['steps', 'SoundGoodizer'];
+
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+                let label = document.querySelector(`label[for="${slider.id}"]`);
+                if (!label) return;
+
+                let span = label.parentNode.querySelector(`.auto-value-span[data-for="${slider.id}"]`);
+                if (!span) {
+                    span = document.createElement('span');
+                    span.className = 'auto-value-span value-label';
+                    span.dataset.for = slider.id;
+                    label.parentNode.appendChild(span);
+                }
+
+                // Add click-to-edit functionality
+                if (!skipIds.includes(slider.id)) {
+                    span.style.cursor = 'pointer';
+                    span.title = 'Click to edit value';
+                    span.addEventListener('click', function(e) {
+                        if (span.querySelector('input')) return;
+                        
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.value = slider.value;
+                        input.style.width = '60px';
+                        input.style.fontSize = 'inherit';
+                        input.style.background = 'rgba(68, 68, 68, 0.8)';
+                        input.style.color = '#fff';
+                        input.style.border = '1px solid #5ac8fa';
+                        input.style.borderRadius = '4px';
+                        input.style.padding = '2px 4px';
+                        
+                        span.textContent = '';
+                        span.appendChild(input);
+                        input.focus();
+                        input.select();
+                        
+                        function finishEdit() {
+                            let val = input.value;
+                            if (slider.min !== '') val = Math.max(Number(slider.min), val);
+                            if (slider.max !== '') val = Math.min(Number(slider.max), val);
+                            slider.value = val;
+                            slider.dispatchEvent(new Event('input'));
+                            updateSpan();
+                        }
+                        
+                        input.addEventListener('blur', finishEdit);
+                        input.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') finishEdit();
+                            else if (e.key === 'Escape') updateSpan();
+                        });
+                    });
+                }
+
+                function updateSpan() {
+                    let val = slider.value;
+                    if (offWhenZero.includes(slider.id) && (val === "0" || val === 0)) {
+                        span.textContent = ' OFF';
+                    } else {
+                        if (skipIds.includes(slider.id)) {
+                            switch (slider.id) {
+                                case 'FFTsize':
+                                    span.textContent = ' ' + (Math.pow(2, val)).toFixed(0);
+                                    break;
+                                case 'DBperOct':
+                                    span.textContent = ' 12';
+                                    break;
+                                default:
+                                    span.textContent = '';
                             }
-                        };
-                        el.addEventListener('input', handler);
-                        el.addEventListener('change', handler);
+                        } else {
+                            span.textContent = ' ' + val;
+                        }
                     }
-                });
+                }
 
-                // Call studyAnalogFilters once on page load if available
+                updateSpan();
+                slider.addEventListener('input', updateSpan);
+            });
+        });
+
+        // Mode switching system
+        let Vmode = 0; // Start with 4ormulator mode
+
+        function SetUpUI() {
+            const controls = ['FFTcontrols', 'analogControls', '4ormClone'];
+            const configs = [
+                { title: 'Crappy FFT Vocoder', whatIs: 'a Fast Fourier Transform vocoder', button: 'Change to Analog Mode', show: 0 },
+                { title: 'Crappy Analog Vocoder', whatIs: 'an Analog Vocoder', button: 'Change to 4ormulator Mode', show: 1 },
+                { title: 'Crappy 4ormulator clone', whatIs: 'an 4ormulator clone', button: 'Change to FFT Mode', show: 2 }
+            ];
+
+            // Hide all controls
+            controls.forEach(id => document.getElementById(id).classList.add('hidden'));
+            
+            // Show current mode
+            const config = configs[Vmode];
+            document.getElementById('Title').textContent = config.title;
+            document.getElementById('what_is').textContent = config.whatIs;
+            document.getElementById('changeBackButton').textContent = config.button;
+            document.getElementById(controls[config.show]).classList.remove('hidden');
+        }
+
+        document.getElementById('changeBackButton').addEventListener('click', function() {
+            Vmode = ((Number(Vmode) || 0) + 1) % 3;
+            SetUpUI();
+            
+            const params = new URLSearchParams(window.location.search);
+            params.set('Vmode', Vmode);
+            const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
+        });
+
+        // Speed type visibility control
+        document.getElementById('speedType').addEventListener('change', function(event) {
+            const userSpeedGroup = document.querySelector('label[for="userSpeed"]').parentNode;
+            if (event.target.value == '2') {
+                userSpeedGroup.classList.remove('hidden');
+            } else {
+                userSpeedGroup.classList.add('hidden');
+            }
+        });
+
+        // Auto-update filters toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const autoUpdateCheckbox = document.getElementById('AutoUpdateFilters');
+            const manualStudyButton = document.getElementById('ManualStudyFilters');
+
+            autoUpdateCheckbox.addEventListener('change', () => {
+                if (autoUpdateCheckbox.checked) {
+                    manualStudyButton.classList.add('hidden');
+                } else {
+                    manualStudyButton.classList.remove('hidden');
+                }
+            });
+
+            manualStudyButton.addEventListener('click', () => {
                 if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
             });
-            </script>
-        </div>
-        <div id="4ormClone" style="display: block;">
-            <div id="apControls" style="display: block; margin-bottom: 1em;">
-            <label for="Ag">Base frequency: </label>
-            <input type="range" id="Ag" value=".125" min="0" max="1" step="0.001">
-            |
-            <label for="Resonance4orm">Resonance: </label>
-            <input type="range" id="Resonance4orm" value="0.999" min="0" max="0.999" step="0.001">
-            |
-            <label for="4ormFilterType">Filter Type:</label>
-            <select id="4ormFilterType">
-                <option value="0">ApLp</option>
-                <option value="1">Lp12</option>
-                <option value="2">BP12</option>
-            </select>
-            <br>
-            <label for="UseArrLength">Use Array Length:</label>
-            <input type="checkbox" id="UseArrLength">
-            |
-            <label for="MaxHarm">Max Harmonics: </label>
-            <input type="range" id="MaxHarm" value="16" min="1" max="1000" step="1">
-            |
-            <label for="4ormVolume">Volume: </label>
-            <input type="range" id="4ormVolume" value="1" min="0" max="10" step="0.01">
-            <br>
-            <!--<label for="4ormFilterType">Osc Filter Type:</label>
-            <select id="4ormFilter2Type">
-                <option value="0">None</option>
-                <option value="1">ApLp</option>
-                <option value="2">Lp12</option>
-                <option value="3">BP12</option>
-            </select>
-            |-->
-            <label for="use_gen">use generator</label>
-            <input type="checkbox" id="use_gen">
-            |
-            <label for="gen_type">generator (filtered):<label>
-            <select id="gen_type">
-                <option value="0">Input 2</option>
-                <option valuw="1">sine</option>
-                <option value="2">triangle</option>
-                <option value="3">sawtooth</option>
-                <option value="4">PWM</option>
-                <option value="5">noise</option>
-            </select>
-            <br>
-            <label for="PWMwidth">PWM width: </label>
-            <input type="range" id="PWMwidth" value="0.5" min="0" max="1" step="0.01">
-            |
-            <label for="resonance2">Resonance 2: </label>
-            <input type="range" id="resonance2" value="0.99" min="0" max="0.999" step="0.001">
-            <br>
-            <label for="Harmonics">Offsets (Array only)</label>
-            <br>
-            <textarea id="Harmonics" value="[-5,2,7,10].map((i)=&gt;2**((i+3)/12)*Math.PI/128/HZ*2048*440)" style="
-                box-sizing: border-box;
-                resize: vertical;
-                max-width: 800px;
-                max-height: 200px;
-                min-width: 100px;
-                min-height: 40px;
-            ">[-5,2,7,10].map((i)=&gt;2**((i+3)/12)*Math.PI/128/HZ*2048*440)</textarea>
-            <!--textarea stuff-->
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const harmonicsTextarea = document.getElementById('Harmonics');
-                    if (harmonicsTextarea) {
-                        harmonicsTextarea.addEventListener('keydown', function(e) {
-                            if (e.key === 'Tab') {
-                                e.preventDefault();
-                                const start = this.selectionStart;
-                                const end = this.selectionEnd;
-                                // Insert tab character at cursor
-                                this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
-                                // Move cursor after the tab
-                                this.selectionStart = this.selectionEnd = start + 1;
-                            }
-                        });
+
+            ['TotalBands', 'Resonance', 'DBperOct', 'BPwidth', 'Alt_BP', 'AutoUpdateFilters'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const handler = () => {
+                        const autoUpdate = document.getElementById('AutoUpdateFilters');
+                        if (!autoUpdate || autoUpdate.checked) {
+                            if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
+                        }
+                    };
+                    el.addEventListener('input', handler);
+                    el.addEventListener('change', handler);
+                }
+            });
+
+            if (typeof studyAnalogFilters === 'function') studyAnalogFilters();
+        });
+
+        // Harmonics textarea tab support
+        document.addEventListener('DOMContentLoaded', function() {
+            const harmonicsTextarea = document.getElementById('Harmonics');
+            if (harmonicsTextarea) {
+                harmonicsTextarea.addEventListener('keydown', function(e) {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const start = this.selectionStart;
+                        const end = this.selectionEnd;
+                        this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
+                        this.selectionStart = this.selectionEnd = start + 1;
                     }
                 });
-            </script>
-            <div id="harm">
-                <h3>Harmonics</h3>
-                <!-- This will be populated with buttons H1-H12 -->
-            </div>
-            <script>
-            // Function to create 12 buttons labeled H1-H12 and append to #harm
-            function createHarmonicButtons() {
-                const harmDiv = document.getElementById('harm');
-                if (!harmDiv) return;
-                // Use a global array for selected harmonics
-                window.harmString = window.harmString || [];
-                // Remove old buttons if any
-                Array.from(harmDiv.querySelectorAll('button.harm-btn')).forEach(btn => btn.remove());
-                for (let i = 1; i <= 12; i++) {
-                    const btn = document.createElement('button');
-                    btn.textContent = `H${i}`;
-                    btn.className = 'harm-btn';
-                    btn.style.margin = '2px';
-                    btn.dataset.harmonic = i;
-                    // Set initial color if selected
-                    if (window.harmString.includes(i)) {
+            }
+        });
+
+        // Harmonic buttons system
+        function createHarmonicButtons() {
+            const harmDiv = document.getElementById('harm');
+            if (!harmDiv) return;
+            
+            window.harmString = window.harmString || [];
+            
+            Array.from(harmDiv.querySelectorAll('button.harm-btn')).forEach(btn => btn.remove());
+            
+            for (let i = 1; i <= 12; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = `H${i}`;
+                btn.className = 'harm-btn';
+                btn.dataset.harmonic = i;
+                
+                if (window.harmString.includes(i)) {
+                    btn.style.backgroundColor = "#0055ff";
+                    btn.style.color = "#fff";
+                }
+                
+                btn.addEventListener("click", () => {
+                    const idx = window.harmString.indexOf(i);
+                    if (idx !== -1) {
+                        window.harmString.splice(idx, 1);
+                        btn.style.backgroundColor = "";
+                        btn.style.color = "";
+                    } else {
+                        window.harmString.push(i);
                         btn.style.backgroundColor = "#0055ff";
                         btn.style.color = "#fff";
                     }
-                    btn.addEventListener("click", () => {
-                        const idx = window.harmString.indexOf(i);
-                        if (idx !== -1) {
-                            window.harmString.splice(idx, 1);
-                            btn.style.backgroundColor = "";
-                            btn.style.color = "";
-                        } else {
-                            window.harmString.push(i);
-                            btn.style.backgroundColor = "#0055ff";
-                            btn.style.color = "#fff";
-                        }
-                        if (typeof updateHarmonicsText === 'function') updateHarmonicsText();
-                    });
-                    harmDiv.appendChild(btn);
-                }
+                    if (typeof updateHarmonicsText === 'function') updateHarmonicsText();
+                });
+                
+                harmDiv.appendChild(btn);
             }
-            // Call it on DOMContentLoaded and after heldNotes is initialized
-            document.addEventListener('DOMContentLoaded', createHarmonicButtons);
-            // Also re-create buttons if heldNotes changes (optional, for sync)
-            window.createHarmonicButtons = createHarmonicButtons;
-            </script>
-            <div id="easyKeyboard">
-                <h3>Easy Mode Keyboard</h3>
-            </div>
-            <script>
-                // Example: Simulate adding/removing notes to trigger updates
-                // In your actual application, these would be called on noteOn/noteOff events
-                function addNote(note) {
-                    heldNotes.add(note);
-                    updateHarmonicsText();
+        }
+
+        // Piano keyboard system
+        const semitoneNames = [
+            { name: 'C', black: false },
+            { name: 'C#', black: true },
+            { name: 'D', black: false },
+            { name: 'D#', black: true },
+            { name: 'E', black: false },
+            { name: 'F', black: false },
+            { name: 'F#', black: true },
+            { name: 'G', black: false },
+            { name: 'G#', black: true },
+            { name: 'A', black: false },
+            { name: 'A#', black: true },
+            { name: 'B', black: false },
+        ];
+
+        const heldNotes = new Set();
+        const keyboard = document.getElementById("easyKeyboard");
+        const totalKeys = 60;
+        const base = -24;
+
+        function updateHarmonicsText() {
+            const harmonicsArea = document.getElementById("Harmonics");
+            if (!harmonicsArea) return;
+
+            const arr = Array.from(heldNotes).sort((a, b) => a - b);
+            const harmArr = (window.harmString || []).slice().sort((a, b) => a - b);
+            const arrString = `[${arr.join(",")}]`;
+            const harmString = `[${harmArr.join(",")}]`;
+            const mapFunctionString = `.flatMap((i)=>{\n    f=2**((i+3)/12)*Math.PI/128/HZ*2048*440;\n    return ${harmString}.map(a=>a*f);\n})`;
+            harmonicsArea.value = arrString + mapFunctionString;
+        }
+
+        function renderKeyboard() {
+            keyboard.innerHTML = '';
+            
+            let split = keyboard.offsetWidth < 600 || window.innerWidth < 700;
+            let keysPerRow = split ? 12 : 24;
+            
+            for (let k = 0; k < totalKeys; k++) {
+                if (k % keysPerRow === 0) {
+                    var rowDiv = document.createElement("div");
+                    rowDiv.className = "keyboard-row";
+                    keyboard.appendChild(rowDiv);
                 }
 
-                function removeNote(note) {
-                    heldNotes.delete(note);
-                    updateHarmonicsText();
+                const intVal = k + base;
+                const name = semitoneNames[k % 12];
+                const isBlack = name.black;
+
+                const btn = document.createElement("button");
+                btn.className = `key-button ${isBlack ? 'black' : 'white'}`;
+                btn.dataset.note = intVal;
+                if (isBlack) {
+                    btn.style.marginLeft = "-21px";
+                    btn.style.marginRight = "-21px";
+                } else {
+                    btn.style.marginLeft = "0";
+                    btn.style.marginRight = "0";
                 }
 
-                // Initial call to set the text area when the page loads
-                document.addEventListener('DOMContentLoaded', () => {
-                    updateHarmonicsText(); // Initialize with the default .map() if nothing is present
+
+                if (heldNotes.has(intVal)) {
+                    btn.classList.add('active');
+                }
+
+                btn.addEventListener("click", () => {
+                    if (heldNotes.has(intVal)) {
+                        heldNotes.delete(intVal);
+                        btn.classList.remove('active');
+                    } else {
+                        heldNotes.add(intVal);
+                        btn.classList.add('active');
+                    }
+                    updateHarmonicsText();
                 });
 
-                const semitoneNames = [
-                    { name: 'C', black: false },
-                    { name: 'C#', black: true },
-                    { name: 'D', black: false },
-                    { name: 'D#', black: true },
-                    { name: 'E', black: false },
-                    { name: 'F', black: false },
-                    { name: 'F#', black: true },
-                    { name: 'G', black: false },
-                    { name: 'G#', black: true },
-                    { name: 'A', black: false },
-                    { name: 'A#', black: true },
-                    { name: 'B', black: false },
-                ];
+                rowDiv.appendChild(btn);
+            }
+        }
 
-                // Initialize heldNotes from localStorage
-                const storedNotes = localStorage.getItem('heldNotes');
-                const heldNotes = new Set(storedNotes ? JSON.parse(storedNotes) : []);
-
-                const keyboard = document.getElementById("easyKeyboard");
-                const totalKeys = 60; // C0 to B4 (C5 excluded)
-                const base = -24;     // makes C2 = 0
-
-                // Function to save heldNotes to localStorage
-                function saveHeldNotes() {
-                    localStorage.setItem('heldNotes', JSON.stringify(Array.from(heldNotes)));
-                }
-
-                function updateHarmonicsText() {
-                    const harmonicsArea = document.getElementById("Harmonics");
-                    if (!harmonicsArea) return;
-
-                    // Use heldNotes for keyboard, harmString for harmonics
-                    const arr = Array.from(heldNotes).sort((a, b) => a - b);
-                    const harmArr = (window.harmString || []).slice().sort((a, b) => a - b);
-                    const arrString = `[${arr.join(",")}]`;
-                    const harmString = `[${harmArr.join(",")}]`;
-                    // Compose a .flatMap string using the dedicated harmonics array
-                    const mapFunctionString = `.flatMap((i)=>{\n    f=2**((i+3)/12)*Math.PI/128/HZ*2048*440;\n    return ${harmString}.map(a=>a*f);\n})`;
-                    harmonicsArea.value = arrString + mapFunctionString;
-                }
-
-                // Responsive split logic
-                function renderKeyboard() {
-                    keyboard.innerHTML = '';
-                    // Check if the keyboard container is too small
-                    let split = false;
-                    if (keyboard.offsetWidth < 600 || window.innerWidth < 700) {
-                        split = true;
-                    }
-                    let keysPerRow = split ? 12 : 24;
-                    let rows = split ? 5 : 3; // 60/12=5, 60/24=2.5 (so 3 rows for large screens)
-
-                    for (let k = 0; k < totalKeys; k++) {
-                        if (k % keysPerRow === 0) {
-                            var rowDiv = document.createElement("div");
-                            rowDiv.style.display = "flex";
-                            rowDiv.style.position = "relative";
-                            rowDiv.style.marginBottom = "8px";
-                            keyboard.appendChild(rowDiv);
-                        }
-
-                        const intVal = k + base;
-                        const name = semitoneNames[k % 12];
-                        const isBlack = name.black;
-
-                        const btn = document.createElement("button");
-                        const octave = Math.floor((k + base) / 12);
-                        btn.dataset.note = intVal;
-                        btn.style.position = "relative";
-                        btn.style.zIndex = isBlack ? 2 : 1;
-                        btn.style.paddingTop = "30px";
-                        btn.style.width = isBlack ? "3px" : "40px";
-                        btn.style.height = isBlack ? "60px" : "120px";
-                        if (isBlack) {
-                            btn.style.marginLeft = "-21px";
-                            btn.style.marginRight = "-21px";
-                        } else {
-                            btn.style.marginLeft = "0";
-                            btn.style.marginRight = "0";
-                        }
-
-                        btn.style.backgroundColor = isBlack ? "#222" : "#fff";
-                        btn.style.color = isBlack ? "#ccc" : "#000";
-                        btn.style.border = "1px solid #444";
-                        btn.style.borderRadius = "3px";
-                        btn.style.display = "inline-block";
-
-                        const activeColor = "#0055ff"; // blue
-
-                        // Check if this note was previously held (from localStorage)
-                        if (heldNotes.has(intVal)) {
-                            btn.style.backgroundColor = activeColor;
-                            btn.style.color = "#fff";
-                        }
-
-                        btn.addEventListener("click", () => {
-                            if (heldNotes.has(intVal)) {
-                                heldNotes.delete(intVal);
-                                btn.style.backgroundColor = isBlack ? "#222" : "#fff";
-                                btn.style.color = isBlack ? "#ccc" : "#000";
-                            } else {
-                                heldNotes.add(intVal);
-                                btn.style.backgroundColor = activeColor;
-                                btn.style.color = "#fff";
-                            }
-                            updateHarmonicsText();
-                        });
-
-                        rowDiv.appendChild(btn);
-                    }
-                }
-
-                // Initial render and update on resize
-                window.addEventListener('resize', renderKeyboard);
-                document.addEventListener('DOMContentLoaded', () => {
-                    renderKeyboard();
-                    //updateHarmonicsText();
-                });
-            </script>
-
-        </div> 
-        </div>
-            <label for="iterations">Iterations:</label>
-            <input type="number" id="iterations" value="1" min="1">
-            it may get loud (or not, i don't recomend using this with long audio files)
-        <br>
-        <button id="playButton" disabled="">Play Audio</button>
-        <button id="pauseButton" disabled="">Pause Audio</button>
-        <button id="stopButton" disabled="">Stop Audio</button>
-        <button id="downloadButton" disabled="">Download Audio</button>
-        <button id="reprocessButton" disabled="">Reprocess Audio</button>
-        <button id="helpButton">Help</button>
-        </div>
-        
-        <div id="helpPopup" style="display: none;">
-            <div style="background-color: #333; padding: 20px; border-radius: 10px; color: #fff; max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto;">
-            <h2>Help</h2>
-            <p>Welcome to the Crappy FFT Vocoder!</p>
-            <p>this is a Fast Fourier Transform based vocoder that uses a lot of math to process audio files.</p>
-            <p><strong>What is FFT?</strong></p>
-            <p>The Fast Fourier Transform (FFT) is an algorithm that quickly converts a signal from its original time domain into a frequency domain. This allows the vocoder to analyze and manipulate the different frequency components of audio, enabling effects like filtering, modulation, and vocoding.</p>
-            <p>Learn more about the <a href="https://en.wikipedia.org/wiki/Fast_Fourier_transform" target="_blank" rel="noopener noreferrer" style="color:#4af;">Fast Fourier Transform (FFT)</a> on Wikipedia.</p>
-            <p>this is why it's taking so long to process</p>
-
-            <p>fun fact: dividing the FFT index by 2 will multiply the pitch by 2, multiplying it will do the opposite
-            </p><p>Here are some instructions and information to get you started:</p>
-            <ul>
-            <li><strong>Decay Type:</strong> Choose between RMS and Peak for the decay type.</li>
-            <li><strong>Release:</strong> Adjust the release time for the vocoder (0 is no release and 1 is max release).</li>
-            <li><strong>Pitch:</strong> Adjust the pitch of the vocoded audio (input only).</li>
-            <li><strong>Shift:</strong> Shifts the FFT bands of the vocoded audio (input only)</li>
-            
-            <p><strong>FFT Vocoder Mode:</strong></p>
-            <li><strong>BandBreak:</strong> this shifts the bands a couple of times</li>
-            <li><strong>Flip:</strong> self explanitory it flips the bands</li>
-            <li><strong>Broken Vocoder Type:</strong> Select the type of broken vocoder effect.</li>
-            <ul>
-                <p>All the types with it's desciption I added</p>
-                <li>Triangle: Best sounding (sounds like it's bit-crushed)</li>
-                <li>Square: F L A T</li>
-                <li>Sawtooth: F L A T 2</li>
-                <li>semi-sine: 0 bass at all it's all treble (don't recommend for vocoding)</li>
-                <li>double sine: no bass (still good tho)</li>
-                <li>triple sine: same as double sine</li>
-                <li>half sine: it sounds like the bands are wide</li>
-                <li>sine squared: F L A T 3</li>
-                <li>sine cubed: kinda like the triangle one</li>
-                <li>2 sine: it's half sine but with more bass and it's wider</li>
-                <li>3 sine: B A S S</li>
-                <li>squared sine: F L A T 4</li>
-                <li>IDK: i genuinely have no idea what this is but it sounds like a retro game coming from an old TV</li>
-                <li>Noise: F L A T 5</li>
-                <li>sine sine: this is a joke, sin(o*sin(o)) also very flat</li>
-                <li>harmonics saw: harmonic series of a sawtooth also it's phase shifted by 90</li>
-                <li>harmonics sq: harmonic series of a square also it's phase shifted by 90</li>
-                <li>Bitwise: sounds like Triangle but more bit-crushed</li>
-                <li>Floor: sounds like Triangle but more bit-crushed</li>
-            </ul>
-            <br>
-            <li><strong>Broken Vocoder Out:</strong> Choose which audio to output (Both, Input, Carrier).</li>
-            <li><strong>Iterations:</strong> Set the number of iterations for processing.</li>
-            <li><strong>Volume:</strong> Adjust the volume of the output audio.</li>
-            <li><strong>Divide Bands:</strong> Adjust the number of bands to divide the audio into.</li>
-            <li><strong>Clamp Out:</strong> Choose whether to clamp the output audio (Off, On, individual bands).</li>
-            <li><strong>Clamp Threshold:</strong> Adjust the threshold for clamping the output audio.</li>
-            <li><strong>FFT Size:</strong> Adjust the size of the FFT (Fast Fourier Transform) used for processing.</li>
-            <li><strong>Bass Boost:</strong> Adjust the Bass boost level for the audio. (putting it in the negatives won't decrease it, it will increase it in a different way)</li>
-            <li><strong>Steps:</strong> Adjust the number of steps for quantizing the envelope (OFF means no quantization).</li>
-            <li><strong>Round Type:</strong> Choose the rounding type for the steps (Floor, Round, Ceil).</li>
-            
-            <p><strong>Analog Vocoder Mode:</strong></p>
-
-                <li><strong>Total Bands:</strong> Sets the number of filter bands (more bands = more detailed vocoding).</li>
-                <li><strong>Resonance:</strong> Controls the sharpness of the bandpass filters (higher values = more pronounced filtering).</li>
-                <li><strong>Bandpass Width:</strong> Adjusts the width of each bandpass filter. (only anvalibe ont the default bandpass)</li>
-                <li><strong>Volume Boost:</strong> Increases the output volume after processing.</li>
-                <li><strong>dB per Octave:</strong> Sets the filter slope (steepness) in decibels per octave.</li>
-                <li><strong>Alternative Bandpass:</strong> Switches to an alternative bandpass filter algorithm. (first one is really sensitive/strong)</li>
-                <ul>
-                    <li>Default: Default bandpass filter. it is really sensitive when Bandpass Width is 0</li>
-                    <li>Normal: A standard bandpass filter.</li>
-                    <li>Weird: non-linear filter.</li>
-                    <li>Fast: A faster bandpass filter with less processing time.</li>
-                    <li>3FLT: A bandpass filter that uses three filters for better sound.</li>
-                    <li>ApBp: uses an allpass to make lp by adding the original input to the output</li>
-                </ul>
-            
-            <p>just another way of vocoding</p>
-            
-            <li><strong>Simple Chorus:</strong> Choose the type of simple chorus effect.</li>
-            <li><strong>Speed:</strong> Choose the speed type for the chorus effect.</li>
-            <li><strong>User Speed:</strong> Adjust the user-defined speed for the chorus effect.</li>
-
-
-            <p><strong>4ormulator Mode:</strong></p>
-            <li><strong>Base frequency:</strong> Sets the base frquency of Offsets.</li>
-            <li><strong>Use Array Length:</strong> option for either use Max Harmonics or the length of offsets.</li>
-            <li><strong>Max Harmonics:</strong> Sets the maximum about of harmonics</li>
-            <li><strong>Offsets:</strong> Sets the offset (shift) for the filter.</li>
-            <br>
-            <div id="version">version 1.2</div> <!--current version-->
-            Made by D3nschot (DX3050)
-            </ul>
-            <button id="closeHelpButton">Close</button>
-            </div>
-        </div>
-
-    <script>
-        let dragSourceInput = null;
+        // Drag and drop system
         let draggingInputId = null;
 
         ['carrierInput', 'audioInput'].forEach(id => {
@@ -982,107 +1391,111 @@
             input.addEventListener('dragover', e => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
+                input.classList.add('drag-over');
+            });
+
+            input.addEventListener('dragleave', e => {
+                input.classList.remove('drag-over');
             });
 
             input.addEventListener('drop', e => {
                 e.preventDefault();
-                const targetId = id;
-                const sourceId = draggingInputId;
-
-                const sourceInput = document.getElementById(sourceId);
-                const targetInput = document.getElementById(targetId);
-
-                if (!sourceInput || !sourceInput.files || sourceId === targetId) return;
-
-                if (!targetInput.files.length) {
-                    targetInput.files = sourceInput.files;
-                    targetInput.dispatchEvent(new Event('change'));
-                    return;
+                input.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    input.files = files;
+                    input.dispatchEvent(new Event('change'));
                 }
-
-                showSwapPopup(sourceInput, targetInput);
             });
         });
 
-        function updateFilePreview(input) {
-            const preview = document.getElementById(`${input.id}Preview`);
-            if (!preview) return;
+        // URL parameter management
+        function updateURLParams() {
+            const params = new URLSearchParams();
 
-            if (input.files && input.files.length > 0) {
-                preview.textContent = `Selected: ${input.files[0].name}`;
-            } else {
-                preview.textContent = `No file selected`;
-            }
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                const id = input.id;
+                if (!id || input.type === 'file') return;
+
+                if (input.type === 'checkbox') {
+                    params.set(id, input.checked ? 'true' : 'false');
+                } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
+                    const encoded = btoa(unescape(encodeURIComponent(input.value)));
+                    params.set(id, `base64~${encoded}`);
+                } else {
+                    params.set(id, input.value);
+                }
+            });
+
+            params.set('Vmode', Vmode);
+            const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
         }
 
-        const fileA=null
-        const fileB=null
-        const bufferSwap=null
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search);
 
-        function replaceFiles(fromInput, toInput) {
-            const file = fromInput.files[0];
-            if (!file) return;
+            params.forEach((value, key) => {
+                if (key === 'Vmode') {
+                    window.Vmode = parseInt(value) || 0;
+                    return;
+                }
 
-            const dt = new DataTransfer();
-            dt.items.add(file);
+                const input = document.getElementById(key);
+                if (!input) return;
 
-            toInput.files = dt.files;
-            toInput.dispatchEvent(new Event('change', { bubbles: true }));
+                if (input.type === 'checkbox') {
+                    input.checked = value === 'true';
+                } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
+                    if (value.startsWith('base64~')) {
+                        try {
+                            const b64 = value.slice(7);
+                            input.value = decodeURIComponent(escape(atob(b64)));
+                        } catch (e) {
+                            input.value = '';
+                        }
+                    } else {
+                        input.value = value;
+                    }
+                } else {
+                    input.value = value;
+                }
 
-            updateFilePreview(toInput);
+                input.dispatchEvent(new Event('input'));
+            });
         }
 
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            // Attach URL updating to all inputs
+            document.querySelectorAll('input[type="range"], input[type="number"], input[type="checkbox"], select, textarea').forEach(input => {
+                input.addEventListener('input', updateURLParams);
+                input.addEventListener('change', updateURLParams);
+            });
 
+            loadStateFromURL();
+            SetUpUI();
+            createHarmonicButtons();
+            renderKeyboard();
+            updateHarmonicsText();
 
-        function showSwapPopup(sourceInput, targetInput) {
-            let popup = document.getElementById('swapPopup');
-            if (!popup) {
-                popup = document.createElement('div');
-                popup.id = 'swapPopup';
-                popup.style.position = 'fixed';
-                popup.style.top = '50%';
-                popup.style.left = '50%';
-                popup.style.transform = 'translate(-50%, -50%)';
-                popup.style.background = '#333';
-                popup.style.color = '#fff';
-                popup.style.padding = '20px';
-                popup.style.borderRadius = '10px';
-                popup.style.zIndex = '2000';
-                popup.style.textAlign = 'center';
-                popup.style.boxShadow = '0 0 10px #000';
-                document.body.appendChild(popup);
-            }
+            // Handle window resize for keyboard
+            window.addEventListener('resize', renderKeyboard);
+        });
 
-            popup.innerHTML = `
-                <div style="margin-bottom: 10px;">
-                    Replace files between:<br><strong>${sourceInput.id}</strong> and <strong>${targetInput.id}</strong>?
-                </div>
-                <button id="replaceConfirm">Replace</button>
-                <button id="cancelPopup">Cancel</button>
-            `;
+        // Help popup system
+        document.getElementById('helpButton').addEventListener('click', function() {
+            // Show the existing help popup
+            document.getElementById('helpPopup').classList.remove('hidden');
+        });
 
-            popup.style.display = 'block';
+        // Close help popup
+        document.getElementById('closeHelpButton').addEventListener('click', function() {
+            document.getElementById('helpPopup').classList.add('hidden');
+        });
 
-        document.getElementById('replaceConfirm').onclick = () => {
-            replaceFiles(sourceInput, targetInput);
-            popup.style.display = 'none';
-        };
-
-
-            document.getElementById('cancelPopup').onclick = () => {
-                popup.style.display = 'none';
-            };
-        }
-
-
-        document.getElementById('carrierInput').setAttribute('draggable', 'true');
-        document.getElementById('audioInput').setAttribute('draggable', 'true');
-
-
-    </script>
-    <!--vmode block-->
-        <script>
-            // Function to clean up the URL by removing disallowed characters
+        // Function to clean up the URL by removing disallowed characters
             function CleanUpLink() {
                 const DisAllowsCharacters = '(|^*%$#@!<>,/\\:\';\"{}[]~+")';
                 const regex = new RegExp('[' + DisAllowsCharacters.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ']', 'g');
@@ -1097,102 +1510,6 @@
                 }
             }
             
-            //document.addEventListener('DOMContentLoaded', CleanUpLink);
-
-            let Vmode=0; // 0 for FFT, 1 for analog
-
-            function SetUpUI(){
-                if (Vmode === 0) {
-                    document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
-                    document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
-                    document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
-                    document.getElementById('FFTcontrols').style.display = 'block';
-                    document.getElementById('analogControls').style.display = 'none';
-                    document.getElementById('4ormClone').style.display = 'none';
-                    document.getElementById('changeBack').style.display = 'block';
-                } else if (Vmode === 1) {
-                    document.getElementById('Title').textContent = 'Crappy Analog Vocoder';
-                    document.getElementById('what_is').textContent = 'an Analog Vocoder';
-                    document.getElementById('FFTcontrols').style.display = 'none';
-                    document.getElementById('analogControls').style.display = 'block';
-                    document.getElementById('changeBackButton').textContent = 'Change to 4ormulator Mode';
-                    document.getElementById('4ormClone').style.display = 'none';
-                    document.getElementById('changeBack').style.display = 'block';
-                } else if (Vmode === 2) {
-                    document.getElementById('Title').textContent = 'Crappy 4ormulator clone';
-                    document.getElementById('what_is').textContent = 'an 4ormulator clone';
-                    document.getElementById('changeBackButton').textContent = 'Change to FFT Mode';
-                    document.getElementById('FFTcontrols').style.display = 'none';
-                    document.getElementById('analogControls').style.display = 'none';
-                    document.getElementById('4ormClone').style.display = 'block';
-                    document.getElementById('changeBack').style.display = 'block';
-                } else {
-                    document.getElementById('Title').textContent = 'Crappy FFT Vocoder';
-                    document.getElementById('what_is').textContent = 'a Fast Fourier Transform vocoder';
-                    document.getElementById('changeBackButton').textContent = 'Change to Analog Mode';
-                    document.getElementById('FFTcontrols').style.display = 'block';
-                    document.getElementById('analogControls').style.display = 'none';
-                    document.getElementById('4ormClone').style.display = 'none';
-                    document.getElementById('changeBack').style.display = 'block';
-                }
-            }
-
-            document.getElementById('changeBackButton').addEventListener('click', function() {
-                // Toggle between 0 (FFT) and 1 (analog)
-                Vmode = ((Number(Vmode) || 0) + 1) % 3;
-
-                SetUpUI()
-
-                // Update the URL with the new Vmode
-                const params = new URLSearchParams(window.location.search);
-                params.set('Vmode', Vmode);
-                const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-                window.history.replaceState({}, '', newUrl);
-            });
-
-            document.addEventListener('DOMContentLoaded', function() {
-                const params = new URLSearchParams(window.location.search);
-                Vmode = Number(params.get('Vmode')) || 0; // Default to 0 if not set
-
-                SetUpUI()
-                
-                const userSpeedLabel = document.querySelector('label[for="userSpeed"]');
-                const userSpeedSlider = document.getElementById('userSpeed');
-                const speedTypeSelect = new URLSearchParams(window.location.search).get('speedType') || '0';
-
-                if (speedTypeSelect == '2') {
-                    userSpeedLabel.style.display = 'inline';
-                    userSpeedSlider.style.display = 'inline';
-                } else {
-                    userSpeedLabel.style.display = 'none';
-                    userSpeedSlider.style.display = 'none';
-                }
-            
-            });
-        </script>
-        
-        <script>
-            const cornerElement = document.createElement('a');
-            cornerElement.href = 'https://github.com/D3nschot/crappy-FFT-vocoder';
-            cornerElement.style.position = 'fixed';
-            cornerElement.style.bottom = '10px';
-            cornerElement.style.right = '10px';
-            cornerElement.style.backgroundColor = '#444';
-            cornerElement.style.color = '#fff';
-            cornerElement.style.padding = '10px';
-            cornerElement.style.borderRadius = '5px';
-            cornerElement.style.zIndex = '1000';
-            cornerElement.textContent = 'Fork me on GitHub :)';
-            document.body.appendChild(cornerElement);
-
-            document.getElementById('helpButton').addEventListener('click', function() {
-            document.getElementById('helpPopup').style.display = 'block';
-            });
-
-            document.getElementById('closeHelpButton').addEventListener('click', function() {
-            document.getElementById('helpPopup').style.display = 'none';
-            });
-
             function handleDragOver(event) {
                 event.preventDefault();
                 event.target.classList.add('drag-over');
@@ -1242,85 +1559,85 @@
             // Initialize the visibility of the speed slider based on the current selection
             document.getElementById('speedType').dispatchEvent(new Event('change'));
 
-            // Function to update the URL with the current state
-
-            function updateURLParams() {
-                const params = new URLSearchParams();
-
-                document.querySelectorAll('input, select, textarea').forEach(input => {
-                    const id = input.id;
-                    if (!id) return;
-
-                    // Skip file inputs
-                    if (input.type === 'file') return;
-
-                    if (input.type === 'checkbox') {
-                        params.set(id, input.checked ? 'true' : 'false');
-                    } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
-                        // Encode text and tag with base64~
-                        const encoded = btoa(unescape(encodeURIComponent(input.value)));
-                        params.set(id, `base64~${encoded}`);
-                    } else {
-                        params.set(id, input.value);
-                    }
-                });
-
-                params.set('Vmode', Vmode);
-
-                const newUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-                window.history.replaceState({}, '', newUrl);
+            // --- Cookie helpers ---
+            function savePresetCookie(presetName, data, days = 30) {
+                const json = JSON.stringify(data);
+                const encoded = encodeURIComponent(json);
+                let expires = "";
+                if (days) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + (days*24*60*60*1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = presetName + "=" + encoded + expires + "; path=/";
             }
 
+            function loadPresetCookie(presetName) {
+                const nameEQ = presetName + "=";
+                const ca = document.cookie.split(';');
+                for(let i=0; i < ca.length; i++) {
+                    let c = ca[i].trim();
+                    if (c.indexOf(nameEQ) === 0) {
+                        try {
+                            return JSON.parse(decodeURIComponent(c.substring(nameEQ.length)));
+                        } catch (e) {
+                            console.error("Invalid preset cookie", e);
+                        }
+                    }
+                }
+                return null;
+            }
 
-            function loadStateFromURL() {
-                const params = new URLSearchParams(window.location.search);
+            function listPresets() {
+                return document.cookie.split(";").map(c => c.trim().split("=")[0]);
+            }
 
-                params.forEach((value, key) => {
-                    if (key === 'Vmode') {
-                        window.Vmode = value;
+            // Collect current settings from inputs
+
+            // Collect current settings from inputs
+            function exportCurrentSettings() {
+                const inputs = document.querySelectorAll('input, select'); // query inside function
+                const settings = {};
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox') {
+                        settings[input.id] = input.checked;
+                    } else {
+                        settings[input.id] = input.value;
+                    }
+                });
+                settings.Mode = Vmode; // keep as number: 0, 1, 2
+                return settings;
+            }
+
+            // Apply settings back to inputs
+            function importSettings(obj) {
+                Object.keys(obj).forEach(key => {
+                    if (key === "Mode" || key === "Vmode") {
+                        Vmode = obj[key];
                         return;
                     }
-
-                    const input = document.getElementById(key);
-                    if (!input) return;
-
-                    if (input.type === 'checkbox') {
-                        input.checked = value === 'true';
-                    } else if (input.type === 'text' || input.tagName.toLowerCase() === 'textarea') {
-                        if (value.startsWith('base64~')) {
-                            try {
-                                const b64 = value.slice(7);
-                                input.value = decodeURIComponent(escape(atob(b64)));
-                            } catch (e) {
-                                input.value = ''; // fallback on failure
-                            }
+                    const el = document.getElementById(key);
+                    if (el) {
+                        if (el.type === 'checkbox') {
+                            el.checked = obj[key] === true || obj[key] === "true";
                         } else {
-                            input.value = value; // fallback: plain text
+                            el.value = obj[key];
                         }
-                    } else {
-                        input.value = value;
+                        el.dispatchEvent(new Event('input'));
+                        el.dispatchEvent(new Event('change'));
                     }
-
-                    input.dispatchEvent(new Event('input'));
                 });
             }
 
-            // Attach event listeners to all sliders and dropdowns
-            document.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll(inputs).forEach(input => {
-                    input.addEventListener('input', updateURLParams);
-                    input.addEventListener('change', updateURLParams);
-                });
 
-                // Load state from URL on page load
-                loadStateFromURL();
-            });
-
+            // --- Your existing code with preset integration ---
             document.getElementById('ViewProperties').addEventListener('click', function() {
                 const inputs = document.querySelectorAll('input, select');
                 const fileInputs = document.querySelectorAll('input[type="file"]');
                 const properties = [];
                 const fileInfo = [];
+
+
 
                 // Collect input values
                 inputs.forEach(input => {
@@ -1356,7 +1673,18 @@
                                         <br>
                                         <h1>Input Values</h1>
                                         <ul>${properties.map(prop => `<li>${prop}</li>`).join('')}</ul>
-                                        <button id="ExportJSON" style="margin-top: 10px;">Export as JSON</button>|<button id="closePropertiesButton" style="margin-top: 10px;">Close</button>
+                                        <br>
+                                        <div>
+                                            <button id="ExportJSON">Export JSON</button> |
+                                            <button id="ImportJSON">Import JSON</button> 
+                                            <br>
+                                            note that this uses Cookies/localStorage
+                                            <br>
+                                            <button id="SavePreset">Save Preset</button> |
+                                            <button id="LoadPreset">Load Preset</button> 
+                                            <br>
+                                            <button id="closePropertiesButton">Close</button>
+                                        </div>
                                     `;
 
                                     // Reattach the close button event listener
@@ -1366,17 +1694,19 @@
 
                                     // Add ExportJSON functionality
                                     document.getElementById('ExportJSON').addEventListener('click', function() {
+                                        const inputs = document.querySelectorAll('input, select'); // query inside the function
                                         const jsonObject = {};
+
                                         inputs.forEach(input => {
-                                            if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
-                                                jsonObject[input.id] = input.value;
-                                            } else if (input.type === 'checkbox') {
-                                                jsonObject[input.id] = input.checked;
+                                            if (input.type === 'checkbox') {
+                                                jsonObject[input.id] = input.checked; // boolean
+                                            } else {
+                                                jsonObject[input.id] = input.value;   // string
                                             }
                                         });
 
-                                        // Add Vmode as a property
-                                        jsonObject.Mode = Vmode ? 'Analog Mode' : 'FFT Mode';
+                                        // Numeric Mode
+                                        jsonObject.Mode = Vmode; // 0, 1, 2
 
                                         const jsonBlob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
                                         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -1386,6 +1716,46 @@
                                         downloadLink.click();
                                         URL.revokeObjectURL(jsonUrl);
                                     });
+
+                                    // Import JSON
+                                    document.getElementById('ImportJSON').addEventListener('click', function() {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = 'application/json';
+                                        input.addEventListener('change', function(event) {
+                                            const file = event.target.files[0];
+                                            if (!file) return;
+
+                                            const reader = new FileReader();
+                                            reader.onload = function(e) {
+                                                try {
+                                                    const jsonObject = JSON.parse(e.target.result);
+                                                    Object.keys(jsonObject).forEach(key => {
+                                                        if (key === 'Mode' || key === 'Vmode') {
+                                                            window.Vmode = jsonObject[key]; // numeric mode
+                                                            return;
+                                                        }
+                                                        const inputElement = document.getElementById(key);
+                                                        if (inputElement) {
+                                                            if (inputElement.type === 'checkbox') {
+                                                                inputElement.checked = jsonObject[key] === true;
+                                                            } else {
+                                                                inputElement.value = jsonObject[key];
+                                                            }
+                                                            inputElement.dispatchEvent(new Event('input'));
+                                                            inputElement.dispatchEvent(new Event('change'));
+                                                        }
+                                                    });
+                                                    alert('Properties imported successfully!');
+                                                } catch (error) {
+                                                    alert('Invalid JSON file. Please select a valid properties file.');
+                                                }
+                                            };
+                                            reader.readAsText(file);
+                                        });
+                                        input.click();
+                                    });
+
                                 }
                             });
                         };
@@ -1398,7 +1768,6 @@
                     }
                 });
 
-                // Create the popup
                 const popup = document.createElement('div');
                 popup.style.position = 'fixed';
                 popup.style.top = '50%';
@@ -1408,48 +1777,42 @@
                 popup.style.color = '#fff';
                 popup.style.padding = '20px';
                 popup.style.borderRadius = '10px';
-                // Responsive and flex styles:
                 popup.style.width = '90vw';
                 popup.style.maxWidth = '600px';
                 popup.style.minWidth = '220px';
                 popup.style.maxHeight = '80vh';
                 popup.style.overflowY = 'auto';
-                popup.style.overflowX = 'hidden';
                 popup.style.zIndex = '1000';
-                popup.style.display = 'flex';
-                popup.style.flexDirection = 'column';
-                popup.style.alignItems = 'flex-start'; // or 'center' if you want centered content
-                popup.style.justifyContent = 'flex-start';
-                popup.style.boxSizing = 'border-box';
-                popup.style.textAlign = 'left';
 
-                // Add content to the popup
+                // Build popup content
                 popup.innerHTML = `
                     <h2>Properties</h2>
                     ${fileInfo.join('')}
-                    <br>
                     <h2>Input Values</h2>
-                    <ul style="width:100%;word-break:break-word;overflow-wrap:anywhere;padding:1;margin:0;">
-                        ${properties.map(prop => `<li style="word-break:break-word;overflow-wrap:anywhere;">${prop}</li>`).join('')}
-                    </ul>
+                    <ul>${properties.map(p => `<li>${p}</li>`).join('')}</ul>
                     <br>
                     <div>
-                        <button id="ExportJSON" style="margin-top: 10px;">Export as JSON</button> |
-                        <button id="ImportJSON" style="margin-top: 10px;">Import JSON</button> |
-                        <button id="closePropertiesButton" style="margin-top: 10px;">Close</button>
+                        <button id="ExportJSON">Export JSON</button> |
+                        <button id="ImportJSON">Import JSON</button> 
+                        <br>
+                        note that this uses Cookies/localStorage
+                        <br>
+                        <button id="SavePreset">Save Preset</button> |
+                        <button id="LoadPreset">Load Preset</button> 
+                        <br>
+                        <button id="closePropertiesButton">Close</button>
                     </div>
                 `;
 
-                // Append the popup to the body
                 document.body.appendChild(popup);
 
-                // Add event listener to close the popup
-                document.getElementById('closePropertiesButton').addEventListener('click', function() {
+                // Close button
+                document.getElementById('closePropertiesButton').addEventListener('click', () => {
                     document.body.removeChild(popup);
                 });
 
-                // Add ExportJSON functionality
-                document.getElementById('ExportJSON').addEventListener('click', function() {
+                // Export JSON
+                document.getElementById('ExportJSON').addEventListener('click', () => {
                     const jsonObject = {};
                     inputs.forEach(input => {
                         if (input.type === 'range' || input.type === 'number' || input.tagName === 'SELECT') {
@@ -1458,60 +1821,137 @@
                             jsonObject[input.id] = input.checked;
                         }
                     });
-
-                    // Add Vmode as a property
-                    jsonObject.Mode = Vmode ? 'Analog Mode' : 'FFT Mode';
-
-                    const jsonBlob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
-                    const jsonUrl = URL.createObjectURL(jsonBlob);
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = jsonUrl;
-                    downloadLink.download = 'properties.json';
-                    downloadLink.click();
-                    URL.revokeObjectURL(jsonUrl);
+                    jsonObject.Mode = Vmode;
+                    const blob = new Blob([JSON.stringify(jsonObject, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "properties.json";
+                    a.click();
+                    URL.revokeObjectURL(url);
                 });
 
-                document.getElementById('ImportJSON').addEventListener('click', function() {
+                // Import JSON
+                document.getElementById('ImportJSON').addEventListener('click', () => {
                     const input = document.createElement('input');
                     input.type = 'file';
                     input.accept = 'application/json';
-                    input.addEventListener('change', function(event) {
-                        const file = event.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                try {
-                                    const jsonObject = JSON.parse(e.target.result);
-                                    Object.keys(jsonObject).forEach(key => {
-                                        if (key === 'Mode' || key === 'Vmode') {
-                                            // Handle Vmode/Mode property
-                                            window.Vmode = jsonObject[key];
-                                            // Optionally update UI if needed
-                                            return;
-                                        }
-                                        const inputElement = document.getElementById(key);
-                                        if (inputElement) {
-                                            if (inputElement.type === 'checkbox') {
-                                                inputElement.checked = jsonObject[key] === true || jsonObject[key] === 'true';
-                                            } else {
-                                                inputElement.value = jsonObject[key];
-                                            }
-                                            // Trigger input and change events to update UI
-                                            inputElement.dispatchEvent(new Event('input'));
-                                            inputElement.dispatchEvent(new Event('change'));
-                                        }
-                                    });
-                                    alert('Properties imported successfully!');
-                                } catch (error) {
-                                    alert('Invalid JSON file. Please select a valid properties file.');
-                                }
-                            };
-                            reader.readAsText(file);
+                    input.onchange = e => {
+                        const file = e.target.files[0];
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            try {
+                                const obj = JSON.parse(e.target.result);
+                                applyPreset(obj);
+                                alert("Imported successfully");
+                            } catch {
+                                alert("Invalid JSON");
+                            }
+                        };
+                        reader.readAsText(file);
+                    };
+                    input.click();
+                });
+
+                // Load presets from cookie/localStorage
+                function getPresets() {
+                    const data = localStorage.getItem("presets");
+                    return data ? JSON.parse(data) : {};
+                }
+
+                    console.log("Loaded presets:", localStorage.getItem("presets"));
+
+                // Save presets to storage
+                function savePresets(presets) {
+                    localStorage.setItem("presets", JSON.stringify(presets));
+                    updatePresetList();
+                }
+
+                function updatePresetList() {
+                    const presets = getPresets();
+                    const presetList = document.getElementById("presetList");
+                    if (!presetList) return; // <-- prevents null errors
+
+                    presetList.innerHTML = `<option value="">-- Select a preset --</option>`;
+                    for (const key in presets) {
+                        const opt = document.createElement("option");
+                        opt.value = key;
+                        opt.textContent = key;
+                        presetList.appendChild(opt);
+                    }
+                }
+
+
+                // Save preset
+                document.getElementById("SavePreset").addEventListener("click", () => {
+                    const name = prompt("Enter a preset name:");
+                    if (!name) return;
+                    const presets = getPresets();
+                    presets[name] = exportCurrentSettings(); // <-- replace with your export function
+                    savePresets(presets);
+                });
+
+                // Load preset
+                document.getElementById("LoadPreset").addEventListener("click", () => {
+                    // Check if the dropdown already exists
+                    if (!document.getElementById("presetList")) {
+                        const container = document.createElement("div");
+                        container.style.marginTop = "10px";
+                        container.innerHTML = `
+                            <label for="presetList">Presets: </label>
+                            <select id="presetList">
+                                <option value="">-- Select a preset --</option>
+                            </select>
+                            <button id="ConfirmLoadPreset">Load</button>
+                        `;
+                        popup.appendChild(container);
+
+                        updatePresetList(); // ✅ safe now, dropdown exists
+
+                        // Confirm load action
+                        document.getElementById("ConfirmLoadPreset").addEventListener("click", () => {
+                            const presetList = document.getElementById("presetList");
+                            const name = presetList.value;
+                            if (!name) {
+                                alert("Please select a preset from the list.");
+                                return;
+                            }
+                            const presets = getPresets();
+                            if (presets[name]) {
+                                importSettings(presets[name]);
+                                alert(`Preset "${name}" loaded successfully.`);
+                            }
+                        });
+                    }
+                });
+
+
+
+                // Initialize dropdown on page load
+                updatePresetList();
+
+
+                // Apply preset to inputs
+                function applyPreset(obj) {
+                    Object.keys(obj).forEach(key => {
+                        if (key === "Mode" || key === "Vmode") {
+                            Vmode = obj[key];
+                            return;
+                        }
+                        const el = document.getElementById(key);
+                        if (el) {
+                            if (el.type === 'checkbox') {
+                                el.checked = obj[key] === true || obj[key] === "true";
+                            } else {
+                                el.value = obj[key];
+                            }
+                            el.dispatchEvent(new Event('input'));
+                            el.dispatchEvent(new Event('change'));
                         }
                     });
-                    input.click();
-                });;
+                }
             });
+
         </script>
     <script>
         let audioContext, analyser, source, processedBuffer, audioData, carrierBuffer;
@@ -1732,27 +2172,84 @@
             popup.style.display = block && text ? 'block' : 'none';
         }
 
+        function showProcessPOP_UP_WL(message, visible = true, showProgress = false, progress = 0) {
+            let popup = document.getElementById("processPopup");
+
+            // Flex layout: gif on the left, text on the right
+            popup.innerHTML = `
+                <div style="display:flex;align-items:center;gap:15px;">
+                    <img src="Load.gif" alt="Loading..." style="width:75px;height:75px;flex-shrink:0;">
+                    <div style="flex:1;">
+                        <p style="margin:0;white-space:pre-line;">${message || "Processing..."}</p>
+                        ${showProgress ? `
+                            <div id="progressWrapper" style="margin-top:10px;width:100%;background:#222;border-radius:5px;overflow:hidden;height:12px;">
+                                <div id="progressBar" style="height:100%;width:${progress || 0}%;background:#5ac8fa;"></div>
+                            </div>` : ""}
+                    </div>
+                </div>
+            `;
+            popup.style.display = "block";
+
+            if (showProgress) {
+                let per = Math.max(0, Math.min(progress, 100)); // clamp 0-100
+                const progressBar = popup.querySelector("#progressBar");
+                if (progressBar) {
+                    progressBar.style.width = per + "%";
+
+                    // 🎨 Color formula
+                    const B255 = (Math.min(per / 100 * 255, 255) / 255) ** 1.5 * 255;
+                    progressBar.style.backgroundColor =
+                        `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
+                }
+            }
+
+            if (!popup) {
+                popup = document.createElement("div");
+                popup.id = "processPopup";
+                popup.style.position = "fixed";
+                popup.style.top = "50%";
+                popup.style.left = "50%";
+                popup.style.transform = "translate(-50%, -50%)";
+                popup.style.background = "rgba(34, 34, 34, 0.95)";
+                popup.style.color = "#fff";
+                popup.style.padding = "20px 30px";
+                popup.style.borderRadius = "15px";
+                popup.style.zIndex = "6000";
+                popup.style.textAlign = "left";
+                popup.style.boxShadow = "0 10px 40px rgba(0,0,0,0.6)";
+                popup.style.minWidth = "320px";
+                popup.style.maxWidth = "500px";
+                document.body.appendChild(popup);
+            }
+
+            if (!visible) {
+                popup.style.display = "none";
+                return;
+            }
+        }
+
+
         async function processAudioIterations(iterations, offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer) {
             await new Promise(resolve => setTimeout(resolve, 20));
             if (iterations >= 2) {
                 if (iterations == 69) {
-                    showProcessPOP_UP(`nice, 1/${iterations}`, true, true, 1 / iterations * 100);
+                    showProcessPOP_UP_WL(`nice, 1/${iterations}`, true, true, 1 / iterations * 100);
                 } else {
-                    showProcessPOP_UP(`Processing... this will take a while (website is frozen so you can do anything until it\'s done) \n1/${iterations} iterations`, true, true, 1 / iterations * 100);
+                    showProcessPOP_UP_WL(`Processing... this will take a while (website is frozen so you can do anything until it\'s done) \n1/${iterations} iterations`, true, true, 1 / iterations * 100);
                 }
             } else {
-                showProcessPOP_UP('Processing... this will take a while (website is frozen so you can do anything until it\'s done)', true);
+                showProcessPOP_UP_WL('Processing... this will take a while (website is frozen so you can do anything until it\'s done)', true);
             }
             for (let i = 0; i < iterations; i++) {
                 
                 if (iterations >= 2) {
                     if (iterations == 69) {
-                        showProcessPOP_UP(`nice, ${i + 1}/${iterations}`, true, true, (i + 1) / iterations * 100);
+                        showProcessPOP_UP_WL(`nice, ${i + 1}/${iterations}`, true, true, (i + 1) / iterations * 100);
                     } else {
-                        showProcessPOP_UP(`Processing... this will take a while (website is frozen so you can do anything until it\'s done) \n${i + 1}/${iterations} iterations`, true, true, i / iterations * 100);
+                        showProcessPOP_UP_WL(`Processing... this will take a while (website is frozen so you can do anything until it\'s done) \n${i + 1}/${iterations} iterations`, true, true, i / iterations * 100);
                     }
                 } else {
-                    showProcessPOP_UP('Processing... this will take a while (website is frozen so you can do anything until it\'s done)', true);
+                    showProcessPOP_UP_WL('Processing... this will take a while (website is frozen so you can do anything until it\'s done)', true);
                 }
 
                 // Pause for 10ms (adjust as needed)
@@ -1797,7 +2294,7 @@
                     carrierRight = inputRight;
                 }
             // Hide popup when done
-            showProcessPOP_UP('', false);
+            showProcessPOP_UP_WL('', false);
         }
 
         function apply4ormLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
@@ -2092,6 +2589,7 @@
             let z4S=[{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}]
             let z8S=[{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}]
             let z7S=[{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
+            let zBPCS = [{stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0 }))}]
 
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2S[callCount]) {
@@ -2160,7 +2658,7 @@
                 const mult = 10 * 2 ** (4 * (1 - dww));
                 const shapeFactor = 1 + norm ** power * mult;
 
-                return (high * shapeFactor * (1+dww*6))/16;
+                return (high * shapeFactor * (1+dww*6))/16 * (1+c**3*(1-dww)*200);
             }
 
             function bp2(d, c, r = 0, db = 2, callCount) {
@@ -2197,7 +2695,7 @@
                         default: out = z4S[callCount].bp2 - z4S[callCount].bp3;
                     }
 
-                    return out;
+                    return out*(db**.75)/4*(1+cc*8);
                 } catch (e) {
                     return 0;
                 }
@@ -2253,7 +2751,7 @@
 
                     out = z4S[callCount].bp1 - z4S[callCount].bp2;
 
-                    return out;
+                    return out/4*(1+cc*8);
                 } catch (e) {
                     return 0;
                 }
@@ -2277,7 +2775,7 @@
                 const mult = 10 * 2 ** (4 * (1 - dww));
                 const shapeFactor = 1 + norm ** power * mult;
 
-                return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32;
+                return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32 * (1+c*16+c**5*(1-dww)*200);
             }
 
             ap = (inputY, ag = 0, res = 0, callCount = 1) => {
@@ -2311,9 +2809,84 @@
                     s.pi = -y2;  // You can choose [y2, y4] for smoother vs sharper
 
                     callCount++;
-                    return (y2+input)/8
+                    return (y2+input)/64*(1+ag*8);
                 } catch (e) {
                     throw e;
+                }
+            }
+
+            bpTC = (d, c, r = 0, stages = 2, callCount) => {
+                try {
+                    if (!zBPCS[callCount]) {
+                        zBPCS.push({
+                            // Each stage has two state vars
+                            stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0 }))
+                        });
+                    }
+
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(1e-6, 0.99, c);
+                    const fb = r + r / (1 - cc);
+
+                    const s = zBPCS[callCount];
+                
+                    let f=d
+
+                    div=(1-r**100*.99)
+                    let st = s.stage[0];
+                    st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                    st.bp2 += cc * (st.bp1 - st.bp2);
+                    f = st.bp1 - st.bp2; // feed forward into next stage
+                    o=f / (1-cc**2)*1.25 / (r/2+.5)
+
+                    // Process cascade
+                    for (let i = 1; i < stages; i++) {
+                        let st = s.stage[i];
+                        st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                        st.bp2 += cc * (st.bp1 - st.bp2);
+                        f = (st.bp1 - st.bp2) * (1-r**2) / (1-cc**2)*1.25 / (r/2+.5); // feed forward into next stage
+                        o=f
+                    }
+
+                    return o*(.25+cc*2) // Output of last stage
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            bpTC2 = (d, c, r = 0, stages = 2, callCount) => {
+                try {
+                    if (!zBPCS[callCount]) {
+                        zBPCS.push({
+                            // Each stage has two state vars
+                            stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0 }))
+                        });
+                    }
+
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(1e-6, 0.99, c**2);
+                    const fb = r
+
+                    const s = zBPCS[callCount];
+                
+                    let f=d
+                    let st = s.stage[0];
+                    st.bp1 += st.bp2 += cc*(f-st.bp1)-st.bp2*(1-fb)
+                    f = -st.bp2 / (cc) * (1-fb)
+                    o=f
+
+                    // Process cascade
+                    for (let i = 1; i < stages; i++) {
+                        let st = s.stage[i];
+                        st.bp1 += st.bp2 += cc*(f-st.bp1)-st.bp2*(1-fb)
+                        f = st.bp2 / (cc)
+                        f*=1-fb
+                        o=f
+                    }
+
+                    return o*(.25+cc*2)*8 // Output of last stage
+                } catch (e) {
+                    return 0;
                 }
             }
 
@@ -2359,6 +2932,7 @@
                 let z4S = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
                 let z8S = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
                 let z7S = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
+                let zBPCS = [{stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0, hp:0 }))}];
 
                 //console.log(altBP)
 
@@ -2390,6 +2964,12 @@
                             break;
                         case 5:
                             out = ap(testInput, FLTcutoff, resonance, 0);
+                            break;
+                        case 6:
+                            out = bpTC(testInput, FLTcutoff, resonance, db, 0);
+                            break;
+                        case 7:
+                            out = bpTC2(testInput, FLTcutoff, resonance, db, 0);
                             break;
                         default:
                             out = bp(testInput, FLTcutoff, resonance, db, bpwidth, 0);
@@ -2461,8 +3041,9 @@
             let z4 = [{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}];
             let z8 = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
             let z5 = [{var1:0}];
-            let z7 = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
-
+            let z7 = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}];
+            let zBPC = [{stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0, hp:0 }))}];
+            
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2[callCount]) {
                     z2[callCount] = {lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0};
@@ -2530,7 +3111,7 @@
                 const mult = 10 * 2 ** (4 * (1 - dww));
                 const shapeFactor = 1 + norm ** power * mult;
 
-                return (high * shapeFactor * (1+dww*6))/16;
+                return (high * shapeFactor * (1+dww*6))/16 * (1+c**3*(1-dww)*200);
             }
 
             function bp2(d, c, r = 0, db = 2, callCount) {
@@ -2567,7 +3148,7 @@
                         default: out = z4[callCount].bp2 - z4[callCount].bp3;
                     }
 
-                    return out;
+                    return out*(db**.75)/4*(1+cc*8);
                 } catch (e) {
                     return 0;
                 }
@@ -2622,7 +3203,7 @@
                     let out=0;
                     out = z4[callCount].bp1 - z4[callCount].bp2;
 
-                    return out;
+                    return out/4*(1+cc*8);
                 } catch (e) {
                     return 0;
                 }
@@ -2646,7 +3227,7 @@
                 const mult = 10 * 2 ** (4 * (1 - dww));
                 const shapeFactor = 1 + norm ** power * mult;
 
-                return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/32;
+                return (high * shapeFactor * (1+dww) * (2**(dww*3-1)))/128 * (1+c*16+c**5*(1-dww)*200);
             }
 
             ap = (inputY, ag = 0, res = 0, callCount = 1) => {
@@ -2676,11 +3257,86 @@
 
                     s.pi = -y2;
 
-                    return (y2 + input) / 8;
+                    return (y2+input)/64*(1+ag*8)
                 } catch (e) {
                     throw e;
                 }
             };
+
+            bpTC = (d, c, r = 0, stages = 2, callCount) => {
+                try {
+                    if (!zBPC[callCount]) {
+                        zBPC.push({
+                            // Each stage has two state vars
+                            stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0, hp:0 }))
+                        });
+                    }
+
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(1e-6, 0.99, c);
+                    const fb = r + r / (1 - cc);
+
+                    const s = zBPC[callCount];
+                
+                    let f=d
+
+                    div=(1-r**100*.99)
+                    let st = s.stage[0];
+                    st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                    st.bp2 += cc * (st.bp1 - st.bp2);
+                    f = st.bp1 - st.bp2; // feed forward into next stage
+                    o=f / (1-cc**2)*1.25 / (r/2+.5)
+
+                    // Process cascade
+                    for (let i = 1; i < stages; i++) {
+                        let st = s.stage[i];
+                        st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                        st.bp2 += cc * (st.bp1 - st.bp2);
+                        f = (st.bp1 - st.bp2) * (1-r**2) / (1-cc**2)*1.25 / (r/2+.5); // feed forward into next stage
+                        o=f
+                    }
+
+                    return o*(.25+cc*2); // Output of last stage
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            bpTC2 = (d, c, r = 0, stages = 2, callCount) => {
+                try {
+                    if (!zBPC[callCount]) {
+                        zBPC.push({
+                            // Each stage has two state vars
+                            stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0 }))
+                        });
+                    }
+
+                    const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
+                    const cc = clamp(1e-6, 0.99, c**2);
+                    const fb = r //+ r / (1 - cc);
+
+                    const s = zBPC[callCount];
+                
+                    let f=d
+                    let st = s.stage[0];
+                    st.bp1 += st.bp2 += cc*(f-st.bp1)-st.bp2*(1-fb)
+                    f = -st.bp2 / (cc) * (1-fb)
+
+                    o=f
+
+                    // Process cascade
+                    for (let i = 1; i < stages; i++) {
+                        let st = s.stage[i];
+                        st.bp1 += st.bp2 += cc*(f-st.bp1)-st.bp2*(1-fb)
+                        f = st.bp2 / (cc) * (1-fb)
+                        o=f
+                    }
+
+                    return o*(.25+cc*2)*8// Output of last stage
+                } catch (e) {
+                    return 0;
+                }
+            }
 
             // UI values
             const sel = parseInt(document.getElementById('decayType').value)-1;
@@ -2692,6 +3348,10 @@
             const n = parseInt(document.getElementById('TotalBands').value) || 40;
             const flip = document.getElementById('FreqFlip').checked;
             const pitch = parseFloat(document.getElementById('pitch').value);
+            const decayByFreq = parseInt(document.getElementById('decayByFreq').value) || 0;
+            const freqCurve = parseFloat(document.getElementById('freqCurve').value) || 0;
+            const UseResBasedOnDistance = document.getElementById('UseResBasedOnDistance').checked;
+            const addLPtoLowEnd = document.getElementById('addLPtoLowEnd').checked;
 
             // Envelope followers
             function peak(a, decayF, call) {
@@ -2705,61 +3365,173 @@
                 return sqrt(z5[call].var1);
             }
             
+            function bandFrequency(bands, index, sampleRate, convertToFloat = true) {
+                const fmin = 20;                         // lowest frequency
+                const fmax = sampleRate / 2.205;         // Nyquist-ish limit
+                const ratio = Math.pow(fmax / fmin, 1 / bands); // geometric step
+
+                // center frequency of this band
+                let freq = fmin * Math.pow(ratio, index + 0.5);
+
+                // optionally normalize to [0,1]
+                if (convertToFloat) {
+                    freq = freq / (sampleRate / 2);
+                }
+                return freq;
+            }
+
             let modulatedValue = 1
             const simpleChorus = parseInt(document.getElementById('simpleChorus').value);
             const duration = inputLeft.length / sampleRate;
+
+            function curve(i, nv) {
+                switch (freqCurve) {
+                    case 0:
+                        ic = i / nv;
+                        EQvol = 1;
+                        distance = (i+1)/nv - i/nv;
+                        break;
+                    case 1:
+                        ic = Math.log(i/nv+1)/Math.LOG2E;
+                        EQvol = 1-ic/10;
+                        distance = (Math.log((i+1)/nv+1)/Math.LOG2E) - ic;
+                        break;
+                    case 2:
+                        ic = Math.exp(i/nv*Math.LN2)-1;
+                        EQvol = .9+ic/10;
+                        distance = (Math.exp((i+1)/nv*Math.LN2)-1) - ic;
+                        break;
+                    case 3:
+                        ic = 2**(i/nv*8-8);
+                        EQvol = .5+ic*2;
+                        distance = 2**((i+1)/nv*8-8) - ic
+                        break;
+                    case 4:
+                        ic = (i/nv)**2;
+                        EQvol = .9+ic/10;
+                        distance = ((i+1)/nv)**2 - ic;
+                        break;
+                    case 5:
+                        ic = bandFrequency(nv,i,48000)**.5
+                        EQvol = 2
+                        distance = bandFrequency(nv,i+1,48000)**.5 - ic;
+                        break;
+                    case 6:
+                        ic = Math.sin((i/nv-.5)*PI)/2.01+.5;
+                        EQvol = ic*8;
+                        distance = Math.sin(((i+1)/nv-.5)*PI)/2.01+.5 - ic;
+                        break;
+                    default:
+                        ic = i/nv;
+                        EQvol = 1;
+                        distance = (i+1)/nv - ic;
+                        break;
+                }
+
+                return {ic, distance, EQvol};
+            }
+
             // Vocoder function
-            function vocoder(inp, car) {
-                let relv = rel, nv = n, volv = vol, fbv = fb, dbv = db, dww = dw, selv = sel;
-                let dd = 0.025 / pow(1 - fbv, 0.83362376);
+            function vocoder(inp, car, bool=false) {
+                let relv = 0, nv = n, volv = vol, fbv = fb, dbv = db, dww = dw, selv = sel;
                 let p = [rms, peak][max(min(selv, 2), 0)];
                 let result = 0;
                 let carrierSum = 0, modSum = 0;
                 const Alt_BP=parseInt(document.getElementById('Alt_BP').value) || 0;
+                let distance = 0;
+                let EQvol = 1;
 
                 for (let i = 1; i <= nv; i++) {
 
-                    const g = i / nv / 2**(pitch/12);
                     // Filter input (modulator) and carrier
                     const filter = (v, m, f = 0, dwo, FRQ) => {
-                        FRQ=f?1-FRQ:FRQ
-                        switch (Alt_BP) {
-                            case 0:
-                                return bp(v * 64, FRQ, fbv, dbv, dwo, m);
-                            case 1:
-                                return bp2(v * 64, FRQ, fbv, dbv, m);
-                            case 2:
-                                return bp3(v * 256, FRQ, fbv, dbv, m);
-                            case 3:
-                                return bp4(v * 64, FRQ, fbv, dbv, m);
-                            case 4:
-                                return bp5(v * 64, FRQ, fbv, dbv, dwo, m);
-                            case 5:
-                                return ap(v * 64, FRQ, fbv, m);
-                            default:
-                                return bp(v * 64, FRQ, fbv, dbv, dwo, m);
-                        } 
-                    };
-                    const modFiltered = filter(inp, i, flip, dww, g);
-                    const carFiltered = filter(car, i + n, false, dww, i/nv);
+                        // Flip FRQ if f flag is set
+                        FRQ = f ? 1 - FRQ : FRQ;
 
-                    const absFilterX = abs(modFiltered);
-                    const mod = p(absFilterX, 2**-((rel*3)**2)/800, i);
+                        if (Alt_BP === 0) {
+                            return bp(v * 64, FRQ, fbv, dbv, dwo, m);
+                        } else if (Alt_BP === 1) {
+                            return bp2(v * 64, FRQ, fbv, dbv, m);
+                        } else if (Alt_BP === 2) {
+                            return bp3(v * 256, FRQ, fbv, dbv, m);
+                        } else if (Alt_BP === 3) {
+                            return bp4(v * 64, FRQ, fbv, dbv, m);
+                        } else if (Alt_BP === 4) {
+                            return bp5(v * 64, FRQ, fbv, dbv, dwo, m);
+                        } else if (Alt_BP === 5) {
+                            return ap(v * 64, FRQ, fbv, m);
+                        } else if (Alt_BP === 6) {
+                            return bpTC(v * 64, FRQ, fbv, dbv, m);
+                        } else if (Alt_BP === 7) {
+                            return bpTC2(v * 64, FRQ, fbv, dbv, m);
+                        } else {
+                            return bp(v * 64, FRQ, fbv, dbv, dwo, m);
+                        }
+                    };
+
+                    let vol = 1;
+
+                    // Get curve values
+                    let { ic, distance, EQvol: eqv } = curve(i, nv);
+
+
+                    //console.log(i, ic, distance)
+                    if (UseResBasedOnDistance && (freqCurve==5 || freqCurve==6 || freqCurve==7)) {
+                        fbv = fb * (1 - distance*1.75);
+                        //EQvol = 1
+                    }
+
+                    switch (decayByFreq) {
+                        case 0:
+                            relv = rel;
+                            break;
+                        case 1:
+                            relv = rel + ic/4;
+                            break;
+                        case 2:
+                            relv = rel + (1-ic)/4;
+                            break;
+                        default:
+                            relv = rel;
+                    }
+
+                    const g = ic / 2**(pitch/12);
+
+                    const modFiltered = filter(inp, i + 0 + bool*n*3, flip, dww, g);
+                    const carFiltered = filter(car, i + n + bool*n*3, false, dww, ic);
+
+                    const absFilterX = abs(modFiltered)*EQvol;
+                    const mod = p(absFilterX, 2**-((relv*3)**2)/400, i + bool*n*3);
 
                     // For debugging: sum up mod and carrier
                     //modSum += mod;
-                    //carrierSum += carFiltered;
+                    //carrierSum = carFiltered;
+                    //combined = modFiltered/512
 
                     // If mod is always zero, you will only hear silence or the modular
                     const combined = mod * carFiltered * (1 - fbv) / sqrt(nv * 10) * (1 - g);
-                    result += combined * volv*8;
+                    result += combined * volv;
 
                     //console.log(result, mod, carFiltered, combined, inp, car, i, nv, modulatedValue);
                 }
 
+                let LPOUT = 0
+                if (addLPtoLowEnd) {
+                    let { ic, distance, EQvol: eqv } = curve(1, nv);
+
+                    fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
+                    LPC = lp(car*64, ic, fbv, dbv, n*2+2 + bool*n*3);
+                    LPM = lp(inp*64, ic, fbv, dbv, n*2+3 + bool*n*3);
+
+                    ABSLPC = abs(LPM);
+                    LPOUT = LPC * p(ABSLPC, 2**-((rel*3)**2)/400, n*2+2)
+                }
+
+                let LOUT = LPOUT * volv / 8 * dbv + result*n/2;
+
                 // Prevent NaN/Infinity
                 if (!isFinite(result) || isNaN(result)) result = 0;
-                return result / 128;
+                return LOUT / 128;
             }
 
             // Output buffer
@@ -2771,8 +3543,8 @@
             for (let idx = 0; idx < bufferLen; idx++) {
                 const idxL = idx % carrierLeft.length;
                 const idxR = idx % carrierRight.length;
-                outputLeft[idx] = vocoder(carrierLeft[idxL], inputLeft[idx]);
-                outputRight[idx] = vocoder(carrierRight[idxR], inputRight[idx]);
+                outputLeft[idx] = vocoder(carrierLeft[idxL], inputLeft[idx], 0);
+                outputRight[idx] = vocoder(carrierRight[idxR], inputRight[idx], 1);
             }
 
             return outputBuffer;
@@ -3240,6 +4012,5 @@
             }
         }
     </script>
-
-
-</div><a href="https://github.com/D3nschot/crappy-FFT-vocoder" style="position: fixed; bottom: 10px; right: 10px; background-color: rgb(68, 68, 68); color: rgb(255, 255, 255); padding: 10px; border-radius: 5px; z-index: 1000;">Fork me on GitHub :)</a></body></html>
+</body>
+</html>

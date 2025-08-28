@@ -586,6 +586,36 @@
                 font-size: 12px;
             }
         }
+
+        /* New styles for the thinner synth keyboard */
+        #synthKeyboardContainer .key-button.white {
+            width: 15px; /* Thinner width for white keys */
+            height: 80px; /* Height remains the same */
+            padding-top: 15px; /* Padding for text */
+            font-size: 8px; /* Smaller font size */
+        }
+
+        #synthKeyboardContainer .key-button.black {
+            width: 10px; /* Thinner width for black keys */
+            height: 40px; /* Height remains the same */
+            font-size: 8px; /* Smaller font size */
+        }
+
+        /* Responsive adjustments for the thinner synth keyboard */
+        @media (max-width: 768px) {
+            #synthKeyboardContainer .key-button.white {
+                width: 12px; /* Thinner width for smaller screens */
+                height: 50px; /* Height remains the same */
+                padding-top: 12px; /* Adjusted padding */
+            }
+
+            #synthKeyboardContainer .key-button.black {
+                width: 8px; /* Thinner width for smaller screens */
+                height: 32.5px; /* Height remains the same */
+                margin-left: -4px; /* Adjusted margin for overlap */
+                margin-right: -4px; /* Adjusted margin for overlap */
+            }
+        }
     </style>
 </head>
 <body>
@@ -626,14 +656,166 @@
 
                 <!--it's swaped, i ain't gonna fix it-->
                 <div class="form-group">
-                    <label>Audio Input:</label>
+                    <label for="carrierInput">Audio Input:</label>
                     <input type="file" id="carrierInput" class="form-control" draggable="true">
                 </div>
 
                 <div class="form-group">
-                    <label>Carrier Input:</label>
+                    <label for="audioInput">Carrier Input:</label>
                     <input type="file" id="audioInput" class="form-control" draggable="true">
                 </div>
+            </div>
+
+            <!--synth-->
+            <div class="control-panel">
+                <h3>Synth</h3>
+                
+                <div class="form-group">
+                    <label for="enableSynth">Enable Synth:</label>
+                    <input type="checkbox" id="enableSynth">
+                </div>
+
+                <div class="form-group">
+                    <label for="synthWaveform">Waveform:</label>
+                    <select id="synthWaveform" class="form-control">
+                        <option value="0">sine</option>
+                        <option value="1">triangle</option>
+                        <option value="2" selected>sawtooth</option>
+                        <option value="3">square</option>
+                        <option value="4">PWM</option>
+                        <option value="5">noise</option>
+                        <option value="6">OV tri</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="synthVolume">Synth Volume:</label>
+                    <input type="range" id="synthVolume" min="0" max="2" step="0.01" value="0.5">
+                </div>
+
+                <div class="form-group">
+                    <label for="synthOctave">Octave Shift:</label>
+                    <input type="range" id="synthOctave" min="-3" max="3" step="1" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="synthDetune">Detune Amount:</label>
+                    <input type="range" id="synthDetune" min="0" max="1" step="0.01" value="0.02">
+                </div>
+
+                <div class="form-group">
+                    <label for="synthVoices">Voice Count:</label>
+                    <input type="range" id="synthVoices" min="1" max="8" step="1" value="1">
+                </div>
+
+                <label>Synth Keyboard:</label>
+                <div class="keyboard-section">
+                    <div class="keyboard-container" id="synthKeyboardContainer"></div>
+                </div>
+            </div>
+
+
+
+                <script>
+                    // Re-using the semitoneNames and heldNotes from the original script
+                    const semitoneNames = [
+                        { name: 'C', black: false },
+                        { name: 'C#', black: true },
+                        { name: 'D', black: false },
+                        { name: 'D#', black: true },
+                        { name: 'E', black: false },
+                        { name: 'F', black: false },
+                        { name: 'F#', black: true },
+                        { name: 'G', black: false },
+                        { name: 'G#', black: true },
+                        { name: 'A', black: false },
+                        { name: 'A#', black: true },
+                        { name: 'B', black: false },
+                    ];
+
+                    const synthHeldNotes1 = new Set(); // Use a separate set for the first synth notes
+                    const synthKeyboardContainer1 = document.getElementById("synthKeyboardContainer");
+                    const synthTotalKeys = 72; // Total number of keys
+                    const synthBaseNote = 48; // Starting from C3 (MIDI note 48)
+
+                    // Render the synth keyboard
+                    function renderSynthKeyboard(container, heldNotes) {
+                        container.innerHTML = '';
+                        
+                        const synthTotalKeys = 72;
+                        const synthBaseNote = 36; // C2 instead of C3 for more range
+                        const synthKeysPerRow = 24;
+
+                        let currentRowDiv;
+
+                        for (let k = 0; k < synthTotalKeys; k++) {
+                            if (k % synthKeysPerRow === 0) {
+                                currentRowDiv = document.createElement("div");
+                                currentRowDiv.className = "keyboard-row";
+                                container.appendChild(currentRowDiv);
+                            }
+
+                            const midiNote = synthBaseNote + k;
+                            const noteIndexInOctave = k % 12;
+                            const name = semitoneNames[noteIndexInOctave];
+                            const isBlack = name.black;
+
+                            const btn = document.createElement("button");
+                            btn.className = `key-button ${isBlack ? 'black' : 'white'}`;
+                            btn.dataset.note = midiNote;
+                            btn.textContent = name.name;
+
+                            if (isBlack) {
+                                btn.style.marginLeft = "-25px";
+                                btn.style.marginRight = "-25px";
+                            } else {
+                                btn.style.marginLeft = "0";
+                                btn.style.marginRight = "0";
+                            }
+
+                            if (heldNotes.has(midiNote)) {
+                                btn.classList.add('active');
+                            }
+
+                            btn.addEventListener("click", () => {
+                                if (heldNotes.has(midiNote)) {
+                                    heldNotes.delete(midiNote);
+                                    btn.classList.remove('active');
+                                    //console.log(`Synth Note Off: ${midiNote}`);
+                                } else {
+                                    heldNotes.add(midiNote);
+                                    btn.classList.add('active');
+                                    //console.log(`Synth Note On: ${midiNote}`);
+                                }
+                            });
+
+                            currentRowDiv.appendChild(btn);
+                        }
+                    }
+
+                    // Call the render function for the keyboard when the DOM is loaded
+                    document.addEventListener('DOMContentLoaded', () => {
+                        renderSynthKeyboard(synthKeyboardContainer1, synthHeldNotes1);
+                        // Add event listener for window resize to re-render if layout changes
+                        window.addEventListener('resize', () => {
+                            renderSynthKeyboard(synthKeyboardContainer1, synthHeldNotes1);
+                        });
+                    });
+
+                    // Global synth state
+                    const synthState = {
+                        heldNotes: new Set(),
+                        enabled: false,
+                        waveform: 0,
+                        volume: 0.5,
+                        octave: 0,
+                        detune: 0,
+                        voices: 1,
+                        t: 0 // Global time counter
+                    };
+                </script>
+
+
             </div>
 
             <!-- Basic Controls Panel -->
@@ -1063,7 +1245,10 @@
             "probably gonna make Crappy Analog Voc- oh wait, I already did",
             "A fast Fourier transform (FFT) is an algorithm that computes the discrete Fourier transform (DFT) of a sequence, or its inverse (IDFT).",
             "Don't we love how long it takes to process audio files? :D",
-            "new ui? because why not?"
+            "new ui? because why not?",
+            "I should really stop adding features",
+            "synth👍 -D3nschot",
+            "synth👍 -DX3050",
         ];
 
         document.getElementById('Title').addEventListener('click', function() {
@@ -1293,22 +1478,6 @@
             }
         }
 
-        // Piano keyboard system
-        const semitoneNames = [
-            { name: 'C', black: false },
-            { name: 'C#', black: true },
-            { name: 'D', black: false },
-            { name: 'D#', black: true },
-            { name: 'E', black: false },
-            { name: 'F', black: false },
-            { name: 'F#', black: true },
-            { name: 'G', black: false },
-            { name: 'G#', black: true },
-            { name: 'A', black: false },
-            { name: 'A#', black: true },
-            { name: 'B', black: false },
-        ];
-
         const heldNotes = new Set();
         const keyboard = document.getElementById("easyKeyboard");
         const totalKeys = 60;
@@ -1374,6 +1543,7 @@
             }
         }
 
+        
         // Drag and drop system
         let draggingInputId = null;
 
@@ -2029,9 +2199,10 @@
             }
         });
 
+        let EnSynth=document.getElementById('enableSynth').checked;
         // this fixed the issue of requireing the carrier file to be loaded first
         function tryProcessAudio(B) {
-            if (loadedCarrierBuffer && loadedAudioBuffer) {
+            if ((loadedCarrierBuffer && loadedAudioBuffer) || (loadedCarrierBuffer && EnSynth)) {
                 processAudio(B);
             }
         }
@@ -2226,7 +2397,197 @@
                 return;
             }
         }
+    
+        // Enhanced polyFsaw function that works with the keyboard
+        function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, waveformType, t) {
+            if (heldNotesSet.size === 0) return 0; // No notes pressed
+            
+            const notesArray = Array.from(heldNotesSet).map(midiNote => midiNote - 69); // Convert MIDI to relative semitones (A4 = 0)
+            const len = notesArray.length;
+            const totalVoices = len * m;
+            const sqrtM = Math.sqrt(m);
+            let sum = 0;
+            const ratio = 1//44100/48000;
+            
+            for (let k = 0; k < totalVoices; k++) {
+                const i = k % len;
+                const j = Math.floor(k / len);
+                const pitch = 2 ** ((notesArray[i] - 7.8) / 12 + octaveShift) * ratio;
+                const detune = Math.sqrt(j) / sqrtM;
+                const phase = t * pitch * (1 + detune * detuneAmount) + detune * 181.019335984;
+                let val;
+                
+                switch (waveformType) {
+                    case 0: // sine
+                        val = Math.sin(phase / 128 * Math.PI); 
+                        break;
+                    case 1: // triangle
+                        val = Math.asin(-Math.sin(phase / 128 * Math.PI)) / Math.PI * 2; 
+                        break;
+                    case 2: // sawtooth
+                        val = phase/128%2-1; 
+                        break;
+                    case 3: // square
+                        val = ((phase | (phase + 64)) & 128) / 128 - 64/128 - .5; 
+                        break;
+                    case 4: // PWM
+                        const phh = Math.acos(-Math.cos(t / 32768 * Math.PI)) / Math.PI * 128;
+                        val = ((phase | (phase + phh)) & 128) / 128 - phh/256 - .5; 
+                        break;
+                    case 5: // noise
+                        val = (Math.random() - 0.5) * 2;
+                        break;
+                    case 6: // custom (your original custom function)
+                        val = customWaveform(pitch * (1 + detune * detuneAmount), detune * 181.019335984, t);
+                        break;
+                    default: 
+                        val = Math.sin(phase / 128 * Math.PI);
+                }
+                sum += val;
+            }
+            return sum / m / 3;
+        }
 
+        // Custom waveform function (simplified version of your original)
+        function customWaveform(y, ph, t) {
+            const hz = 48000;
+            const invHz = Math.PI / hz;
+            const mod = y * 1;
+            const x = t * y + ph;
+            
+            const rate1 = 1.60;
+            const rate2 = 2.21;
+            const s1 = +Math.sin(t * rate1 * invHz);
+            const s2 = -Math.sin(t * rate2 * invHz);
+            
+            const o1 = x + s1 * 1.4e4 * mod * 0.003 / rate1;
+            const o2 = x * 2 ** (0.1/12) + s2 * 1.4e4 * mod * 0.003 / rate2;
+            
+            // Simplified triangle functions
+            const tri1 = Math.tan(Math.sin(o1/128 * Math.PI)) * 82.125 + 128;
+            const tri2 = Math.tan(Math.sin(o2/128 * Math.PI) * 1.3) * (64/1.81) + 128;
+            
+            const v = ((tri1 & 255) + (tri2 & 255)) * 0.5 - 128;
+            
+            // Simplified waveshaper
+            const wt = v / 256 + 0.5;
+            return (wt * wt / 2.38 - Math.abs(((wt + 0.5) % 1 - 0.5) * 2) ** 0.64 + 0.6) * 2 - 0.1;
+        }
+
+        // Modified processAudio function to use the synth
+        function processAudio(buffer) {
+            if (!loadedAudioBuffer) {
+                alert('Please select a Modular audio file.');
+                return;
+            }
+
+            // Check if Synth is enabled
+            const synthEnabled = document.getElementById('enableSynth')?.checked || false;
+            
+            if (!synthEnabled && !loadedCarrierBuffer) {
+                alert('Please select a carrier audio file or enable Synth.');
+                return;
+            }
+
+            const iterations = parseInt(document.getElementById('iterations').value);
+            if (iterations < 1) {
+                alert('Please enter a valid number of iterations.');
+                return;
+            }
+
+            // Carrier determines total length
+            const carrierDuration = loadedCarrierBuffer.length / loadedCarrierBuffer.sampleRate;
+            const targetLength = Math.ceil(carrierDuration * buffer.sampleRate);
+
+            // Resize input to carrier duration
+            if (!synthEnabled) {
+                buffer = createLoopedBuffer(buffer, targetLength);
+            }
+
+            // Set up analyser (for live vis)
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            const bufferLength = analyser.frequencyBinCount;
+            const frequencyData = new Float32Array(bufferLength);
+
+            source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            // Offline render context length = carrier length
+            const offlineContext = new OfflineAudioContext(
+                2,
+                loadedCarrierBuffer.length,
+                loadedCarrierBuffer.sampleRate
+            );
+
+            let offlineSource = offlineContext.createBufferSource();
+            offlineSource.buffer = buffer;
+
+            const offlineAnalyser = offlineContext.createAnalyser();
+            offlineAnalyser.fftSize = 2048;
+            const offlineFrequencyData = new Uint8Array(offlineAnalyser.frequencyBinCount);
+
+            offlineSource.connect(offlineAnalyser);
+            offlineAnalyser.connect(offlineContext.destination);
+
+            offlineSource.start();
+            offlineContext.startRendering().then(function(renderedBuffer) {
+
+                let carrierLeft  = loadedCarrierBuffer.getChannelData(0);
+                let carrierRight = loadedCarrierBuffer.numberOfChannels > 1
+                    ? loadedCarrierBuffer.getChannelData(1)
+                    : loadedCarrierBuffer.getChannelData(0);
+
+                let inputLeft, inputRight;
+                if (synthEnabled) {
+                    // synth must fill to carrier length
+                    const length = loadedCarrierBuffer.length;
+                    inputLeft  = new Float32Array(length);
+                    inputRight = new Float32Array(length);
+
+                    const volume   = parseFloat(document.getElementById('synthVolume').value);
+                    const octave   = parseInt(document.getElementById('synthOctave').value);
+                    const detune   = parseFloat(document.getElementById('synthDetune').value);
+                    const voices   = parseInt(document.getElementById('synthVoices').value);
+                    const waveform = parseInt(document.getElementById('synthWaveform').value);
+
+                    for (let i = 0; i < length; i++) {
+                        synthState.t = i;
+                        const synthSample = polyFsawFromKeyboard(
+                            voices,
+                            synthState.heldNotes,
+                            octave,
+                            detune,
+                            waveform,
+                            i
+                        ) * volume;
+                        inputLeft[i]  = synthSample;
+                        inputRight[i] = synthSample;
+                    }
+                } else {
+                    // looped input is already adjusted to carrier duration
+                    inputLeft  = renderedBuffer.getChannelData(0);
+                    inputRight = renderedBuffer.numberOfChannels > 1
+                        ? renderedBuffer.getChannelData(1)
+                        : renderedBuffer.getChannelData(0);
+                }
+
+                // process iterations — now both input + carrier aligned
+                processAudioIterations(iterations, offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer);
+
+                // Enable buttons
+                document.getElementById('playButton').disabled = false;
+                document.getElementById('pauseButton').disabled = false;
+                document.getElementById('stopButton').disabled = false;
+                document.getElementById('downloadButton').disabled = false;
+                document.getElementById('reprocessButton').disabled = false;
+
+                visualize(offlineAnalyser, offlineFrequencyData);
+                showProcessPOP_UP('', false);
+            });
+        }
 
         async function processAudioIterations(iterations, offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer) {
             await new Promise(resolve => setTimeout(resolve, 20));
@@ -2502,76 +2863,6 @@
             }
 
             return outputBuffer;
-        }
-
-        function processAudio(buffer) {
-            if (!loadedCarrierBuffer) {
-                alert('Please select a carrier audio file.');
-                return;
-            }
-            if (!loadedAudioBuffer) {
-                alert('Please select a Modular audio file.');
-                return;
-            }
-
-            // Get the number of iterations
-            const iterations = parseInt(document.getElementById('iterations').value);
-            if (iterations < 1) {
-                alert('Please enter a valid number of iterations.');
-                return;
-            }
-            
-            // Create looped version of input to match the carrier length
-            const carrierDuration = loadedCarrierBuffer.length / loadedCarrierBuffer.sampleRate;
-            const targetLength = Math.ceil(carrierDuration * buffer.sampleRate);
-            buffer = createLoopedBuffer(buffer, targetLength);
-
-            // Set up analyser
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
-            const bufferLength = analyser.frequencyBinCount;
-            const frequencyData = new Float32Array(bufferLength);
-
-            // Create a buffer source for the original audio
-            source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-
-            // Perform FFT and reconstruct audio using the provided logic
-            const offlineContext = new OfflineAudioContext(2, buffer.length, buffer.sampleRate); // Stereo
-            let offlineSource = offlineContext.createBufferSource();
-            offlineSource.buffer = buffer;
-
-            const offlineAnalyser = offlineContext.createAnalyser();
-            offlineAnalyser.fftSize = 2048;
-            const offlineFrequencyData = new Uint8Array(offlineAnalyser.frequencyBinCount);
-
-            offlineSource.connect(offlineAnalyser);
-            offlineAnalyser.connect(offlineContext.destination);
-
-            offlineSource.start();
-            offlineContext.startRendering().then(function(renderedBuffer) {
-                let inputLeft = buffer.getChannelData(0);
-                let inputRight = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0);
-                let carrierLeft = loadedCarrierBuffer.getChannelData(0);
-                let carrierRight = loadedCarrierBuffer.numberOfChannels > 1 ? loadedCarrierBuffer.getChannelData(1) : loadedCarrierBuffer.getChannelData(0);
-
-                processAudioIterations(iterations, offlineContext, inputLeft, inputRight, carrierLeft, carrierRight, buffer);
-
-                // Enable buttons
-                document.getElementById('playButton').disabled = false;
-                document.getElementById('pauseButton').disabled = false;
-                document.getElementById('stopButton').disabled = false;
-                document.getElementById('downloadButton').disabled = false;
-                document.getElementById('reprocessButton').disabled = false;
-
-                // Visualize the sine wave volumes
-                visualize(offlineAnalyser, offlineFrequencyData);
-
-                // Hide processing indicator
-                showProcessPOP_UP('', false);
-            });
         }
 
         /**
@@ -3877,6 +4168,18 @@
 
             return outputBuffer;
         }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const synthKeyboardContainer = document.getElementById("synthKeyboardContainer");
+            if (synthKeyboardContainer) {
+                renderSynthKeyboard(synthKeyboardContainer, synthState.heldNotes);
+                
+                window.addEventListener('resize', () => {
+                    renderSynthKeyboard(synthKeyboardContainer, synthState.heldNotes);
+                });
+            }
+        });
 
         function visualize(analyser, dataArray) {
             const canvas = document.getElementById('visualizer');

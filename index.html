@@ -676,6 +676,7 @@
                         <option value="12">OV unisono</option>
                         <option value="13">OV strings + unisono</option>
                         <option value="14">VX Power (Not Perfect)</option>
+                        <option value="15">damped saw</option>
                         <option value="9">Noise</option>
                     </select>
                 </div>
@@ -2522,16 +2523,17 @@
                     ratio=4, decay=.01, attack=0,db=2
                 }=settings;
 
-                d = MBChp(d,.01,0,3,channel*4);
+                d = MBChp(d,.01,0,3,channel*5);
 
-                let low=MBClp(d,lowFreq,0,db,0);
-                low=compressor(low,lowThreshold,ratio,attack,decay,0);
+                //natural sound ratios 1, 2 and 1.5
+                let low=MBClp(d,lowFreq,0,db,0+channel*5);
+                low=compressor(low,lowThreshold,ratio,attack,decay,0+channel*5);
 
-                let mid=MBChp(MBClp(d,midHigh,0,db,1),midLow,0,db,1);
-                mid=compressor(mid,midThreshold,ratio,attack,decay,1);
+                let mid=MBChp(MBClp(d/2,midHigh,0,db,1+channel*5),midLow,0,db,1+channel*5);
+                mid=compressor(mid,midThreshold,ratio,attack,decay,1+channel*5);
 
-                let high=MBChp(d,HighFreq,0,db,2);
-                high=compressor(high,highThreshold,ratio,attack,decay,2);
+                let high=MBChp(d/1.5,HighFreq,0,db,2+channel*5);
+                high=compressor(high,highThreshold,ratio,attack,decay,2+channel*5);
 
                 return low+mid+high;
             }
@@ -2539,12 +2541,13 @@
             const thres=1;
             const set={
                 lowFreq:.05, midLow:.015, midHigh:.4, HighFreq:.1,
-                lowThreshold:thres, midThreshold:thres/2, highThreshold:thres/1.5,
+                lowThreshold:thres, midThreshold:thres, highThreshold:thres,
                 ratio:2.0, decay:0.0005, attack:0.01, db:8
             };
 
             // rms(input,.01,.01,0) fine
-            return mbc(input*(1+amt*10),set)/3;
+            // to prevent cliping
+            return compressor(mbc(input*(1+amt*100),set),thres,set.ratio,set.attack,set.decay,channel*5+3);
         }
 
 
@@ -2574,10 +2577,10 @@
             // waveform function returning [L, R]
             const waveformFn = (pitch, j) => { // j is the voice index within the note
                 const detuneL = Math.sqrt(j*2) / sqrtM;
-                const detuneR = Math.sqrt(j*2 + (m?0:1)) / sqrtM;
+                const detuneR = Math.sqrt(j*2 + (m>1?1:0)) / sqrtM;
 
-                const phaseL = t * pitch * (1 + detuneL * detuneAmount) + detuneL * 181.019335984;
-                const phaseR = t * pitch * (1 + detuneR * detuneAmount) + detuneR * 181.019335984;
+                const phaseL = t * pitch * (1 + detuneL * detuneAmount) + detuneL * 1e10;
+                const phaseR = t * pitch * (1 + detuneR * detuneAmount) + detuneR * 1e10;
 
                 switch (waveformType) {
                     case 0: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
@@ -2612,6 +2615,8 @@
                     case 13: return [(unisono.charCodeAt(phaseL*1.5/2.286 % unisono.length|0) + Strings.charCodeAt(phaseL*1.5/2.286 % Strings.length|0))/2**15 - 1,
                                     (unisono.charCodeAt(phaseR*1.5/2.286 % unisono.length|0) + Strings.charCodeAt(phaseR*1.5/2.286 % Strings.length|0))/2**15 - 1];
                     case 14: return Power(phaseL, totalVoices, t); // Power should return stereo
+                    case 15: return [(Math.sin(-phaseL * Math.PI / 128 + Math.asin(Math.sin(-phaseL * Math.PI / 128 )) / 3))
+                                    ,(Math.sin(-phaseR * Math.PI / 128 + Math.asin(Math.sin(-phaseR * Math.PI / 128 )) / 3))]
                     default: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
                 }
             };
@@ -2940,6 +2945,7 @@
             const harmExpr = document.getElementById('Harmonics')?.value || '[0,2,3,7].map(i => 2**(i/12))';
             const volume = parseFloat(document.getElementById('4ormVolume')?.value || 1.0);
             const _4ormFilterType = parseInt(document.getElementById('4ormFilterType')?.value || 0);
+            const decayType = parseInt(document.getElementById('DecayType')?.value || 0);
             const HZ = context.sampleRate
 
             // Parse harmonic array
@@ -3097,6 +3103,7 @@
                     let tt=0
                     const Fcall = call * stages*2 + i
                     const stageAg = ag * repeatArr(arr, i);
+                    const dec=[rms,peak][decayType]
                     if (document.getElementById('use_gen')?.checked) {
                         const GENi = generator(stageAg/stages, IP2)*stages;
                         let GEN = 0
@@ -3107,7 +3114,7 @@
                         }
 
 
-                        out += GEN*peak(Math.abs(F(IP, stageAg*pitchV, res, Fcall))/2,2**-((rel*5)**2)/800,Fcall);
+                        out += GEN*dec(Math.abs(F(IP, stageAg*pitchV, res, Fcall))/2,2**-((rel*3)**2)/400,Fcall);
                     } else {
                         // Use the input directly
                         out += F(IP, stageAg, res, Fcall);
@@ -4309,7 +4316,6 @@
 
                     // === CLASSIC MAGNITUDE TRANSFER MODE ===
                     if (useClassicMagnitudeTransfer) {
-                        // Use the new FFT functions for classic magnitude transfer
                         const reM = new Float32Array(SIZE);
                         const imM = new Float32Array(SIZE);
                         const reC = new Float32Array(SIZE);
@@ -4323,21 +4329,19 @@
                             imM[i] = 0;
                         }
 
-                        // Perform FFT using the classic FFT functions
+                        // Perform FFT
                         const brOut = parseInt(document.getElementById('BR_out').value);
-                        clampWaveOutput = 1
-
-
-                        switch(brOut) {
-                            case 1: // Both - use wave function for both
+                        clampWaveOutput = 1;
+                        switch (brOut) {
+                            case 1:
                                 fft_classic(reM, imM, true, clampWaveOutput);
                                 fft_classic(reC, imC, true, clampWaveOutput);
                                 break;
-                            case 2: // Input only - use wave function for modulator
+                            case 2:
                                 fft_classic(reM, imM, true, clampWaveOutput);
                                 fft_classic(reC, imC, false, false);
                                 break;
-                            case 3: // Carrier only - use wave function for carrier
+                            case 3:
                                 fft_classic(reM, imM, false, false);
                                 fft_classic(reC, imC, true, clampWaveOutput);
                                 break;
@@ -4345,25 +4349,47 @@
                                 fft_classic(reM, imM, false, false);
                                 fft_classic(reC, imC, false, false);
                         }
-                        
+
+                        // ⬇️ envelope state arrays (persistent across calls!)
+                        if (!applyFFTLogic._classicEnv) {
+                            applyFFTLogic._classicEnv = new Float32Array(SIZE);
+                        }
+                        const env = applyFFTLogic._classicEnv;
+
+                        const DecayType = parseInt(document.getElementById('decayType').value);
+                        const Release   = parseFloat(document.getElementById('release').value) 
+                                        ** (1 / (4 + (SIZE / 1024 - 1) * 2)); // similar scaling
+                        const Ratio     = SIZE / 1024;
+
                         // Extract magnitude and phase
                         const magM = new Array(SIZE);
-                        const phC = new Array(SIZE);
+                        const phC  = new Array(SIZE);
 
                         for (let i = 0; i < SIZE; i++) {
-                            // Modulator magnitude
-                            magM[i] = Math.sqrt(reM[i] * reM[i] + imM[i] * imM[i]);
-                            
-                            // Carrier phase
+                            const instMag = Math.sqrt(reM[i] * reM[i] + imM[i] * imM[i]); // instant magnitude
+
+                            // --- envelope smoothing ---
+                            const REL = Math.min((1 - Release) * Ratio, 1);
+                            switch (DecayType) {
+                                case 1: // RMS-like smoothing
+                                    env[i] = (1 - REL) * env[i] + REL * instMag * instMag;
+                                    magM[i] = Math.sqrt(env[i]);
+                                    break;
+                                case 2: // Peak hold + exponential release
+                                    env[i] = Math.max(instMag, env[i] * (1 - REL));
+                                    magM[i] = env[i];
+                                    break;
+                                default: // raw
+                                    magM[i] = instMag;
+                            }
+
                             phC[i] = Math.atan2(imC[i], reC[i]);
                         }
 
-                        // Apply classic magnitude transfer: modulator magnitude + carrier phase
+                        // Apply magnitude transfer
                         for (let i = 0; i < SIZE; i++) {
-                            const outMag = magM[i];  // Take magnitude from modulator
-                            const outPh = phC[i];    // Take phase from carrier
-                            
-                            // Convert back to complex form
+                            const outMag = magM[i];
+                            const outPh  = phC[i];
                             reM[i] = outMag * Math.cos(outPh);
                             imM[i] = outMag * Math.sin(outPh);
                         }
@@ -4375,16 +4401,16 @@
                             imM[i] *= volume;
                         }
 
-                        // Perform IFFT using classic IFFT
+                        // IFFT
                         ifft_classic(reM, imM);
 
                         // Overlap-add with windowing
                         for (let i = 0; i < SIZE; i++) {
                             const inputt = outputData[t + i] + reM[i] * window[i];
                             if (clampOut == 1) {
-                                outputData[t + i] = Math.min(Threshold, Math.max(-Threshold, inputt))/3;
+                                outputData[t + i] = Math.min(Threshold, Math.max(-Threshold, inputt)) / 3;
                             } else {
-                                outputData[t + i] += reM[i] * window[i]/3;
+                                outputData[t + i] += reM[i] * window[i] / 3;
                             }
                         }
                     } else {
@@ -4618,90 +4644,238 @@
             }
         });
 
-        /**
+        /*
          * Visualize the frequency response of the analog filters based on current analog control properties.
          * Draws the response on the #filterView canvas.
          */
-
+        // global for it to not reset on each call
         let visState = 0;
 
-        function visualize(analyser, dataArray) {
-            const canvas = document.getElementById('visualizer');
-            const ctx = canvas.getContext('2d');
-            const bufferLength = analyser.frequencyBinCount;
+        /*
+         * syncMethod:
+         * 0 = Rising Zero Crossing
+         * 1 = Falling Zero Crossing
+         * 2 = Any Zero Crossing
+         * 3 = Positive Peak
+         * 4 = Negative Trough
+         * 5 = Steepest Rising Edge
+         * 6 = Steepest Falling Edge
+         * 7 = RMS Trigger
+         * 8 = Hysteresis Trigger
+         * 9 = Correlation Sync
+         */
 
-            // Add click event listener to toggle between linear and log modes
-            canvas.addEventListener('click', function() {
-                visState = 1 - visState; // Toggle between 0 and 1
-            });
+        syncMethod = 7
+
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        canvas.addEventListener('click', function () {
+            visState = (visState + 1) % 4;
+        });
+
+        function visualize(analyserL, analyserR, dataArrayL, dataArrayR) {
+            const bufferLength = analyserL.frequencyBinCount;
+
+            // Global visualization state:
+            // 0 = Linear Spectrum
+            // 1 = Log Spectrum
+            // 2 = Scope
+            // 3 = Mixed (Log + Scope)
+
+            // Toggle on click
 
             function draw() {
-                analyser.getByteFrequencyData(dataArray);
-                
                 const width = canvas.width;
                 const height = canvas.height;
-                
+
+                // Pull FFT + Time-domain data
+                analyserL.getByteFrequencyData(dataArrayL);
+                analyserR.getByteFrequencyData(dataArrayR);
+
+                const timeDataL = new Uint8Array(analyserL.fftSize);
+                const timeDataR = new Uint8Array(analyserR.fftSize);
+                analyserL.getByteTimeDomainData(timeDataL);
+                analyserR.getByteTimeDomainData(timeDataR);
+
                 ctx.clearRect(0, 0, width, height);
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, width, height);
 
                 switch (visState) {
-                    case 0: // Linear
-                        const barWidth = (width / bufferLength) * 2.5;
-                        let x = 0;
-
-                        for (let i = 0; i < bufferLength; i++) {
-                            const barHeight = dataArray[i] * 1.56;
-                            const barH = barHeight * 1.26 / 2;
-                            const B255 = (Math.min(barH, 255) / 255) ** 1.5 * 255;
-                            ctx.fillStyle = `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
-                            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-                            x += barWidth + 1;
-                        }
+                    case 0: // Linear Spectrum
+                        drawSpectrumLinear(dataArrayL);
                         break;
 
-                    case 1: // Logarithmic
-                        const func = Math.log;
-                        const logMin = 1;
-                        const logMax = func(bufferLength + 1);
-                        
-                        for (let i = 0; i < bufferLength; i++) {
-                            const barHeight = (dataArray[i] / 255) * height;
-                            const x = (func(i + logMin) / logMax) * width;
-                            // Calculate bar width so bars fill the canvas with no gaps
-                            const nextX = (func(i + 1 + logMin) / logMax) * width;
-                            const barWidthLog = nextX - x + 1;
-                            const barH = barHeight * 1.26 / 2;
-                            const B255 = (Math.min(barH, 255) / 255) ** 1.5 * 255;
-                            ctx.fillStyle = `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
-                            ctx.fillRect(x, height - barHeight, barWidthLog, barHeight);
-                        }
+                    case 1: // Log Spectrum
+                        drawSpectrumLog(dataArrayL);
+                        break;
+
+                    case 2: // Scope
+                        drawScope(timeDataL, timeDataR, 1.0);
+                        break;
+
+                    case 3: // Mixed
+                        ctx.globalAlpha = 0.25;
+                        drawSpectrumLog(dataArrayL);
+                        ctx.globalAlpha = 1.0;
+                        drawScope(timeDataL, timeDataR, 1.0);
                         break;
                 }
 
                 requestAnimationFrame(draw);
             }
 
+            function drawSpectrumLinear(dataArray) {
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] * 1.56;
+                    const barH = barHeight * 1.26 / 2;
+                    const B255 = (Math.min(barH, 255) / 255) ** 1.5 * 255;
+                    ctx.fillStyle = `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            }
+
+            function drawSpectrumLog(dataArray) {
+                const func = Math.log;
+                const logMin = 1;
+                const logMax = func(bufferLength + 1);
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * canvas.height;
+                    const x = (func(i + logMin) / logMax) * canvas.width;
+                    const nextX = (func(i + 1 + logMin) / logMax) * canvas.width;
+                    const barWidthLog = nextX - x + 1;
+                    const barH = barHeight * 1.26 / 2;
+                    const B255 = (Math.min(barH, 255) / 255) ** 1.5 * 255;
+                    ctx.fillStyle = `rgb(${Math.min(B255 * 2, 255)}, 0, ${Math.min((256 - B255) * 2, 255)})`;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidthLog, barHeight);
+                }
+            }
+
+            function drawScope(timeDataL, timeDataR, alpha = 1.0) {
+                ctx.globalAlpha = alpha;
+                ctx.lineWidth = 1.5;
+                
+                // All sync methods
+                function findRisingZeroCrossing(d){for(let i=0;i<d.length-1;i++){if(d[i]<128&&d[i+1]>=128)return {index:i,canSync:true}}return {index:0,canSync:false}}
+                function findFallingZeroCrossing(d){for(let i=0;i<d.length-1;i++){if(d[i]>128&&d[i+1]<=128)return {index:i,canSync:true}}return {index:0,canSync:false}}
+                function findAnyZeroCrossing(d){for(let i=0;i<d.length-1;i++){if((d[i]<128&&d[i+1]>=128)||(d[i]>128&&d[i+1]<=128))return {index:i,canSync:true}}return {index:0,canSync:false}}
+                function findPositivePeak(d){let m=-1,i0=0,c=false;for(let i=0;i<d.length;i++){if(d[i]>m){m=d[i];i0=i;c=true}}return {index:i0,canSync:c&&m>140}}
+                function findNegativeTrough(d){let m=256,i0=0,c=false;for(let i=0;i<d.length;i++){if(d[i]<m){m=d[i];i0=i;c=true}}return {index:i0,canSync:c&&m<116}}
+                function findSteepestRisingEdge(d){let m=0,i0=0,c=false;for(let i=0;i<d.length-1;i++){let s=d[i+1]-d[i];if(s>m){m=s;i0=i;c=true}}return {index:i0,canSync:c&&m>10}}
+                function findSteepestFallingEdge(d){let m=0,i0=0,c=false;for(let i=0;i<d.length-1;i++){let s=d[i]-d[i+1];if(s>m){m=s;i0=i;c=true}}return {index:i0,canSync:c&&m>10}}
+                function findRMSTrigger(d,w=32,t=20){for(let i=0;i<d.length-w;i++){let r=0;for(let j=0;j<w;j++){let s=d[i+j]-128;r+=s*s}r=Math.sqrt(r/w);if(r>t)return {index:i,canSync:true}}return {index:0,canSync:false}}
+                function findCorrelationSync(d,p,l=64){if(!p||p.length<l)return {index:0,canSync:false};let bc=-1,bi=0;for(let i=0;i<=d.length-l;i++){let c=0,na=0,nb=0;for(let j=0;j<l;j++){const a=d[i+j]-128,b=p[j]-128;c+=a*b;na+=a*a;nb+=b*b}if(na>0&&nb>0){c/=Math.sqrt(na*nb);if(c>bc){bc=c;bi=i}}}return {index:bi,canSync:bc>0.7}}
+                function findHysteresisTrigger(d,low=120,high=136){let trig=false;for(let i=0;i<d.length-1;i++){if(!trig&&d[i]<low)trig=true;else if(trig&&d[i]>high)return {index:i,canSync:true}}return {index:0,canSync:false}}
+                
+                function getSyncPoint(timeData, method = 'risingZero', previousPattern = null) {
+                    switch (method) {
+                        case 0: return findRisingZeroCrossing(timeData);
+                        case 1: return findFallingZeroCrossing(timeData);
+                        case 2: return findAnyZeroCrossing(timeData);
+                        case 3: return findPositivePeak(timeData);
+                        case 4: return findNegativeTrough(timeData);
+                        case 5: return findSteepestRisingEdge(timeData);
+                        case 6: return findSteepestFallingEdge(timeData);
+                        case 7: return findRMSTrigger(timeData);
+                        case 8: return findHysteresisTrigger(timeData);
+                        case 9: return findCorrelationSync(timeData, previousPattern);
+                        default: return findRisingZeroCrossing(timeData);
+                    }
+                }
+                
+                // Find sync point for each channel separately using selected method
+                const syncResultL = getSyncPoint(timeDataL, syncMethod);
+                const syncResultR = getSyncPoint(timeDataR, syncMethod);
+                const startIndexL = syncResultL.index;
+                const startIndexR = syncResultR.index;
+                const canSyncL = syncResultL.canSync;
+                const canSyncR = syncResultR.canSync;
+                
+                // Enable additive blending so red+blue = magenta
+                ctx.globalCompositeOperation = "lighter";
+                
+                // Left channel (red) - synchronized to its own trigger point
+                ctx.strokeStyle = "rgb(255, 0, 0)";
+                ctx.beginPath();
+                for (let i = 0; i < timeDataL.length; i++) {
+                    const index = canSyncL ? (startIndexL + i) % timeDataL.length : i;
+                    const x = (i / timeDataL.length) * canvas.width;
+                    // Convert from 0-255 range to centered waveform
+                    const y = ((255 - timeDataL[index]) / 255.0) * canvas.height;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                
+                // Right channel (blue) - synchronized to its own trigger point
+                ctx.strokeStyle = "rgb(0, 0, 255)";
+                ctx.beginPath();
+                for (let i = 0; i < timeDataR.length; i++) {
+                    const index = canSyncR ? (startIndexR + i) % timeDataR.length : i;
+                    const x = (i / timeDataR.length) * canvas.width;
+                    // Convert from 0-255 range to centered waveform
+                    const y = ((255 - timeDataR[index]) / 255.0) * canvas.height;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                
+                // Restore normal drawing mode for next layers
+                ctx.globalCompositeOperation = "source-over";
+                
+                // Draw sync indicators and method label
+                ctx.beginPath();
+                ctx.arc(10, 10, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = canSyncL ? 'red' : 'gray';
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(25, 10, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = canSyncR ? 'blue' : 'gray';
+                ctx.fill();
+                
+                // Display current sync method
+                ctx.fillStyle = 'white';
+                ctx.font = '12px monospace';
+                //ctx.fillText(`Sync: ${syncMethod}`, 45, 15);
+            }
+
             draw();
         }
 
-        document.getElementById('playButton').addEventListener('click', function() {
+        document.getElementById('playButton').addEventListener('click', function () {
             if (processedBuffer) {
                 playbackSource = audioContext.createBufferSource();
                 playbackSource.buffer = processedBuffer; // Play the processed buffer stored in RAM
-                playbackSource.connect(audioContext.destination);
 
-                // Set up a new analyser for playback visualization
-                const playbackAnalyser = audioContext.createAnalyser();
-                playbackAnalyser.fftSize = 2048;
-                const playbackFrequencyData = new Uint8Array(playbackAnalyser.frequencyBinCount);
+                // --- Create split for stereo channels ---
+                const splitter = audioContext.createChannelSplitter(2);
 
-                playbackSource.connect(playbackAnalyser);
-                playbackAnalyser.connect(audioContext.destination);
+                // --- Create analysers for L & R ---
+                const analyserL = audioContext.createAnalyser();
+                const analyserR = audioContext.createAnalyser();
+                analyserL.fftSize = 2048;
+                analyserR.fftSize = 2048;
 
-                // Visualize the playback audio
-                visualize(playbackAnalyser, playbackFrequencyData);
+                const dataArrayL = new Uint8Array(analyserL.frequencyBinCount);
+                const dataArrayR = new Uint8Array(analyserR.frequencyBinCount);
 
+                // --- Routing ---
+                playbackSource.connect(splitter);
+                splitter.connect(analyserL, 0); // Left channel
+                splitter.connect(analyserR, 1); // Right channel
+
+                // Connect to speakers
+                analyserL.connect(audioContext.destination);
+                analyserR.connect(audioContext.destination);
+
+                // --- Visualize both channels ---
+                visualize(analyserL, analyserR, dataArrayL, dataArrayR);
+
+                // --- Start playback ---
                 playbackSource.start();
             }
         });

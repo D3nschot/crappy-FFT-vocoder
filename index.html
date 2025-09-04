@@ -677,6 +677,8 @@
                         <option value="13">OV strings + unisono</option>
                         <option value="14">VX Power (Not Perfect)</option>
                         <option value="15">damped saw</option>
+                        <option value="16">VX Phased</option>
+                        <option value="17">VX chip (Arp)</option>
                         <option value="9">Noise</option>
                     </select>
                 </div>
@@ -1084,11 +1086,12 @@
                         <option value="3">exponential (base2)</option>
                         <option value="4">squared</option>
                         <option value="5" selected>Audaciy aproxinarion</option>
+                        <option value="6">Vocodex aproxinarion</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <lebel for="UseResBasedOnDistance">Use Resonance Based on Distance (Audaciy aproxinarion):</lebel>
+                    <lebel for="UseResBasedOnDistance">Use Resonance Based on Distance:</lebel>
                     <input type="checkbox" id="UseResBasedOnDistance" checked>
                 </div>
 
@@ -1096,6 +1099,26 @@
                 <div class="form-group">
                     <label for="addLPtoLowEnd">Add LP to Low End:</label>
                     <input type="checkbox" id="addLPtoLowEnd">
+                </div>
+
+                <div class="form-group">
+                    <label for="addHPtoHighEnd">Add HP to High End:</label>
+                    <input type="checkbox" id="addHPtoHighEnd">
+                </div>
+
+                <div class="form-group">
+                    <i>
+                        Recommended settings for <strong>Analog Mode</strong>: <br>
+                        this is primarily for the option <strong>Audaciy aproxinarion</strong> and <strong>Vocodex aproxinarion</strong>. <br>
+                        Use <strong>20 Bands</strong> for an <strong>Audacity-like</strong> sound, or <strong>47 Bands</strong> for a <strong>Vocodex-like</strong> sound. <br>
+                        Set the <strong>Filter Type</strong> to <strong>True Cascade2</strong> for <strong>Audacity-like</strong>, or <strong>True Cascade</strong> for <strong>Vocodex-like</strong>. <br>
+                        Adjust <strong>Resonance</strong> to <strong>0.9999</strong> (with <strong>Use Resonance Based on Distance</strong>) for <strong>Audacity-like</strong>,  
+                        or to <strong>0.85</strong> (without <strong>Use Resonance Based on Distance</strong>) for <strong>Vocodex-like</strong>. <br>
+                        It is also recommended to enable <strong>SoundGoodizer</strong> at <strong>0.1-0.3</strong> for a <strong>Vocodex-like</strong> sound,  
+                        but leave it <strong>off</strong> for <strong>Audacity-like</strong>. <br>
+                        Finally set <strong>dB</strong> to <strong>48 dB per oct</strong> for both modes. <br>
+                    </i>
+
                 </div>
             </div>
 
@@ -1368,7 +1391,7 @@
                                     span.textContent = ' ' + (Math.pow(2, val)).toFixed(0);
                                     break;
                                 case 'DBperOct':
-                                    span.textContent = ' 12';
+                                    span.textContent = ' ' + val*6 + ' dB/oct';
                                     break;
                                 default:
                                     span.textContent = '';
@@ -2617,6 +2640,8 @@
                     case 14: return Power(phaseL, totalVoices, t); // Power should return stereo
                     case 15: return [(Math.sin(-phaseL * Math.PI / 128 + Math.asin(Math.sin(-phaseL * Math.PI / 128 )) / 3))
                                     ,(Math.sin(-phaseR * Math.PI / 128 + Math.asin(Math.sin(-phaseR * Math.PI / 128 )) / 3))]
+                    case 16: return Phased(phaseL, t, totalVoices, j); // Phased should return stereo
+                    case 17: return Chip(notesArray,detuneL,detuneR,detuneAmount,m,t).map((x)=>x/len)
                     default: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
                 }
             };
@@ -2671,8 +2696,10 @@
 
             let sumL = 0, sumR = 0;
 
-            for (let i = 0; i < itt; i++) {
-                const sqrtM = Math.sqrt(itt);
+            m=8
+
+            for (let i = 0; i < m; i++) {
+                const sqrtM = Math.sqrt(m);
                 const detuneL = Math.sqrt(i*2) / (sqrtM*2);
                 const detuneR = Math.sqrt(i*2 + 1) / (sqrtM*2);
 
@@ -2688,8 +2715,8 @@
                 sumR += v(baseR1) + v(baseR2) + w(baseR2) * 3 + w(baseR3) * 4;
             }
 
-            sumL /= itt * 2;
-            sumR /= itt * 2;
+            sumL /= m * 2;
+            sumR /= m * 2;
 
             // --- duopole low-pass filter (2-pole) ---
             if (Power._lpState1L === undefined) Power._lpState1L = 0;
@@ -2713,6 +2740,107 @@
 
             return [lp2L*deClickAttack, lp2R*deClickAttack]; // stereo output
         }
+
+        // Multi-stage Phaser DSP with AP equation
+        function Phaser(inputY, ag = 0, res = 0, stages = 4, channel = 0) {
+            if (!Phaser._state) Phaser._state = [];
+
+            // Always ensure state exists
+            if (!Phaser._state[channel]) {
+                Phaser._state[channel] = {
+                    stages: Array.from({ length: stages }, () => ({
+                        p1: 0, p2: 0, p3: 0, p4: 0
+                    })),
+                    pi: 0
+                };
+            }
+
+            const chain = Phaser._state[channel];
+            const stageArr = chain.stages;
+
+            let pi = chain.pi;
+
+            const nres = 1 - res;
+            const mr = 1 - nres * (0.5 + nres / 2);
+            let x = inputY - pi * mr;
+
+            const a = Math.max(Math.min(1 - (ag / 2) ** 2, 0.99999), 0);
+
+            // process through N AP sections
+            for (let s of stageArr) {
+                const y1 = -a * x + s.p1 + a * s.p2;
+                s.p1 = x;
+                s.p2 = y1;
+
+                const y2 = -a * y1 + s.p3 + a * s.p4;
+                s.p3 = y1;
+                s.p4 = y2;
+
+                x = y2;
+            }
+
+            pi = -x;
+            chain.pi = pi;
+
+            return (inputY-pi) * 0.5; // wet/dry mix
+        }
+
+
+        function Phased(y, t, itt, chanIndex) {
+            let LFO = Math.acos(-Math.sin(t/44100*2*Math.PI/8)) / Math.PI / 2+.5; // 0..1 LFO
+
+            let fL = 0, fR = 0;
+            const m = 4;
+            const sqrtM = Math.sqrt(m)*2;
+
+            for (let k=0; k<m; k++) {  // <-- use k instead of i
+                const detuneL = Math.sqrt(k*2) / (sqrtM*2);
+                const detuneR = Math.sqrt(k*2 + 1) / (sqrtM*2);
+                fL += (y/128*(1+detuneL/64)+detuneL*1e10)%2-1;
+                fR += (y/128*(1+detuneR/64)+detuneR*1e10)%2-1;
+            }
+            fL /= m;
+            fR /= m;
+
+            // to mimic a chorus
+            fLO = y/256%1-.5 + fL
+            fRO = y/256%1-.5 + fR
+
+
+            // the actual phased part
+            fLO = Phaser(fLO, LFO**2, 0.23, 6, chanIndex);     
+            fRO = Phaser(fRO, LFO**2, 0.23, 6, chanIndex+itt); 
+
+            return [fLO, fRO];
+        }
+
+// Chip-style arpeggiator synth
+function Chip(pitchesArr, detuneL = 0, detuneR = 0, detuneAmount=0.02, voices = 1, t = 0) {
+    if (pitchesArr.length === 0) return [0, 0];
+
+    const arr = [...pitchesArr].sort((a, b) => a - b);
+
+    const spt = t / 44100 * 32;  // step index
+    const stepIndex = Math.floor(spt) % arr.length;
+    const pitch = 2 ** ((arr[stepIndex] - 69) / 12); // MIDI→Hz ratio
+
+    // Envelope decay inside step
+    const spDec = (1 - (spt % 1)) ** 0.5;
+
+    let outL = 0, outR = 0;
+
+    const phaseL = t * pitch * (1 + detuneL * detuneAmount) + detuneL*1e10;
+    const phaseR = t * pitch * (1 + detuneR * detuneAmount) + detuneR*1e10;
+
+    // Simple chip square wave (you can swap with saw, tri, etc.)
+    const waveL = (phaseL % 2-1)*spDec;
+    const waveR = (phaseR % 2-1)*spDec;
+
+    outL += waveL * spDec;
+    outR += waveR * spDec;
+
+    return [outL, outR];
+}
 
         // Modified processAudio function to use the synth
         function processAudio(buffer) {
@@ -3392,24 +3520,22 @@
                     const s = zBPCS[callCount];
                 
                     let f=d
-
-                    div=(1-r**100*.99)
                     let st = s.stage[0];
                     st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
                     st.bp2 += cc * (st.bp1 - st.bp2);
-                    f = st.bp1 - st.bp2; // feed forward into next stage
-                    o=f / (1-cc**2)*1.25 / (r/2+.5)
+                    f = (st.bp1 - st.bp2) * (1+cc**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
+                    o=f
 
                     // Process cascade
                     for (let i = 1; i < stages; i++) {
                         let st = s.stage[i];
                         st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
                         st.bp2 += cc * (st.bp1 - st.bp2);
-                        f = (st.bp1 - st.bp2) * (1-r**2) / (1-cc**2)*1.25 / (r/2+.5); // feed forward into next stage
+                        f = (st.bp1 - st.bp2) * (1-r**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
                         o=f
                     }
 
-                    return o*(.25+cc*2) // Output of last stage
+                    return o*(1+cc+cc**3*4)*4 // Output of last stage
                 } catch (e) {
                     return 0;
                 }
@@ -3840,24 +3966,22 @@
                     const s = zBPC[callCount];
                 
                     let f=d
-
-                    div=(1-r**100*.99)
                     let st = s.stage[0];
                     st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
                     st.bp2 += cc * (st.bp1 - st.bp2);
-                    f = st.bp1 - st.bp2; // feed forward into next stage
-                    o=f / (1-cc**2)*1.25 / (r/2+.5)
+                    f = (st.bp1 - st.bp2) * (1+cc**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
+                    o=f
 
                     // Process cascade
                     for (let i = 1; i < stages; i++) {
                         let st = s.stage[i];
                         st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
                         st.bp2 += cc * (st.bp1 - st.bp2);
-                        f = (st.bp1 - st.bp2) * (1-r**2) / (1-cc**2)*1.25 / (r/2+.5); // feed forward into next stage
+                        f = (st.bp1 - st.bp2) * (1-r**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
                         o=f
                     }
 
-                    return o*(.25+cc*2); // Output of last stage
+                    return o*(1+cc+cc**3*4)*4 // Output of last stage
                 } catch (e) {
                     return 0;
                 }
@@ -3913,6 +4037,7 @@
             const freqCurve = parseFloat(document.getElementById('freqCurve').value) || 0;
             const UseResBasedOnDistance = document.getElementById('UseResBasedOnDistance').checked;
             const addLPtoLowEnd = document.getElementById('addLPtoLowEnd').checked;
+            const addHPtoHighEnd = document.getElementById('addHPtoHighEnd').checked;
 
             // Envelope followers
             function peak(a, decayF, call) {
@@ -3977,6 +4102,11 @@
                         EQvol = 1+4*(1-i/nv)
                         distance = bandFrequency(nv,i+1,48000)**.5 - ic;
                         break;
+                    case 6:
+                        ic = 2**(i/nv*8-8);
+                        EQvol = 1;
+                        distance = 2**((i+1)/nv*8-8) - ic
+                        break;
                     default:
                         ic = i/nv;
                         EQvol = 1;
@@ -4032,7 +4162,7 @@
 
 
                     //console.log(i, ic, distance)
-                    if (UseResBasedOnDistance && (freqCurve==5 || freqCurve==4 || freqCurve==3)) {
+                    if (UseResBasedOnDistance && (freqCurve==6 || freqCurve==5 || freqCurve==4 || freqCurve==3)) {
                         fbv = fb * (1 - distance*1.75);
                         //EQvol = 1
                     }
@@ -4076,11 +4206,22 @@
                     let { ic, distance, EQvol: eqv } = curve(1, nv);
 
                     fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
-                    LPC = lp(car*64, ic, fbv, dbv, n*2+2 + bool*n*3);
-                    LPM = lp(inp*64, ic, fbv, dbv, n*2+3 + bool*n*3);
+                    LPC = lp(car*64, ic, fbv, 2, n*2+2 + bool*n*3);
+                    LPM = lp(inp*64, ic, fbv, 2, n*2+3 + bool*n*3);
 
                     ABSLPC = abs(LPM);
                     LPOUT = LPC * p(ABSLPC, 2**-((rel*3)**2)/400, n*2+2)
+                }
+
+                if (addHPtoHighEnd) {
+                    let { ic, distance, EQvol: eqv } = curve(nv, nv);
+
+                    fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
+                    LPC = hp(car*64, ic, fbv, 2, n*2+2 + bool*n*3);
+                    LPM = hp(inp*64, ic, fbv, 2, n*2+3 + bool*n*3);
+
+                    ABSLPC = abs(LPM);
+                    LPOUT = LPC * p(ABSLPC, 2**-((rel*3)**2)/400, n*2+3)
                 }
 
                 let LOUT = LPOUT * volv / 8 * dbv + result*n/2;
@@ -4863,14 +5004,21 @@
                 const dataArrayL = new Uint8Array(analyserL.frequencyBinCount);
                 const dataArrayR = new Uint8Array(analyserR.frequencyBinCount);
 
+                // --- Create merger to keep stereo ---
+                const merger = audioContext.createChannelMerger(2);
+
                 // --- Routing ---
                 playbackSource.connect(splitter);
+
                 splitter.connect(analyserL, 0); // Left channel
                 splitter.connect(analyserR, 1); // Right channel
 
+                // Send to merger to preserve stereo
+                analyserL.connect(merger, 0, 0); // analyserL → Left
+                analyserR.connect(merger, 0, 1); // analyserR → Right
+
                 // Connect to speakers
-                analyserL.connect(audioContext.destination);
-                analyserR.connect(audioContext.destination);
+                merger.connect(audioContext.destination);
 
                 // --- Visualize both channels ---
                 visualize(analyserL, analyserR, dataArrayL, dataArrayR);
@@ -4879,6 +5027,7 @@
                 playbackSource.start();
             }
         });
+
 
         document.getElementById('pauseButton').addEventListener('click', function() {
             if (playbackSource) {

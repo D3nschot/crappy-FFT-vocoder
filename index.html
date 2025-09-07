@@ -1122,7 +1122,7 @@
                         <strong>Vocodex-like sound:</strong><br>
                         &bull; Use <strong>47 Bands</strong><br>
                         &bull; Set <strong>Filter Type</strong> to <strong>True Cascade</strong><br>
-                        &bull; Set <strong>Resonance</strong> to <strong>0.85</strong> without <strong>Use Resonance Based on Distance</strong><br>
+                        &bull; Set <strong>Resonance</strong> to <strong>0.8</strong> without <strong>Use Resonance Based on Distance</strong><br>
                         &bull; Enable <strong>SoundGoodizer</strong> at <strong>0.1-0.3</strong><br>
                         &bull; Set <strong>dB</strong> to <strong>48 dB per octave</strong>
                     </i>
@@ -3671,7 +3671,7 @@
                     }
 
                     const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
-                    const cc = clamp(1e-6, 0.99, c)**1.5;
+                    const cc = clamp(1e-6, 0.99, c);
                     const fb = r + r / (1 - cc);
 
                     const s = zBPCS[callCount];
@@ -4226,7 +4226,7 @@
                     }
 
                     const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
-                    const cc = clamp(1e-6, 0.99, c)**1.5;
+                    const cc = clamp(1e-6, 0.99, c);
                     const fb = r + r / (1 - cc);
 
                     const s = zBPC[callCount];
@@ -4493,7 +4493,6 @@
 
                     // Get curve values
                     let { ic, distance, EQvol} = curve(i, nv);
-
 
                     //console.log(i, ic, distance)
                     if (UseResBasedOnDistance && (freqCurve==6 || freqCurve==5 || freqCurve==4 || freqCurve==3)) {

@@ -1065,6 +1065,7 @@
                         <option value="5">ApLp</option>
                         <option value="6">True Cascade (slow)</option>
                         <option value="7" selected>True Cascade2 (slow)</option>
+                        <option value="8">T bandpass</option>
                     </select>
                 </div>
 
@@ -2653,252 +2654,333 @@
             return compressor(mbc(input*(1+amt*100),set),thres,set.ratio,set.attack,set.decay,channel*5+3);
         }
 
-// Wave shaper function
-const OVDistort = document.getElementById("OVDistort");
-const waveShaper = (t) => {
-    t = t/2 + 10.5;
-    return ((DistTable.charCodeAt(Math.floor(t * DistTable.length) % DistTable.length) / 2**14 - 1) * 2.47 - t%1 + 0.5) * 2;
-}
-
-// Main synthesis function
-function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, waveformType, t) {
-    try {
-        if (heldNotesSet.size === 0) return [0, 0];
-
-        const notesArray = Array.from(heldNotesSet).map(n => n - 69);
-        const len = notesArray.length;
-        const totalVoices = len * m;
-        const sqrtM = Math.sqrt(m) * 2;
-        const sqrtM2 = Math.sqrt(m-1)
-        let sumL = 0, sumR = 0;
-        const ratio = 1;
-        const OVDistortVal = parseFloat(OVDistort.value) || 0;
-
-        const waveformFn = (pitch, j,k) => {
-            const detuneL = Math.sin(+j*2)/8;
-            const detuneR = Math.sin(-j*2)/8;
-
-            const phaseL = t * pitch * (1 + detuneL * detuneAmount / 100) + Math.abs(detuneL) * 1e10;
-            const phaseR = t * pitch * (1 + detuneR * detuneAmount / 100) + Math.abs(detuneR) * 1e10;
-
-            switch (waveformType) {
-                case 0: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
-                case 1: return [Math.asin(-Math.sin(phaseL / 128 * Math.PI)) / Math.PI * 2,
-                                Math.asin(-Math.sin(phaseR / 128 * Math.PI)) / Math.PI * 2];
-                case 2: return [phaseL / 128 % 2 - 1, phaseR / 128 % 2 - 1];
-                case 3: return [((phaseL | phaseL) & 128)/128 - 0.5,
-                                ((phaseR | phaseR) & 128)/128 - 0.5];
-                case 4: {
-                    const phh = Math.acos(-Math.cos(t / 32768 * Math.PI)) / Math.PI * 128;
-                    return [((phaseL | (phaseL + phh)) & 128)/128 - phh/256 - 0.5,
-                            ((phaseR | (phaseR + phh)) & 128)/128 - phh/256 - 0.5];
-                }
-                case 5: return [brTable[Math.floor(phaseL) & 255], brTable[Math.floor(phaseR) & 255]];
-                case 6: return [customWaveform(pitch * (1 + detuneL * detuneAmount / 100), detuneL * 181.019335984, t),
-                                customWaveform(pitch * (1 + detuneR * detuneAmount / 100), detuneR * 181.019335984, t)];
-                case 7: return [indigo.charCodeAt(Math.floor(phaseL*indigo.length*2**(-2.6667/12-15)) % indigo.length)/(2**14)-2,
-                                indigo.charCodeAt(Math.floor(phaseR*indigo.length*2**(-2.6667/12-15)) % indigo.length)/(2**14)-2];
-                case 8: return [(((phaseL & 128) ? phaseL - 128 : ~phaseL*2) & 255)/170 - 0.56,
-                                (((phaseR & 128) ? phaseR - 128 : ~phaseR*2) & 255)/170 - 0.56];
-                case 9: return [Math.random()*2-1, Math.random()*2-1];
-                case 10: return [
-                    (indigoMin.charCodeAt(Math.floor(phaseL*indigoMin.length/256) % indigoMin.length)/(2**15)
-                    - indigoMin.charCodeAt(Math.floor((phaseL*indigoMin.length/255 + indigoMin.length/2)) % indigoMin.length)/(2**15.5)+1)**2/2 - 1,
-                    (indigoMin.charCodeAt(Math.floor(phaseR*indigoMin.length/256) % indigoMin.length)/(2**15)
-                    - indigoMin.charCodeAt(Math.floor((phaseR*indigoMin.length/255 + indigoMin.length/2)) % indigoMin.length)/(2**15.5)+1)**2/2 - 1
-                ];
-                case 11: return [Strings.charCodeAt(Math.floor(phaseL*1.5/2.286) % Strings.length)/(2**14)-1,
-                                Strings.charCodeAt(Math.floor(phaseR*1.5/2.286) % Strings.length)/(2**14)-1];
-                case 12: return [unisono.charCodeAt(Math.floor(phaseL*1.5/2.286) % unisono.length)/(2**14)-1,
-                                unisono.charCodeAt(Math.floor(phaseR*1.5/2.286) % unisono.length)/(2**14)-1];
-                case 13: return [(unisono.charCodeAt(Math.floor(phaseL*1.5/2.286) % unisono.length) + Strings.charCodeAt(Math.floor(phaseL*1.5/2.286) % Strings.length))/2**15 - 1,
-                                (unisono.charCodeAt(Math.floor(phaseR*1.5/2.286) % unisono.length) + Strings.charCodeAt(Math.floor(phaseR*1.5/2.286) % Strings.length))/2**15 - 1];
-                case 14: return Power(phaseL, totalVoices, t);
-                case 15: return [(Math.sin(-phaseL * Math.PI / 128 + Math.asin(Math.sin(-phaseL * Math.PI / 128 )) / 3))
-                                ,(Math.sin(-phaseR * Math.PI / 128 + Math.asin(Math.sin(-phaseR * Math.PI / 128 )) / 3))];
-                case 16: {
-                    const i = k % len;  // note index
-                    const j = Math.floor(k / len);  // voice index  
-                    const state = getPhasedState(j, i);
-                    return Phased(phaseL, t, len, state);
-                }
-
-                case 17: return Chip(notesArray,detuneL,detuneR,detuneAmount/100,m,t,octaveShift).map((x)=>x/len);
-                default: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
-            }
-        };
-
-        for (let k = 0; k < totalVoices; k++) {
-            const i = k % len;
-            const j = Math.floor(k / len);
-            const pitch = 2 ** ((notesArray[i] - 9.23) / 12 + octaveShift) * ratio;
-            const [vl, vr] = waveformFn(pitch, j, k);
-            
-            sumL += vl + waveShaper(vl) * OVDistortVal * 4;
-            sumR += vr + waveShaper(vr) * OVDistortVal * 4;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Wave shaper function
+        const OVDistort = document.getElementById("OVDistort");
+        const waveShaper = (t) => {
+            t = t/2 + 10.5;
+            return ((DistTable.charCodeAt(Math.floor(t * DistTable.length) % DistTable.length) / 2**14 - 1) * 2.47 - t%1 + 0.5) * 2;
         }
 
-        return [sumL / m / 3, sumR / m / 3];
-    } catch (error) {
-        showErrorPopup(`Error in polyFsawFromKeyboard \n ${error}`)
-        return [0, 0]; // Return silence on error
-    }
-}
+        // Main synthesis function
+        function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, waveformType, t) {
+            try {
+                if (heldNotesSet.size === 0) return [0, 0];
+                zCho = Object.create(null)
 
-function customWaveform(y, ph, t) {
-    const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
-    const invHz = Math.PI / sampleRate;
-    const mod = y;
-    const x = t * y + ph;
+                const notesArray = Array.from(heldNotesSet).map(n => n - 69);
+                const len = notesArray.length;
+                const totalVoices = len * m;
+                const sqrtM = Math.sqrt(m) * 2;
+                const sqrtM2 = Math.sqrt(m-1)
+                let sumL = 0, sumR = 0;
+                const ratio = 1;
+                const OVDistortVal = parseFloat(OVDistort.value) || 0;
 
-    const rate1 = 1.60;
-    const rate2 = 2.21;
+                const waveformFn = (pitch, j,k) => {
+                    const detuneL = Math.sin(+j*2)/8;
+                    const detuneR = Math.sin(-j*2)/8;
 
-    const s1 = Math.sin(t * rate1 * invHz);
-    const s2 = -Math.sin(t * rate2 * invHz);
+                    const phaseL = t * pitch * (1 + detuneL * detuneAmount / 100) + Math.abs(detuneL) * 1e10;
+                    const phaseR = t * pitch * (1 + detuneR * detuneAmount / 100) + Math.abs(detuneR) * 1e10;
 
-    const o1 = x + s1 * 1.4e4 * mod * 0.003 / rate1;
-    const o2 = x * 2 ** (0.1/12) + s2 * 1.4e4 * mod * 0.003 / rate2;
+                    switch (waveformType) {
+                        case 0: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
+                        case 1: return [Math.asin(-Math.sin(phaseL / 128 * Math.PI)) / Math.PI * 2,
+                                        Math.asin(-Math.sin(phaseR / 128 * Math.PI)) / Math.PI * 2];
+                        case 2: return [phaseL / 128 % 2 - 1, phaseR / 128 % 2 - 1];
+                        case 3: return [((phaseL | phaseL) & 128)/128 - 0.5,
+                                        ((phaseR | phaseR) & 128)/128 - 0.5];
+                        case 4: {
+                            const phh = Math.acos(-Math.cos(t / 32768 * Math.PI)) / Math.PI * 128;
+                            return [((phaseL | (phaseL + phh)) & 128)/128 - phh/256 - 0.5,
+                                    ((phaseR | (phaseR + phh)) & 128)/128 - phh/256 - 0.5];
+                        }
+                        case 5: return [brTable[Math.floor(phaseL) & 255], brTable[Math.floor(phaseR) & 255]];
+                        case 6: return [customWaveform(pitch * (1 + detuneL * detuneAmount / 100), detuneL * 181.019335984, t),
+                                        customWaveform(pitch * (1 + detuneR * detuneAmount / 100), detuneR * 181.019335984, t)];
+                        case 7: return [indigo.charCodeAt(Math.floor(phaseL*indigo.length*2**(-2.6667/12-15)) % indigo.length)/(2**14)-2,
+                                        indigo.charCodeAt(Math.floor(phaseR*indigo.length*2**(-2.6667/12-15)) % indigo.length)/(2**14)-2];
+                        case 8: return [(((phaseL & 128) ? phaseL - 128 : ~phaseL*2) & 255)/170 - 0.56,
+                                        (((phaseR & 128) ? phaseR - 128 : ~phaseR*2) & 255)/170 - 0.56];
+                        case 9: return [Math.random()*2-1, Math.random()*2-1];
+                        case 10: return [
+                            (indigoMin.charCodeAt(Math.floor(phaseL*indigoMin.length/256) % indigoMin.length)/(2**15)
+                            - indigoMin.charCodeAt(Math.floor((phaseL*indigoMin.length/255 + indigoMin.length/2)) % indigoMin.length)/(2**15.5)+1)**2/2 - 1,
+                            (indigoMin.charCodeAt(Math.floor(phaseR*indigoMin.length/256) % indigoMin.length)/(2**15)
+                            - indigoMin.charCodeAt(Math.floor((phaseR*indigoMin.length/255 + indigoMin.length/2)) % indigoMin.length)/(2**15.5)+1)**2/2 - 1
+                        ];
+                        case 11: return [Strings.charCodeAt(Math.floor(phaseL*1.5/2.286) % Strings.length)/(2**14)-1,
+                                        Strings.charCodeAt(Math.floor(phaseR*1.5/2.286) % Strings.length)/(2**14)-1];
+                        case 12: return [unisono.charCodeAt(Math.floor(phaseL*1.5/2.286) % unisono.length)/(2**14)-1,
+                                        unisono.charCodeAt(Math.floor(phaseR*1.5/2.286) % unisono.length)/(2**14)-1];
+                        case 13: return [(unisono.charCodeAt(Math.floor(phaseL*1.5/2.286) % unisono.length) + Strings.charCodeAt(Math.floor(phaseL*1.5/2.286) % Strings.length))/2**15 - 1,
+                                        (unisono.charCodeAt(Math.floor(phaseR*1.5/2.286) % unisono.length) + Strings.charCodeAt(Math.floor(phaseR*1.5/2.286) % Strings.length))/2**15 - 1];
+                        case 14: return Power(phaseL, totalVoices, k, t)
+                        case 15: return [(Math.sin(-phaseL * Math.PI / 128 + Math.asin(Math.sin(-phaseL * Math.PI / 128 )) / 3))
+                                        ,(Math.sin(-phaseR * Math.PI / 128 + Math.asin(Math.sin(-phaseR * Math.PI / 128 )) / 3))];
+                        case 16: {
+                            const i = k % len;  // note index
+                            const j = Math.floor(k / len);  // voice index  
+                            const state = getPhasedState(j, i);
+                            return Phased(phaseL, t, len, state);
+                        }
 
-    const tri1 = Math.tan(Math.sin(o1/128 * Math.PI)) * 82.125 + 128;
-    const tri2 = Math.tan(Math.sin(o2/128 * Math.PI) * 1.3) * (64/1.81) + 128;
+                        case 17: return Chip(notesArray,detuneL,detuneR,detuneAmount/100,m,t,octaveShift).map((x)=>x/len);
+                        default: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
+                    }
+                };
 
-    const v = ((tri1 & 255) + (tri2 & 255)) * 0.5 - 128;
+                for (let k = 0; k < totalVoices; k++) {
+                    const i = k % len;
+                    const j = Math.floor(k / len);
+                    const pitch = 2 ** ((notesArray[i] - 9.23) / 12 + octaveShift) * ratio;
+                    const [vl, vr] = waveformFn(pitch, j, k);
+                    
+                    sumL += vl + waveShaper(vl) * OVDistortVal * 4;
+                    sumR += vr + waveShaper(vr) * OVDistortVal * 4;
+                }
 
-    return v / 128;
-}
+                return [sumL / m / 3, sumR / m / 3];
+            } catch (error) {
+                showErrorPopup(`Error in polyFsawFromKeyboard \n ${error}`)
+                return [0, 0]; // Return silence on error
+            }
+        }
 
-function Power(y, tt, t) {
-    const PI = Math.PI;
-    const itt = 8;
-    const dtA = 1 / 64;
-    const deClickAttack = Math.min(t/10000,1);
+        function customWaveform(y, ph, t) {
+            const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
+            const invHz = Math.PI / sampleRate;
+            const mod = y;
+            const x = t * y + ph;
 
-    const w = t => Math.max(Math.min(Math.acos(Math.sin(-t * PI * 2 + Math.asin(Math.sin(-t * PI * 2)) / 3)) / PI * 4 - 2, 1), -1);
-    const v = t => Math.sin((t % 1) * 5 - 2.5) + Math.max(Math.min(Math.tan(t * PI + PI / 2) / 100, 2), -2);
+            const rate1 = 1.60;
+            const rate2 = 2.21;
 
-    let sumL = 0, sumR = 0;
-    const m = 8;
+            const s1 = Math.sin(t * rate1 * invHz);
+            const s2 = -Math.sin(t * rate2 * invHz);
 
-    for (let i = 0; i < m; i++) {
-        const sqrtM = Math.sqrt(m);
-        const detuneL = Math.sqrt(i*2) / (sqrtM*2);
-        const detuneR = Math.sqrt(i*2 + 1) / (sqrtM*2);
+            const o1 = x + s1 * 1.4e4 * mod * 0.003 / rate1;
+            const o2 = x * 2 ** (0.1/12) + s2 * 1.4e4 * mod * 0.003 / rate2;
 
-        const baseL1 = y / 128 * (1 + detuneL * dtA) + detuneL * 1e10;
-        const baseL2 = y / 256 * (1 + detuneL * dtA) + detuneL * 1e10;
-        const baseL3 = y / 512 * (1 + detuneL * dtA) + detuneL * 1e10;
+            const tri1 = Math.tan(Math.sin(o1/128 * Math.PI)) * 82.125 + 128;
+            const tri2 = Math.tan(Math.sin(o2/128 * Math.PI) * 1.3) * (64/1.81) + 128;
 
-        const baseR1 = y / 128 * (1 + detuneR * dtA) + detuneR * 1e10;
-        const baseR2 = y / 256 * (1 + detuneR * dtA) + detuneR * 1e10;
-        const baseR3 = y / 512 * (1 + detuneR * dtA) + detuneR * 1e10;
+            const v = ((tri1 & 255) + (tri2 & 255)) * 0.5 - 128;
 
-        sumL += v(baseL1) + v(baseL2) + w(baseL2) * 3 + w(baseL3) * 4;
-        sumR += v(baseR1) + v(baseR2) + w(baseR2) * 3 + w(baseR3) * 4;
-    }
+            return v / 128;
+        }
 
-    sumL /= m * 2;
-    sumR /= m * 2;
+        // linear interpolation helper
+        function readBufferLinear(buf, idxFloat) {
+            const N = buf.length;
+            if (N === 0) return 0;
+            let i0 = Math.floor(idxFloat);
+            let frac = idxFloat - i0;
+            i0 = ((i0 % N) + N) % N;
+            const i1 = (i0 + 1) % N;
+            return buf[i0] * (1 - frac) + buf[i1] * frac;
+        }
 
-    if (Power._lpState1L === undefined) Power._lpState1L = 0;
-    if (Power._lpState2L === undefined) Power._lpState2L = 0;
-    if (Power._lpState1R === undefined) Power._lpState1R = 0;
-    if (Power._lpState2R === undefined) Power._lpState2R = 0;
+        /**
+        * Modern chorus function
+        * input : sample
+        * key   : unique key for state isolation
+        * opts  : { depth, feedback, callCount, maxx, voices }
+        */
+        function chorus(input, key, opts = {}) {
+            const depth = opts.depth ?? 1;          // max delay in samples
+            const feedback = opts.feedback ?? 0;    // feedback coefficient
+            const maxx = opts.maxx ?? 1024;         // buffer length
+            const voices = opts.voices ?? 8;        // LFO voices
+            const rate = opts.rate ?? 0.0000075;    // LFO rate (small float for sample-based increment)
+            const mix = opts.mix ?? 0.5             // Chorus Mix
 
-    const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
-    const absT = Math.abs(t / sampleRate * PI / 6 % 2 - 1);
-    const cutoff = Math.min((absT + 0.4) ** 2, 1 - 1e-5) / tt;
-    let r = 0.5; r += r / (1 - cutoff);
+            if (!zCho[key]) {
+                zCho[key] = {
+                    buffer: new Float32Array(maxx).fill(0),
+                    idx: 0,
+                    t: 0 // LFO phase/time counter
+                };
+            }
 
-    const lp1L = Power._lpState1L + cutoff * (sumL - Power._lpState1L + (Power._lpState1L - Power._lpState2L) * r);
-    const lp2L = Power._lpState2L + cutoff * (lp1L - Power._lpState2L);
-    Power._lpState1L = lp1L; Power._lpState2L = lp2L;
+            const s = zCho[key];
+            let out = input;
 
-    const lp1R = Power._lpState1R + cutoff * (sumR - Power._lpState1R + (Power._lpState1R - Power._lpState2R) * r);
-    const lp2R = Power._lpState2R + cutoff * (lp1R - Power._lpState2R);
-    Power._lpState1R = lp1R; Power._lpState2R = lp2R;
+            for (let v = 0; v < voices; v++) {
+                const phase = v * v;
+                let lfo = (Math.sin(s.t * rate + phase)*.5+.5) * depth;
+                    lfo=Math.floor(lfo * (maxx - 2)) + 1
+                const readIdx = s.idx - lfo < 0 ? s.buffer.length + (s.idx - lfo) : s.idx - lfo;
+                const delayed = readBufferLinear(s.buffer, readIdx);
+                out += delayed;
+            }
 
-    return [lp2L*deClickAttack, lp2R*deClickAttack];
-}
+            // feedback into buffer
+            s.buffer[s.idx] = input + (out - input) / voices * feedback;
 
-// global cache
-const phasedStates = {};
-function getPhasedState(voiceIndex, noteIndex) {
-    const key = `${voiceIndex}_${noteIndex}`;
-    if (!phasedStates[key]) {
-        phasedStates[key] = { L: {}, R: {} };
-    }
-    return phasedStates[key];
-}
+            // advance buffer index and LFO time
+            s.idx = (s.idx + 1) % s.buffer.length;
+            s.t += 1;
+
+            return out / (voices + 1)*(mix)+input*(1-mix); // normalize
+        }
+
+        function Power(y, tt, iitt, t) {
+            const PI = Math.PI;
+            const dtA = 1 / 64;
+            const deClickAttack = Math.min(t / 10000, 1);
+
+            const w = t => Math.max(Math.min(Math.acos(Math.sin(-t * PI * 2 + Math.asin(Math.sin(-t * PI * 2)) / 3)) / PI * 4 - 2, 1), -1);
+            const v = t => Math.sin((t % 1) * 5 - 2.5) + Math.max(Math.min(Math.tan(t * PI + PI / 2) / 100, 2), -2);
+
+            let sumL = 0, sumR = 0;
+            const m = 8;
+            y/=2
+
+            for (let i = 0; i < m; i++) {
+                const sqrtM = Math.sqrt(m);
+                const detuneL = Math.sqrt(i * 2) / (sqrtM * 2);
+                const detuneR = Math.sqrt(i * 2 + 1) / (sqrtM * 2);
+
+                const baseL1 = y / 128 * (1 + detuneL * dtA) + detuneL * 1e10;
+                const baseL2 = y / 256 * (1 + detuneL * dtA) + detuneL * 1e10;
+                const baseL3 = y / 512 * (1 + detuneL * dtA) + detuneL * 1e10;
+
+                const baseR1 = y / 128 * (1 + detuneR * dtA) + detuneR * 1e10;
+                const baseR2 = y / 256 * (1 + detuneR * dtA) + detuneR * 1e10;
+                const baseR3 = y / 512 * (1 + detuneR * dtA) + detuneR * 1e10;
+
+                sumL += v(baseL1) + v(baseL2) + w(baseL2) + w(baseL3);
+                sumR += v(baseR1) + v(baseR2) + w(baseR2) + w(baseR3);
+            }
+
+            sumL /= m;
+            sumR /= m;
+
+            // --- smoothing filter (low-pass) ---
+            if (Power._lpState1L === undefined) Power._lpState1L = 0;
+            if (Power._lpState2L === undefined) Power._lpState2L = 0;
+            if (Power._lpState1R === undefined) Power._lpState1R = 0;
+            if (Power._lpState2R === undefined) Power._lpState2R = 0;
+
+            const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
+            const absT = Math.abs(t / sampleRate * PI / 6 % 2 - 1);
+            const cutoff = Math.min((absT + 0.4) ** 2, 1 - 1e-5) / tt;
+            let r = 0.5;
+            r += r / (1 - cutoff);
+
+            let lp1L = Power._lpState1L + cutoff * (sumL - Power._lpState1L + (Power._lpState1L - Power._lpState2L) * r);
+            let lp2L = Power._lpState2L + cutoff * (lp1L - Power._lpState2L);
+            Power._lpState1L = lp1L;
+            Power._lpState2L = lp2L;
+
+            let lp1R = Power._lpState1R + cutoff * (sumR - Power._lpState1R + (Power._lpState1R - Power._lpState2R) * r);
+            let lp2R = Power._lpState2R + cutoff * (lp1R - Power._lpState2R);
+            Power._lpState1R = lp1R;
+            Power._lpState2R = lp2R;
+
+            const chorusOpts = {
+                depth: 1,
+                feedback: 0,
+                maxx: 1024,
+                voices: 6,
+                rate: 0.0000075
+            };
+
+            // stable keys for left/right
+            const leftKey = `Power_${iitt}_L`;
+            const rightKey = `Power_${iitt}_R`;
+
+            // apply chorus using fixed buffer length
+            lp2L = chorus(lp2L, leftKey, chorusOpts) * deClickAttack;
+            lp2R = chorus(lp2R, rightKey, chorusOpts) * deClickAttack;
+
+            // de-click & return
+            lp2L *= deClickAttack;
+            lp2R *= deClickAttack;
+
+            return [lp2L, lp2R];
+        }
+
+        // global cache
+        const phasedStates = {};
+        function getPhasedState(voiceIndex, noteIndex) {
+            const key = `${voiceIndex}_${noteIndex}`;
+            if (!phasedStates[key]) {
+                phasedStates[key] = { L: {}, R: {} };
+            }
+            return phasedStates[key];
+        }
 
 
-function createPhaserState(stages = 4) {
-  return Array.from({ length: stages }, () => ({ p1: 0, p2: 0, p3: 0, p4: 0 }));
-}
+        function createPhaserState(stages = 4) {
+        return Array.from({ length: stages }, () => ({ p1: 0, p2: 0, p3: 0, p4: 0 }));
+        }
 
 
 
-function Phaser(input, ag = 0, res = 0, stages = 4, state) {
-  // Initialize per channel states properly
-  if (!state.ap) {
-    state.ap = [];
-    state.fb = 0; // Feedback state for prob fb
-    for (let i = 0; i < stages; i++) {
-      state.ap.push({ p1: 0, p2: 0, p3: 0, p4: 0 });
-    }
-  }
+        function Phaser(input, ag = 0, res = 0, stages = 4, state) {
+        // Initialize per channel states properly
+        if (!state.ap) {
+            state.ap = [];
+            state.fb = 0; // Feedback state for prob fb
+            for (let i = 0; i < stages; i++) {
+            state.ap.push({ p1: 0, p2: 0, p3: 0, p4: 0 });
+            }
+        }
 
-  let x = input + state.fb * res; // Add feedback from previous output
-  const a = Math.max(Math.min(1-ag, 1), 0);
+        let x = input + state.fb * res; // Add feedback from previous output
+        const a = Math.max(Math.min(1-ag, 1), 0);
 
-  for (let i = 0; i < stages; i++) {
-    const s = state.ap[i];
+        for (let i = 0; i < stages; i++) {
+            const s = state.ap[i];
 
-    // Standard all-pass chain
-    const y1 = -a * x + s.p1 + a * s.p2;
-    s.p1 = x;
-    s.p2 = y1;
+            // Standard all-pass chain
+            const y1 = -a * x + s.p1 + a * s.p2;
+            s.p1 = x;
+            s.p2 = y1;
 
-    const y2 = -a * y1 + s.p3 + a * s.p4;
-    s.p3 = y1;
-    s.p4 = y2;
+            const y2 = -a * y1 + s.p3 + a * s.p4;
+            s.p3 = y1;
+            s.p4 = y2;
 
-    x = y2;
-  }
+            x = y2;
+        }
 
-  // Store output for feedback
-  state.fb = x;
+        // Store output for feedback
+        state.fb = x;
 
-  return (input+x)/2; // isolated phaser output
-}
+        return (input+x)/2; // isolated phaser output
+        }
 
-function Phased(y, t, itt, state) {
-    // LFO controlling the phaser depth
-    let LFO = Math.acos(-Math.cos(t/44100*2*Math.PI/8)) / Math.PI *.7+.25
+        function Phased(y, t, itt, state) {
+            // LFO controlling the phaser depth
+            let LFO = Math.acos(-Math.cos(t/44100*2*Math.PI/8)) / Math.PI *.7+.25
 
-    // Spread for multiple voices
-    let fL = 0, fR = 0;
-    const m = 4;
-    const sqrtM = Math.sqrt(m)*2;
+            // Spread for multiple voices
+            let fL = 0, fR = 0;
+            const m = 4;
+            const sqrtM = Math.sqrt(m)*2;
 
-    for (let k=0; k<m; k++) {
-        const detuneL = Math.sqrt(k*2) / (sqrtM*2);
-        const detuneR = Math.sqrt(k*2 + 1) / (sqrtM*2);
-        fL += (y/128*(1+detuneL/64)+detuneL*1e10)%2-1;
-        fR += (y/128*(1+detuneR/64)+detuneR*1e10)%2-1;
-    }
-    // fL /= m;
-    // fR /= m;
+            for (let k=0; k<m; k++) {
+                const detuneL = Math.sqrt(k*2) / (sqrtM*2);
+                const detuneR = Math.sqrt(k*2 + 1) / (sqrtM*2);
+                fL += (y/128*(1+detuneL/64)+detuneL*1e10)%2-1;
+                fR += (y/128*(1+detuneR/64)+detuneR*1e10)%2-1;
+            }
+            // fL /= m;
+            // fR /= m;
 
-    fL+=y/128%2-1
-    fR+=y/128%2-1
+            fL+=y/128%2-1
+            fR+=y/128%2-1
 
-    // Now apply phaser to the actual waveform
-    const phasedL = Phaser(fL, LFO**2, 0.23, 6, state.L);
-    const phasedR = Phaser(fR, LFO**2, 0.23, 6, state.R);
+            // Now apply phaser to the actual waveform
+            const phasedL = Phaser(fL, LFO**2, 0.23, 6, state.L);
+            const phasedR = Phaser(fR, LFO**2, 0.23, 6, state.R);
 
-    return [phasedL, phasedR];
-}
+            return [phasedL, phasedR];
+        }
 
         // Modified processAudio function to use the synth
         function processAudio(buffer) {
@@ -3346,13 +3428,14 @@ function Phased(y, t, itt, state) {
 
         const clamp=(minn,maxx,value)=>Math.min(Math.max(value,minn),maxx)
 
-                function studyAnalogFilters() {
+        function studyAnalogFilters() {
             let z2S=[{lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0}]
             let z3S=[{hp6:0,hp12:0,hp18:0,hp24:0,hp30:0,hp36:0,hp42:0,hp48:0}]
             let z4S=[{bp1:0,bp2:0,bp3:0,bp4:0,bp5:0,bp6:0,bp7:0,bp8:0,bp9:0}]
             let z8S=[{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}]
             let z7S=[{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
             let zBPCS = [{stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0 }))}]
+            let zEcoS = [{buffer:[],idx:0,buffer2:[],idx1:0,lastOut:0}]
 
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2S[callCount]) {
@@ -3588,28 +3671,39 @@ function Phased(y, t, itt, state) {
                     }
 
                     const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
-                    const cc = clamp(1e-6, 0.99, c);
+                    const cc = clamp(1e-6, 0.99, c)**1.5;
                     const fb = r + r / (1 - cc);
 
                     const s = zBPCS[callCount];
                 
                     let f=d
+                    // First stage
                     let st = s.stage[0];
                     st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
                     st.bp2 += cc * (st.bp1 - st.bp2);
-                    f = (st.bp1 - st.bp2) * (1+cc**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
-                    o=f
+                    st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                    st.bp2 += cc * (st.bp1 - st.bp2);
+                    st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                    st.bp2 += cc * (st.bp1 - st.bp2);
 
-                    // Process cascade
+                    f = (st.bp2 - st.bp1) * (1-r**2) / (1-cc)  * 1.25; // bp result from this stage
+                    o = f;
+
+                    // Cascade through remaining stages
                     for (let i = 1; i < stages; i++) {
-                        let st = s.stage[i];
-                        st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
-                        st.bp2 += cc * (st.bp1 - st.bp2);
-                        f = (st.bp1 - st.bp2) * (1-r**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
-                        o=f
+                            st = s.stage[i];
+                            st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                            st.bp2 += cc * (st.bp1 - st.bp2);
+                            st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                            st.bp2 += cc * (st.bp1 - st.bp2);
+                            st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                            st.bp2 += cc * (st.bp1 - st.bp2);
+
+                            f = (st.bp2 - st.bp1) * (1-r**2) / (1-cc) * 1.25; 
+                            o = f;
                     }
 
-                    return o*(1+cc+cc**3*4)*4 // Output of last stage
+                    return o / (1-(stages-1)/16)// Output of last stage
                 } catch (e) {
                     return 0;
                 }
@@ -3649,6 +3743,60 @@ function Phased(y, t, itt, state) {
                 } catch (e) {
                     return 0;
                 }
+            }
+
+            TBP = (input, depth = 1, feedback = 0.5, callCount, smooth = 1, maxx = 1024) => {
+                if (!zEcoS[callCount]) {
+                    zEcoS[callCount] = { 
+                        buffer: [], 
+                        idx: 0,
+                        buffer2: [],
+                        idx1: 0,
+                        lastOut: 0   // store previous output for damper
+                    };
+                }
+                const s = zEcoS[callCount];
+
+                // main modulated buffer
+                if (s.buffer.length !== maxx) {
+                    s.buffer = new Array(maxx).fill(0);
+                    s.idx = 0;
+                }
+
+                // second buffer for delayed input
+                if (s.buffer2.length !== maxx) {
+                    s.buffer2 = new Array(maxx).fill(0);
+                    s.idx1 = 0;
+                }
+
+                // ---- Flanger modulated delay ----
+                const lfo = (1/(depth*maxx/Math.PI)) * maxx;
+                const delaySamples = 1 + Math.floor(lfo); 
+                let readIdx = (s.idx - delaySamples + s.buffer.length) % s.buffer.length;
+                let delayed = s.buffer[readIdx] || 0;
+                feedback=(feedback*3+feedback**((delaySamples-4)/4))/4
+
+                // write input + feedback into mod buffer
+                s.buffer[s.idx] = input - delayed * feedback;
+                s.idx = (s.idx + 1) % s.buffer.length;
+
+                // ---- Fixed delay line ----
+                let delayed2 = s.buffer2[s.idx1] || 0;
+                s.buffer2[s.idx1] = input;
+
+                // ---- Mix signals ----
+                let rawOut = (delayed * (1 + feedback) - delayed2);
+
+                // ---- Damper only if smooth === true ----
+                let out;
+                if (smooth) {
+                    damp=1/(delaySamples-1)
+                    out = rawOut * (damp) + s.lastOut * (1-damp);
+                    s.lastOut = out;
+                } else {
+                    out = rawOut;
+                }
+                return out;
             }
 
             const canvas = document.getElementById('filterView');
@@ -3694,6 +3842,7 @@ function Phased(y, t, itt, state) {
                 let z8S = [{pi:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,pi:0}];
                 let z7S = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}]
                 let zBPCS = [{stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0, hp:0 }))}];
+                let zEcoS = [{buffer:[],idx:0,buffer2:[],idx1:0,lastOut:0}]
 
                 //console.log(altBP)
 
@@ -3731,6 +3880,9 @@ function Phased(y, t, itt, state) {
                             break;
                         case 7:
                             out = bpTC2(testInput, FLTcutoff, resonance, db, 0);
+                            break;
+                        case 8:
+                            out = TBP(testInput, FLTcutoff, resonance, 0)
                             break;
                         default:
                             out = bp(testInput, FLTcutoff, resonance, db, bpwidth, 0);
@@ -3805,7 +3957,8 @@ function Phased(y, t, itt, state) {
             let z7 = [{p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, p6: 0, p7: 0, p8: 0, pi: 0}];
             let zBPC = [{stage: Array.from({ length: 8 }, () => ({ bp1: 0, bp2: 0, hp:0 }))}];
             let zHPC = [{stage: Array.from({ length: 8 }, () => ({ hp1: 0, hp2: 0 }))}]
-            
+            let zEco = [{buffer:[],idx:0,buffer2:[],idx1:0,lastOut:0}]
+
             function lp(d, c, r = 0, dbv = 2, callCount) {
                 if (!z2[callCount]) {
                     z2[callCount] = {lp6:0, lp12:0, lp18:0, lp24:0, lp30:0, lp36:0, lp42:0, lp48:0};
@@ -4073,28 +4226,39 @@ function Phased(y, t, itt, state) {
                     }
 
                     const clamp = (minn, maxx, value) => Math.min(Math.max(value, minn), maxx);
-                    const cc = clamp(1e-6, 0.99, c);
+                    const cc = clamp(1e-6, 0.99, c)**1.5;
                     const fb = r + r / (1 - cc);
 
                     const s = zBPC[callCount];
                 
                     let f=d
+                    // First stage
                     let st = s.stage[0];
                     st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
                     st.bp2 += cc * (st.bp1 - st.bp2);
-                    f = (st.bp1 - st.bp2) * (1+cc**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
-                    o=f
+                    st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                    st.bp2 += cc * (st.bp1 - st.bp2);
+                    st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                    st.bp2 += cc * (st.bp1 - st.bp2);
 
-                    // Process cascade
+                    f = (st.bp2 - st.bp1) * (1-r**2) / (1-cc)  * 1.25; // bp result from this stage
+                    o = f;
+
+                    // Cascade through remaining stages
                     for (let i = 1; i < stages; i++) {
-                        let st = s.stage[i];
-                        st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
-                        st.bp2 += cc * (st.bp1 - st.bp2);
-                        f = (st.bp1 - st.bp2) * (1-r**2) * (1+cc**2+cc**7*2.75); // feed forward into next stage
-                        o=f
+                            st = s.stage[i];
+                            st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                            st.bp2 += cc * (st.bp1 - st.bp2);
+                            st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                            st.bp2 += cc * (st.bp1 - st.bp2);
+                            st.bp1 += cc * (f - st.bp1 + fb * (st.bp1 - st.bp2));
+                            st.bp2 += cc * (st.bp1 - st.bp2);
+
+                            f = (st.bp2 - st.bp1) * (1-r**2) / (1-cc) * 1.25; 
+                            o = f;
                     }
 
-                    return o*(1+cc*2+cc**3*16)*4 // Output of last stage
+                    return o / (1-(stages-1)/16) // Output of last stage
                 } catch (e) {
                     return 0;
                 }
@@ -4134,6 +4298,61 @@ function Phased(y, t, itt, state) {
                 } catch (e) {
                     return 0;
                 }
+            }
+
+            
+            TBP = (input, depth = 1, feedback = 0.5, callCount, smooth = 1, maxx = 1024) => {
+                if (!zEco[callCount]) {
+                    zEco[callCount] = { 
+                        buffer: [], 
+                        idx: 0,
+                        buffer2: [],
+                        idx1: 0,
+                        lastOut: 0   // store previous output for damper
+                    };
+                }
+                const s = zEco[callCount];
+
+                // main modulated buffer
+                if (s.buffer.length !== maxx) {
+                    s.buffer = new Array(maxx).fill(0);
+                    s.idx = 0;
+                }
+
+                // second buffer for delayed input
+                if (s.buffer2.length !== maxx) {
+                    s.buffer2 = new Array(maxx).fill(0);
+                    s.idx1 = 0;
+                }
+
+                // ---- Flanger modulated delay ----
+                const lfo = (1/(depth*maxx/2+1)) * maxx;
+                const delaySamples = 1 + Math.floor(lfo); 
+                let readIdx = (s.idx - delaySamples + s.buffer.length) % s.buffer.length;
+                let delayed = s.buffer[readIdx] || 0;
+                feedback=(feedback*3+feedback**((delaySamples-4)/4))/4
+
+                // write input + feedback into mod buffer
+                s.buffer[s.idx] = input - delayed * feedback;
+                s.idx = (s.idx + 1) % s.buffer.length;
+
+                // ---- Fixed delay line ----
+                let delayed2 = s.buffer2[s.idx1] || 0;
+                s.buffer2[s.idx1] = input;
+
+                // ---- Mix signals ----
+                let rawOut = (delayed * (1 + feedback) - delayed2);
+
+                // ---- Damper only if smooth === true ----
+                let out;
+                if (smooth) {
+                    damp=1/(delaySamples-1)
+                    out = rawOut * (damp) + s.lastOut * (1-damp);
+                    s.lastOut = out;
+                } else {
+                    out = rawOut;
+                }
+                return out;
             }
 
             // UI values
@@ -4263,6 +4482,8 @@ function Phased(y, t, itt, state) {
                             return bpTC(v * 64, FRQ, fbv, dbv, m);
                         } else if (Alt_BP === 7) {
                             return bpTC2(v * 64, FRQ, fbv, dbv, m);
+                        } else if (Alt_BP === 8) {
+                            return TBP(v * 64, FRQ, fbv, m)
                         } else {
                             return bp(v * 64, FRQ, fbv, dbv, dwo, m);
                         }

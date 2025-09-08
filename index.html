@@ -2678,11 +2678,11 @@
                 const OVDistortVal = parseFloat(OVDistort.value) || 0;
 
                 const waveformFn = (pitch, j,k) => {
-                    const detuneL = Math.sin(+j*2)/8;
-                    const detuneR = Math.sin(-j*2)/8;
+                    const detuneL = Math.sin(+j)*8;
+                    const detuneR = Math.sin(-j)*8;
 
-                    const phaseL = t * pitch * (1 + detuneL * detuneAmount / 100) + Math.abs(detuneL) * 1e10;
-                    const phaseR = t * pitch * (1 + detuneR * detuneAmount / 100) + Math.abs(detuneR) * 1e10;
+                    const phaseL = t * pitch * (1 + detuneL * detuneAmount / 100) + Math.abs(detuneL) * 1e9;
+                    const phaseR = t * pitch * (1 + detuneR * detuneAmount / 100) + Math.abs(detuneR) * 1e9;
 
                     switch (waveformType) {
                         case 0: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];

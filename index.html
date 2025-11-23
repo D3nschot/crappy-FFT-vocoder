@@ -3433,8 +3433,8 @@
                         if (!window.voiceMixes) window.voiceMixes = [];
                         if (!window.voiceMixes[k]) window.voiceMixes[k] = { L: 0, R: 0 };
                         
-                        window.voiceMixes[k].L += (vl + waveShaper(vl) * oscOVDistort) * oscVolume;
-                        window.voiceMixes[k].R += (vr + waveShaper(vr) * oscOVDistort) * oscVolume;
+                        window.voiceMixes[k].L += (vl + waveShaper(vl) * oscOVDistort * 2) * oscVolume;
+                        window.voiceMixes[k].R += (vr + waveShaper(vr) * oscOVDistort * 2) * oscVolume;
                     }
                 }
 
@@ -3447,8 +3447,8 @@
                         
                         // Apply global Orange Distort to this voice (per-key processing)
                         if (globalOVDistortVal > 0) {
-                            voiceL = voiceL + waveShaper(voiceL) * globalOVDistortVal;
-                            voiceR = voiceR + waveShaper(voiceR) * globalOVDistortVal;
+                            voiceL = voiceL + waveShaper(voiceL) * globalOVDistortVal * 2;
+                            voiceR = voiceR + waveShaper(voiceR) * globalOVDistortVal * 2;
                         }
                         
                         sumL += voiceL * masterVolume;

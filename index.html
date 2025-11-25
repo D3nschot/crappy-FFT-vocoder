@@ -781,9 +781,6 @@
                             <label for="globalOVDistort">Global Orange Distort</label>
                             <input type="range" id="globalOVDistort" min="0" max="1" step="0.01" value="0">
                         </div>
-
-                        <!-- Hidden legacy OVDistort for backwards compatibility -->
-                        <input type="range" id="OVDistort" min="0" max="1" step="0.01" value="0" class="hidden">
                     </div>
 
                     <!-- Individual OSC Tabs -->
@@ -797,7 +794,7 @@
                                 <option value="3">square</option>
                                 <option value="4">PWM</option>
                                 <option value="5">Brigth noise</option>
-                                <option value="6">OV tri</option>
+                                <option value="6">OV Duo tri</option>
                                 <option value="7">OV indigo</option>
                                 <option value="20">OV vox</option>
                                 <option value="11">OV strings</option>
@@ -805,6 +802,13 @@
                                 <option value="12">OV unisono</option>
                                 <option value="22">OV voxpad</option>
                                 <option value="13">OV strings + unisono</option>
+                                <option value="23">OV pulse</option>
+                                <option vaule="24">OV damped saw</option> <!--there are not the same as damped saw-->
+                                <option value="25">OV damped square</option>
+                                <option value="26">OV damped triangle</option>
+                                <option value="27">OV curvation</option>
+                                <option value="28">OV circular</option>
+                                <option value="29">OV distored saw</option>
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
@@ -817,8 +821,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="osc1LFORate">OSC 1 LFO Rate:</label>
+                            <input type="range" id="osc1LFORate" min="0.5" max="3.0" step="0.01" value="1.60">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc1LFOAmount">OSC 1 LFO Amount:</label>
+                            <input type="range" id="osc1LFOAmount" min="-1" max="1" step="0.001" value="0.003">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc1LFOEnable">Enable OSC 1 LFO:</label>
+                            <input type="checkbox" id="osc1LFOEnable">
+                        </div>
+                        <div class="form-group">
                             <label for="osc1Volume">OSC 1 Volume:</label>
-                            <input type="range" id="osc1Volume" min="0" max="2" step="0.01" value="1">
+                            <input type="range" id="osc1Volume" min="0" max="2" step="0.01" value=".5">
                         </div>
 
                         <div class="form-group">
@@ -857,7 +873,7 @@
                                 <option value="3">square</option>
                                 <option value="4">PWM</option>
                                 <option value="5">Brigth noise</option>
-                                <option value="6">OV tri</option>
+                                <option value="6">OV Duo tri</option>
                                 <option value="7">OV indigo</option>
                                 <option value="20">OV vox</option>
                                 <option value="11">OV strings</option>
@@ -865,6 +881,13 @@
                                 <option value="12">OV unisono</option>
                                 <option value="22">OV voxpad</option>
                                 <option value="13">OV strings + unisono</option>
+                                <option value="23">OV pulse</option>
+                                <option vaule="24">OV damped saw</option> <!--there are not the same as damped saw-->
+                                <option value="25">OV damped square</option>
+                                <option value="26">OV damped triangle</option>
+                                <option value="27">OV curvation</option>
+                                <option value="28">OV circular</option>
+                                <option value="29">OV distored saw</option>
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
@@ -877,8 +900,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="osc2LFORate">OSC 2 LFO Rate:</label>
+                            <input type="range" id="osc2LFORate" min="0.5" max="3.0" step="0.01" value="2.21">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc2LFOAmount">OSC 2 LFO Amount:</label>
+                            <input type="range" id="osc2LFOAmount" min="-1" max="1" step="0.001" value="-0.003">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc2LFOEnable">Enable OSC 2 LFO:</label>
+                            <input type="checkbox" id="osc2LFOEnable">
+                        </div>
+                        <div class="form-group">
                             <label for="osc2Volume">OSC 2 Volume:</label>
-                            <input type="range" id="osc2Volume" min="0" max="2" step="0.01" value="1">
+                            <input type="range" id="osc2Volume" min="0" max="2" step="0.01" value=".5">
                         </div>
 
                         <div class="form-group">
@@ -917,7 +952,7 @@
                                 <option value="3">square</option>
                                 <option value="4">PWM</option>
                                 <option value="5">Brigth noise</option>
-                                <option value="6">OV tri</option>
+                                <option value="6">OV Duo tri</option>
                                 <option value="7">OV indigo</option>
                                 <option value="20">OV vox</option>
                                 <option value="11">OV strings</option>
@@ -925,6 +960,13 @@
                                 <option value="12">OV unisono</option>
                                 <option value="22">OV voxpad</option>
                                 <option value="13">OV strings + unisono</option>
+                                <option value="23">OV pulse</option>
+                                <option vaule="24">OV damped saw</option> <!--there are not the same as damped saw-->
+                                <option value="25">OV damped square</option>
+                                <option value="26">OV damped triangle</option>
+                                <option value="27">OV curvation</option>
+                                <option value="28">OV circular</option>
+                                <option value="29">OV distored saw</option>
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
@@ -937,8 +979,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="osc3LFORate">OSC 3 LFO Rate:</label>
+                            <input type="range" id="osc3LFORate" min="0.5" max="3.0" step="0.01" value="1.60">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc3LFOAmount">OSC 3 LFO Amount:</label>
+                            <input type="range" id="osc3LFOAmount" min="-1" max="1" step="0.001" value="0.003">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc3LFOEnable">Enable OSC 3 LFO:</label>
+                            <input type="checkbox" id="osc3LFOEnable">
+                        </div>
+                        <div class="form-group">
                             <label for="osc3Volume">OSC 3 Volume:</label>
-                            <input type="range" id="osc3Volume" min="0" max="2" step="0.01" value="1">
+                            <input type="range" id="osc3Volume" min="0" max="2" step="0.01" value=".5">
                         </div>
 
                         <div class="form-group">
@@ -977,7 +1031,7 @@
                                 <option value="3">square</option>
                                 <option value="4">PWM</option>
                                 <option value="5">Brigth noise</option>
-                                <option value="6">OV tri</option>
+                                <option value="6">OV Duo tri</option>
                                 <option value="7">OV indigo</option>
                                 <option value="20">OV vox</option>
                                 <option value="11">OV strings</option>
@@ -985,6 +1039,13 @@
                                 <option value="12">OV unisono</option>
                                 <option value="22">OV voxpad</option>
                                 <option value="13">OV strings + unisono</option>
+                                <option value="23">OV pulse</option>
+                                <option vaule="24">OV damped saw</option> <!--there are not the same as damped saw-->
+                                <option value="25">OV damped square</option>
+                                <option value="26">OV damped triangle</option>
+                                <option value="27">OV curvation</option>
+                                <option value="28">OV circular</option>
+                                <option value="29">OV distored saw</option>
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
@@ -997,8 +1058,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="osc4LFORate">OSC 4 LFO Rate:</label>
+                            <input type="range" id="osc4LFORate" min="0.5" max="3.0" step="0.01" value="2.21">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc4LFOAmount">OSC 4 LFO Amount:</label>
+                            <input type="range" id="osc4LFOAmount" min="-1" max="1" step="0.001" value="-0.003">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc4LFOEnable">Enable OSC 4 LFO:</label>
+                            <input type="checkbox" id="osc4LFOEnable">
+                        </div>
+                        <div class="form-group">
                             <label for="osc4Volume">OSC 4 Volume:</label>
-                            <input type="range" id="osc4Volume" min="0" max="2" step="0.01" value="1">
+                            <input type="range" id="osc4Volume" min="0" max="2" step="0.01" value=".5">
                         </div>
 
                         <div class="form-group">
@@ -1037,7 +1110,7 @@
                                 <option value="3">square</option>
                                 <option value="4">PWM</option>
                                 <option value="5">Brigth noise</option>
-                                <option value="6">OV tri</option>
+                                <option value="6">OV Duo tri</option>
                                 <option value="7">OV indigo</option>
                                 <option value="20">OV vox</option>
                                 <option value="11">OV strings</option>
@@ -1045,6 +1118,13 @@
                                 <option value="12">OV unisono</option>
                                 <option value="22">OV voxpad</option>
                                 <option value="13">OV strings + unisono</option>
+                                <option value="23">OV pulse</option>
+                                <option vaule="24">OV damped saw</option> <!--there are not the same as damped saw-->
+                                <option value="25">OV damped square</option>
+                                <option value="26">OV damped triangle</option>
+                                <option value="27">OV curvation</option>
+                                <option value="28">OV circular</option>
+                                <option value="29">OV distored saw</option>
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
@@ -1057,8 +1137,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="osc5LFORate">OSC 5 LFO Rate:</label>
+                            <input type="range" id="osc5LFORate" min="0.5" max="3.0" step="0.01" value="1.60">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc5LFOAmount">OSC 5 LFO Amount:</label>
+                            <input type="range" id="osc5LFOAmount" min="-1" max="1" step="0.001" value="0.003">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc5LFOEnable">Enable OSC 5 LFO:</label>
+                            <input type="checkbox" id="osc5LFOEnable">
+                        </div>
+                        <div class="form-group">
                             <label for="osc5Volume">OSC 5 Volume:</label>
-                            <input type="range" id="osc5Volume" min="0" max="2" step="0.01" value="1">
+                            <input type="range" id="osc5Volume" min="0" max="2" step="0.01" value=".5">
                         </div>
 
                         <div class="form-group">
@@ -1097,7 +1189,7 @@
                                 <option value="3">square</option>
                                 <option value="4">PWM</option>
                                 <option value="5">Brigth noise</option>
-                                <option value="6">OV tri</option>
+                                <option value="6">OV Duo tri</option>
                                 <option value="7">OV indigo</option>
                                 <option value="20">OV vox</option>
                                 <option value="11">OV strings</option>
@@ -1105,6 +1197,13 @@
                                 <option value="12">OV unisono</option>
                                 <option value="22">OV voxpad</option>
                                 <option value="13">OV strings + unisono</option>
+                                <option value="23">OV pulse</option>
+                                <option vaule="24">OV damped saw</option> <!--there are not the same as damped saw-->
+                                <option value="25">OV damped square</option>
+                                <option value="26">OV damped triangle</option>
+                                <option value="27">OV curvation</option>
+                                <option value="28">OV circular</option>
+                                <option value="29">OV distored saw</option>
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
@@ -1117,8 +1216,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="osc6LFORate">OSC 6 LFO Rate:</label>
+                            <input type="range" id="osc6LFORate" min="0.5" max="3.0" step="0.01" value="2.21">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc6LFOAmount">OSC 6 LFO Amount:</label>
+                            <input type="range" id="osc6LFOAmount" min="-1" max="1" step="0.001" value="-0.003">
+                        </div>
+                        <div class="form-group">
+                            <label for="osc6LFOEnable">Enable OSC 6 LFO:</label>
+                            <input type="checkbox" id="osc6LFOEnable">
+                        </div>
+                        <div class="form-group">
                             <label for="osc6Volume">OSC 6 Volume:</label>
-                            <input type="range" id="osc6Volume" min="0" max="2" step="0.01" value="1">
+                            <input type="range" id="osc6Volume" min="0" max="2" step="0.01" value=".5">
                         </div>
 
                         <div class="form-group">
@@ -1184,33 +1295,27 @@
                     const synthTotalKeys = 72; // Total number of keys
                     const synthBaseNote = 48; // Starting from C3 (MIDI note 48)
 
-                    // Render the synth keyboard
+                                        // Render the synth keyboard
                     function renderSynthKeyboard(container, heldNotes) {
                         container.innerHTML = '';
-                        
                         const synthTotalKeys = 72;
                         const synthBaseNote = 36; // C2 instead of C3 for more range
                         const synthKeysPerRow = 24;
-
                         let currentRowDiv;
-
                         for (let k = 0; k < synthTotalKeys; k++) {
                             if (k % synthKeysPerRow === 0) {
                                 currentRowDiv = document.createElement("div");
                                 currentRowDiv.className = "keyboard-row";
                                 container.appendChild(currentRowDiv);
                             }
-
                             const midiNote = synthBaseNote + k;
                             const noteIndexInOctave = k % 12;
                             const name = semitoneNames[noteIndexInOctave];
                             const isBlack = name.black;
-
                             const btn = document.createElement("button");
                             btn.className = `key-button ${isBlack ? 'black' : 'white'}`;
                             btn.dataset.note = midiNote;
                             btn.textContent = name.name;
-
                             if (isBlack) {
                                 btn.style.marginLeft = "-25px";
                                 btn.style.marginRight = "-25px";
@@ -1218,36 +1323,50 @@
                                 btn.style.marginLeft = "0";
                                 btn.style.marginRight = "0";
                             }
-
                             if (heldNotes.has(midiNote)) {
                                 btn.classList.add('active');
                             }
-
                             btn.addEventListener("click", () => {
                                 if (heldNotes.has(midiNote)) {
                                     heldNotes.delete(midiNote);
                                     btn.classList.remove('active');
-                                    //console.log(`Synth Note Off: ${midiNote}`);
                                 } else {
                                     heldNotes.add(midiNote);
                                     btn.classList.add('active');
-                                    //console.log(`Synth Note On: ${midiNote}`);
                                 }
+                                // Save synth keys in URL
+                                updateSynthKeysURL();
                             });
-
                             currentRowDiv.appendChild(btn);
+                        }
+                    }
+                    // Save synth keys in URL
+                    function updateSynthKeysURL() {
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('synthKeys', Array.from(synthHeldNotes1).join(','));
+                        window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+                    }
+                    // Restore synth keys from URL
+                    function restoreSynthKeysFromURL() {
+                        const params = new URLSearchParams(window.location.search);
+                        const keys = params.get('synthKeys');
+                        if (keys) {
+                            synthHeldNotes1.clear();
+                            keys.split(',').forEach(k => {
+                                if (k !== '') synthHeldNotes1.add(Number(k));
+                            });
                         }
                     }
 
                     // Call the render function for the keyboard when the DOM is loaded
                     document.addEventListener('DOMContentLoaded', () => {
+                        restoreSynthKeysFromURL();
                         renderSynthKeyboard(synthKeyboardContainer1, synthHeldNotes1);
+                        updateSynthKeysURL(); // Sync URL on load
                         // Add event listener for window resize to re-render if layout changes
                         window.addEventListener('resize', () => {
                             renderSynthKeyboard(synthKeyboardContainer1, synthHeldNotes1);
                         });
-
-
                     });
                 </script>
 
@@ -2180,7 +2299,27 @@
         function loadStateFromURL() {
             const params = new URLSearchParams(window.location.search);
 
+            // Legacy key mapping: old single-synth names -> new per-OSC/master ids
+            const legacyMap = {
+                // Core synth params
+                'synthWaveform': 'osc1Waveform',
+                'synthOctave': 'synthOctave',
+                'synthDetune': 'synthDetune',
+                'synthVoices': 'synthVoices',
+
+                // Old Orange Distort → New Global Orange Distort
+                'OVDistort': 'globalOVDistort',
+
+                // These did NOT exist in old UI:
+                // synthCents, osc1LFORate, osc1LFOAmount, osc1LFOEnable,
+                // osc1Cents, osc1OVDistort, osc1Enabled, etc.
+            };
+
             params.forEach((value, key) => {
+                // Remap legacy keys to current ids
+                if (legacyMap[key]) {
+                    key = legacyMap[key];
+                }
                 if (key === 'Vmode') {
                     window.Vmode = parseInt(value) || 0;
                     return;
@@ -3317,8 +3456,6 @@
         }
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        // Wave shaper function
-        const OVDistort = document.getElementById("OVDistort");
         const waveShaper = (t) => {
             tt = Math.min(Math.max(t,-1),1)/2+.5;
             actualthing=((DistTable.charCodeAt(Math.floor(tt*DistTable.length)%DistTable.length)/2**14-1)*2.47-tt%1+0.5)*2
@@ -3355,6 +3492,10 @@
                     const oscDetune = oscConfig.detune;
                     const oscWaveform = oscConfig.waveform;
                     const oscOVDistort = oscConfig.distort;
+                    // LFO controls
+                    const oscLFORate = oscConfig.lfoRate;
+                    const oscLFOAmount = oscConfig.lfoAmount;
+                    const oscLFOEnabled = oscConfig.lfoEnabled;
 
                     // Calculate effective parameters (global + individual)
                     const effectiveOctave = masterOctave + oscOctave;
@@ -3362,28 +3503,39 @@
                     const effectiveCents = getMasterCents() + oscConfig.cents;
                     const centsAdjustment = Math.pow(2, effectiveCents / 12000);
 
+                    // LFO pitch modulation
+                    let lfoValue = 0;
+                    if (oscLFOEnabled) {
+                        lfoValue = Math.sin(oscLFORate * t / 44100 * Math.PI) * oscLFOAmount;
+                    }
+
                     const waveformFn = (pitch, j, k) => {
                         const detuneL = Math.sin(+j)*8;
                         const detuneR = Math.sin(-j)*8;
-
-                        const phaseL = t * pitch * (1 + detuneL * effectiveDetune / 100) + Math.abs(detuneL) * 1e9;
-                        const phaseR = t * pitch * (1 + detuneR * effectiveDetune / 100) + Math.abs(detuneR) * 1e9;
+                        const DTL = Math.abs(detuneL) * 1e9;
+                        const DTR = Math.abs(detuneR) * 1e9;
+                        // LFO modulates pitch only if enabled
+                        const pitchLFO_L = pitch * (1 + detuneL * effectiveDetune / 100) * (1 + lfoValue);
+                        const PL= pitch * (1 + detuneL * effectiveDetune / 100)
+                        const PR= pitch * (1 + detuneR * effectiveDetune / 100)
+                        const phaseL = (oscLFOEnabled ? (t + lfoValue * 44100 / oscLFORate / Math.PI) : t) * PL + DTL;
+                        const phaseR = (oscLFOEnabled ? (t + lfoValue * 44100 / oscLFORate / Math.PI) : t) * PR + DTR;
 
                         switch (oscWaveform) {
                             case 0: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
                             case 1: return [Math.asin(-Math.sin(phaseL / 128 * Math.PI)) / Math.PI * 2,
                                             Math.asin(-Math.sin(phaseR / 128 * Math.PI)) / Math.PI * 2];
-                            case 2: return [phaseL / 128 % 2 - 1, phaseR / 128 % 2 - 1];
-                            case 3: return [((phaseL | phaseL) & 128)/128 - 0.5,
-                                            ((phaseR | phaseR) & 128)/128 - 0.5];
+                            case 2: return [(phaseL / 128) % 2 - 1, (phaseR / 128) % 2 - 1];
+                            case 3: return [(phaseL + 128 & 128)/128 - 0.5,
+                                            (phaseR + 128 & 128)/128 - 0.5];
                             case 4: {
                                 const phh = Math.acos(-Math.cos(t / 32768 * Math.PI)) / Math.PI * 128;
-                                return [((phaseL | (phaseL + phh)) & 128)/128 - phh/256 - 0.5,
-                                        ((phaseR | (phaseR + phh)) & 128)/128 - phh/256 - 0.5];
+                                return [((phaseL + 128 | (phaseL + 128 + phh)) & 128)/128 - phh/256 - 0.5,
+                                        ((phaseR + 128 | (phaseR + 128 + phh)) & 128)/128 - phh/256 - 0.5];
                             }
                             case 5: return [brTable[Math.floor(phaseL) & 255], brTable[Math.floor(phaseR) & 255]];
-                            case 6: return [customWaveform(pitch * (1 + detuneL * effectiveDetune / 100), detuneL * 181.019335984, t),
-                                            customWaveform(pitch * (1 + detuneR * effectiveDetune / 100), detuneR * 181.019335984, t)];
+                            case 6: return [customWaveform(phaseL-DTL, detuneL * 181.019335984, t),
+                                            customWaveform(phaseR-DTR, detuneR * 181.019335984, t)];
                             case 7: return [indigo.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % indigo.length)/(2**12)-8,
                                             indigo.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % indigo.length)/(2**12)-8];
                             case 8: return [(((phaseL & 128) ? phaseL - 128 : ~phaseL*2) & 255)/170 - 0.56,
@@ -3397,8 +3549,8 @@
                             case 13: return [(unisono.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % unisono.length) + strings.charCodeAt(Math.floor(phaseL*2**(2.1/12)/55*258) % strings.length))/(2**13)-8,
                                             (unisono.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % unisono.length) + strings.charCodeAt(Math.floor(phaseR*2**(2.1/12)/55*258) % strings.length))/(2**13)-8];
                             case 14: return Power(phaseL, len * m, k, t)
-                            case 15: return [(Math.sin(-phaseL * Math.PI / 128 + Math.asin(Math.sin(-phaseL * Math.PI / 128 )) / 3))
-                                            ,(Math.sin(-phaseR * Math.PI / 128 + Math.asin(Math.sin(-phaseR * Math.PI / 128 )) / 3))];
+                            case 15: return [(Math.sin(Math.tan((phaseL/128-(Math.sin(Math.tan((phaseL/128)%2-1)*2.02))/6)%2-1)*2.02)),
+                                            (Math.sin(Math.tan((phaseR/128-(Math.sin(Math.tan((phaseR/128)%2-1)*2.02))/6)%2-1)*2.02))];
                             case 16: {
                                 const i = k % len;  // note index
                                 const j = Math.floor(k / len);  // voice index  
@@ -3416,7 +3568,20 @@
                                             airy.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % airy.length)/(2**12)-8];
                             case 22: return [voxpad.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % voxpad.length)/(2**12)-8,
                                             voxpad.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % voxpad.length)/(2**12)-8];
-
+                            case 23: return [Math.max(Math.min(Math.tan(t/256*Math.PI)/10,1),-1),
+                                            Math.max(Math.min(Math.tan(t/256*Math.PI)/10,1),-1)];
+                            case 24: return [Math.sin(phaseL/64*Math.PI+Math.sin(phaseL/64*Math.PI)/1.75+Math.sin(phaseL/64*Math.PI*2)/3),
+                                            Math.sin(phaseR/64*Math.PI+Math.sin(phaseR/64*Math.PI)/1.75+Math.sin(phaseR/64*Math.PI*2)/3)];
+                            case 25: return [Math.sin(phaseL/128*Math.PI+Math.sin(phaseL/64*Math.PI)/1.75+Math.sin(phaseL/64*Math.PI*2)/3),
+                                            Math.sin(phaseR/128*Math.PI+Math.sin(phaseR/64*Math.PI)/1.75+Math.sin(phaseR/64*Math.PI*2)/3)];
+                            case 26: return [Math.sin(phaseL/128*Math.PI+Math.sin((phaseL+64)/64*Math.PI)/4),
+                                            Math.sin(phaseR/128*Math.PI+Math.sin((phaseR+64)/64*Math.PI)/4)]
+                            case 27: return [Math.sin(phaseL/128*Math.PI+Math.sin((phaseL+64)/64*Math.PI)/2),
+                                            Math.sin(phaseR/128*Math.PI+Math.sin((phaseR+64)/64*Math.PI)/2)]
+                            case 28: return [Math.sin(Math.sin(phaseL/128*Math.PI+PI))*1.19,
+                                            Math.sin(Math.sin(phaseR/128*Math.PI+PI))*1.19]
+                            case 29: return [Math.max(Math.min(Math.tan(phaseL/256*Math.PI),1),-1),
+                                            Math.max(Math.min(Math.tan(phaseR/256*Math.PI),1),-1)];
                             default: return [Math.sin(phaseL / 128 * Math.PI), Math.sin(phaseR / 128 * Math.PI)];
                         }
                     };
@@ -3442,17 +3607,16 @@
                 const totalVoices = len * m;
                 for (let k = 0; k < totalVoices; k++) {
                     if (window.voiceMixes && window.voiceMixes[k]) {
-                        let voiceL = (window.voiceMixes[k].L / m);
-                        let voiceR = (window.voiceMixes[k].R / m);
-                        
                         // Apply global Orange Distort to this voice (per-key processing)
+                        let voiceL = window.voiceMixes[k].L
+                        let voiceR = window.voiceMixes[k].R
                         if (globalOVDistortVal > 0) {
                             voiceL = voiceL + waveShaper(voiceL) * globalOVDistortVal * 2;
                             voiceR = voiceR + waveShaper(voiceR) * globalOVDistortVal * 2;
                         }
                         
-                        sumL += voiceL * masterVolume;
-                        sumR += voiceR * masterVolume;
+                        sumL += voiceL * masterVolume / (m**.5);
+                        sumR += voiceR * masterVolume / (m**.5);
                     }
                 }
 
@@ -3473,24 +3637,88 @@
         }
 
         function getOSCConfig(oscNumber) {
-            // For backwards compatibility: if individual OSC controls don't exist, use global controls
-            const waveformEl = document.getElementById(`osc${oscNumber}Waveform`);
-            const volumeEl = document.getElementById(`osc${oscNumber}Volume`);
-            const octaveEl = document.getElementById(`osc${oscNumber}Octave`);
-            const detuneEl = document.getElementById(`osc${oscNumber}Detune`);
-            const distortEl = document.getElementById(`osc${oscNumber}OVDistort`);
-            const enabledEl = document.getElementById(`osc${oscNumber}Enabled`);
+            // For backwards compatibility: prefer per-OSC control; if missing, use OSC1 control; if still missing, use master/global
+            const tryGet = (id) => document.getElementById(id);
 
-            // Get individual OSC settings or fall back to global
-            const waveform = waveformEl ? parseInt(waveformEl.value) : parseInt(document.getElementById('synthWaveform')?.value || '2');
-            const volume = volumeEl ? parseFloat(volumeEl.value) : 1.0;
-            const octave = octaveEl ? parseInt(octaveEl.value) : 0;
-            const detune = detuneEl ? parseFloat(detuneEl.value) : 0;
-            const distort = distortEl ? parseFloat(distortEl.value) : 0;
-            const enabled = enabledEl ? enabledEl.checked : true;
-            const cents = getOSCCents(oscNumber);
+            const pref = (id, parseFn, defaultVal) => {
+                const el = tryGet(id);
+                if (el) return parseFn(el.value ?? (el.checked !== undefined ? el.checked : ''));
+                // fallback to osc1 (unless asking for osc1)
+                if (oscNumber !== 1) {
+                    const el1 = tryGet(id.replace(`osc${oscNumber}`, 'osc1'));
+                    if (el1) return parseFn(el1.value ?? (el1.checked !== undefined ? el1.checked : ''));
+                }
+                return defaultVal;
+            };
 
-            return { waveform, volume, octave, detune, distort, enabled, cents };
+            // waveform: fallback to master synthWaveform
+            const waveform = (function(){
+                const el = tryGet(`osc${oscNumber}Waveform`);
+                if (el) return parseInt(el.value);
+                if (oscNumber !== 1) {
+                    const el1 = tryGet('osc1Waveform');
+                    if (el1) return parseInt(el1.value);
+                }
+                const masterEl = tryGet('synthWaveform');
+                return masterEl ? parseInt(masterEl.value) : 2;
+            })();
+
+            const volume = pref(`osc${oscNumber}Volume`, v => parseFloat(v), 1.0);
+            const octave = pref(`osc${oscNumber}Octave`, v => parseInt(v), 0);
+            const detune = pref(`osc${oscNumber}Detune`, v => parseFloat(v), 0);
+            const distort = pref(`osc${oscNumber}OVDistort`, v => parseFloat(v), 0);
+            const enabled = (function(){
+                const el = tryGet(`osc${oscNumber}Enabled`);
+                if (el) return el.checked;
+                if (oscNumber !== 1) {
+                    const el1 = tryGet('osc1Enabled');
+                    if (el1) return el1.checked;
+                }
+                return true;
+            })();
+
+            // cents uses existing helper but prefer osc1 if this doesn't exist
+            const cents = (function(){
+                const el = tryGet(`osc${oscNumber}Cents`);
+                if (el) return parseFloat(el.value);
+                if (oscNumber !== 1) {
+                    const el1 = tryGet('osc1Cents');
+                    if (el1) return parseFloat(el1.value);
+                }
+                return getMasterCents();
+            })();
+
+            // LFO controls: rate, amount, enabled
+            const lfoRateEl = tryGet(`osc${oscNumber}LFORate`);
+            const lfoAmountEl = tryGet(`osc${oscNumber}LFOAmount`);
+            const lfoEnableEl = tryGet(`osc${oscNumber}LFOEnable`);
+
+            const lfoRate = (function(){
+                if (lfoRateEl) return parseFloat(lfoRateEl.value);
+                if (oscNumber !== 1) {
+                    const el1 = tryGet('osc1LFORate'); if (el1) return parseFloat(el1.value);
+                }
+                // fallback master defaults by osc parity
+                return (oscNumber % 2 === 1) ? 1.60 : 2.21;
+            })();
+
+            const lfoAmount = (function(){
+                if (lfoAmountEl) return parseFloat(lfoAmountEl.value);
+                if (oscNumber !== 1) {
+                    const el1 = tryGet('osc1LFOAmount'); if (el1) return parseFloat(el1.value);
+                }
+                return (oscNumber % 2 === 1) ? 0.03 : -0.03;
+            })();
+
+            const lfoEnabled = (function(){
+                if (lfoEnableEl) return !!lfoEnableEl.checked;
+                if (oscNumber !== 1) {
+                    const el1 = tryGet('osc1LFOEnable'); if (el1) return !!el1.checked;
+                }
+                return false;
+            })();
+
+            return { waveform, volume, octave, detune, distort, enabled, cents, lfoRate, lfoAmount, lfoEnabled };
         }
 
         function isOSCEnabled(oscNumber) {
@@ -3527,7 +3755,7 @@
         }
 
         function customWaveform(y, ph, t) {
-            const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
+            const sampleRate = 44100;
             const invHz = Math.PI / sampleRate;
             const mod = y;
             const x = t * y + ph;
@@ -3541,12 +3769,10 @@
             const o1 = x + s1 * 1.4e4 * mod * 0.003 / rate1;
             const o2 = x * 2 ** (0.1/12) + s2 * 1.4e4 * mod * 0.003 / rate2;
 
-            const tri1 = Math.tan(Math.sin(o1/128 * Math.PI)) * 82.125 + 128;
-            const tri2 = Math.tan(Math.sin(o2/128 * Math.PI) * 1.3) * (64/1.81) + 128;
+            const tri1 = Math.sin(o1/128*Math.PI+Math.sin((o1+64)/64*Math.PI)/2);
+            const tri2 = Math.sin(o2/128*Math.PI+Math.sin((o2+64)/64*Math.PI)/4);
 
-            const v = ((tri1 & 255) + (tri2 & 255)) * 0.5 - 128;
-
-            return v / 128;
+            return (tri1+tri2)
         }
 
         // === chorus state & reset ===

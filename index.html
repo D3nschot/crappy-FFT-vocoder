@@ -74,7 +74,7 @@
             padding: 20px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
-            backdrop-filter: blur(10px);
+            /*backdrop-filter: blur(10px);*/
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -145,7 +145,7 @@
             border-radius: 15px;
             padding: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
+            /*backdrop-filter: blur(5px);*/
         }
 
         .control-panel h3 {
@@ -774,7 +774,16 @@
 
                         <div class="form-group">
                             <label for="synthVoices">Voice Count:</label>
-                            <input type="range" id="synthVoices" min="1" max="8" step="1" value="1">
+                            <input type="range" id="synthVoices" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="globalVoiceMix">Master Voice Mix:</label>
+                            <select id="globalVoiceMix" class="form-control">
+                                <option value="2">Root (√n) [Default]</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -782,8 +791,7 @@
                             <input type="range" id="globalOVDistort" min="0" max="1" step="0.01" value="0">
                         </div>
 
-                        <!--div class="form-group"-->
-                        <div class="control-panel hidden">
+                        <div class="form-group">
                             <label>Sync & Ring Matrix:</label>
                             <div id="syncRingContainer" class="form-control" style="display:flex;flex-direction:column;gap:10px;">
                                 <div>
@@ -798,7 +806,18 @@
                                         <!-- ring matrix will be generated here -->
                                     </div>
                                 </div>
-                                <!-- Sync Clocks display removed (not required) -->
+                                <div>
+                                    <strong>Sync Status:</strong>
+                                    <div id="syncStatus" style="font-family: monospace; font-size: 12px; color: #5ac8fa; min-height: 20px;">
+                                        Ready
+                                    </div>
+                                </div>
+                                <div>
+                                    <strong>Voice Count Summary:</strong>
+                                    <div id="voiceCountSummary" style="font-family: monospace; font-size: 12px; color: #5ac8fa; min-height: 60px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; margin-top: 5px;">
+                                        <!-- Voice count summary will be generated here -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -832,17 +851,22 @@
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
+                                <option value="34">distorted saw</option>
                                 <option value="16">VX Phased</option>
                                 <option value="17">VX chip (Arp)</option>
                                 <option value="18">VX Robotsaw</option>
                                 <option value="19">ST chip (Arp)</option>
+                                <option value="30">this.thing</option>
+                                <option value="31">and</option>
+                                <option value="32">xor</option>
+                                <option value="33">or</option>
                                 <option value="9">Noise</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="osc1LFORate">OSC 1 LFO Rate:</label>
-                            <input type="range" id="osc1LFORate" min="0.5" max="3.0" step="0.01" value="1.60">
+                            <input type="range" id="osc1LFORate" min="0" max="3.0" step="0.01" value="1.60">
                         </div>
                         <div class="form-group">
                             <label for="osc1LFOAmount">OSC 1 LFO Amount:</label>
@@ -854,7 +878,7 @@
                         </div>
                         <div class="form-group">
                             <label for="osc1Volume">OSC 1 Volume:</label>
-                            <input type="range" id="osc1Volume" min="0" max="2" step="0.01" value=".5">
+                            <input type="range" id="osc1Volume" min="0" max="2" step="0.01" value="1">
                         </div>
 
                         <div class="form-group">
@@ -875,6 +899,20 @@
                         <div class="form-group">
                             <label for="osc1OVDistort">OSC 1 Orange Distort</label>
                             <input type="range" id="osc1OVDistort" min="0" max="1" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc1VoiceCount">OSC 1 Voice Count:</label>
+                            <input type="range" id="osc1VoiceCount" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc1VoiceMix">OSC 1 Voice Mix:</label>
+                            <select id="osc1VoiceMix" class="form-control">
+                                <option value="2">Root (√n)</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -911,17 +949,22 @@
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
+                                <option value="34">distorted saw</option>
                                 <option value="16">VX Phased</option>
                                 <option value="17">VX chip (Arp)</option>
                                 <option value="18">VX Robotsaw</option>
                                 <option value="19">ST chip (Arp)</option>
+                                <option value="30">this.thing</option>
+                                <option value="31">and</option>
+                                <option value="32">xor</option>
+                                <option value="33">or</option>
                                 <option value="9">Noise</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="osc2LFORate">OSC 2 LFO Rate:</label>
-                            <input type="range" id="osc2LFORate" min="0.5" max="3.0" step="0.01" value="2.21">
+                            <input type="range" id="osc2LFORate" min="0" max="3.0" step="0.01" value="2.21">
                         </div>
                         <div class="form-group">
                             <label for="osc2LFOAmount">OSC 2 LFO Amount:</label>
@@ -933,7 +976,7 @@
                         </div>
                         <div class="form-group">
                             <label for="osc2Volume">OSC 2 Volume:</label>
-                            <input type="range" id="osc2Volume" min="0" max="2" step="0.01" value=".5">
+                            <input type="range" id="osc2Volume" min="0" max="2" step="0.01" value="1">
                         </div>
 
                         <div class="form-group">
@@ -954,6 +997,20 @@
                         <div class="form-group">
                             <label for="osc2OVDistort">OSC 2 Orange Distort</label>
                             <input type="range" id="osc2OVDistort" min="0" max="1" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc2VoiceCount">OSC 2 Voice Count:</label>
+                            <input type="range" id="osc2VoiceCount" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc2VoiceMix">OSC 2 Voice Mix:</label>
+                            <select id="osc2VoiceMix" class="form-control">
+                                <option value="2">Root (√n)</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -990,17 +1047,22 @@
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
+                                <option value="34">distorted saw</option>
                                 <option value="16">VX Phased</option>
                                 <option value="17">VX chip (Arp)</option>
                                 <option value="18">VX Robotsaw</option>
                                 <option value="19">ST chip (Arp)</option>
+                                <option value="30">this.thing</option>
+                                <option value="31">and</option>
+                                <option value="32">xor</option>
+                                <option value="33">or</option>
                                 <option value="9">Noise</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="osc3LFORate">OSC 3 LFO Rate:</label>
-                            <input type="range" id="osc3LFORate" min="0.5" max="3.0" step="0.01" value="1.60">
+                            <input type="range" id="osc3LFORate" min="0" max="3.0" step="0.01" value="1.60">
                         </div>
                         <div class="form-group">
                             <label for="osc3LFOAmount">OSC 3 LFO Amount:</label>
@@ -1012,7 +1074,7 @@
                         </div>
                         <div class="form-group">
                             <label for="osc3Volume">OSC 3 Volume:</label>
-                            <input type="range" id="osc3Volume" min="0" max="2" step="0.01" value=".5">
+                            <input type="range" id="osc3Volume" min="0" max="2" step="0.01" value="1">
                         </div>
 
                         <div class="form-group">
@@ -1033,6 +1095,20 @@
                         <div class="form-group">
                             <label for="osc3OVDistort">OSC 3 Orange Distort</label>
                             <input type="range" id="osc3OVDistort" min="0" max="1" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc3VoiceCount">OSC 3 Voice Count:</label>
+                            <input type="range" id="osc3VoiceCount" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc3VoiceMix">OSC 3 Voice Mix:</label>
+                            <select id="osc3VoiceMix" class="form-control">
+                                <option value="2">Root (√n)</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -1069,17 +1145,22 @@
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
+                                <option value="34">distorted saw</option>
                                 <option value="16">VX Phased</option>
                                 <option value="17">VX chip (Arp)</option>
                                 <option value="18">VX Robotsaw</option>
                                 <option value="19">ST chip (Arp)</option>
+                                <option value="30">this.thing</option>
+                                <option value="31">and</option>
+                                <option value="32">xor</option>
+                                <option value="33">or</option>
                                 <option value="9">Noise</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="osc4LFORate">OSC 4 LFO Rate:</label>
-                            <input type="range" id="osc4LFORate" min="0.5" max="3.0" step="0.01" value="2.21">
+                            <input type="range" id="osc4LFORate" min="0" max="3.0" step="0.01" value="2.21">
                         </div>
                         <div class="form-group">
                             <label for="osc4LFOAmount">OSC 4 LFO Amount:</label>
@@ -1091,7 +1172,7 @@
                         </div>
                         <div class="form-group">
                             <label for="osc4Volume">OSC 4 Volume:</label>
-                            <input type="range" id="osc4Volume" min="0" max="2" step="0.01" value=".5">
+                            <input type="range" id="osc4Volume" min="0" max="2" step="0.01" value="1">
                         </div>
 
                         <div class="form-group">
@@ -1112,6 +1193,20 @@
                         <div class="form-group">
                             <label for="osc4OVDistort">OSC 4 Orange Distort</label>
                             <input type="range" id="osc4OVDistort" min="0" max="1" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc4VoiceCount">OSC 4 Voice Count:</label>
+                            <input type="range" id="osc4VoiceCount" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc4VoiceMix">OSC 4 Voice Mix:</label>
+                            <select id="osc4VoiceMix" class="form-control">
+                                <option value="2">Root (√n)</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -1148,17 +1243,22 @@
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
+                                <option value="34">distorted saw</option>
                                 <option value="16">VX Phased</option>
                                 <option value="17">VX chip (Arp)</option>
                                 <option value="18">VX Robotsaw</option>
                                 <option value="19">ST chip (Arp)</option>
+                                <option value="30">this.thing</option>
+                                <option value="31">and</option>
+                                <option value="32">xor</option>
+                                <option value="33">or</option>
                                 <option value="9">Noise</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="osc5LFORate">OSC 5 LFO Rate:</label>
-                            <input type="range" id="osc5LFORate" min="0.5" max="3.0" step="0.01" value="1.60">
+                            <input type="range" id="osc5LFORate" min="0" max="3.0" step="0.01" value="1.60">
                         </div>
                         <div class="form-group">
                             <label for="osc5LFOAmount">OSC 5 LFO Amount:</label>
@@ -1170,7 +1270,7 @@
                         </div>
                         <div class="form-group">
                             <label for="osc5Volume">OSC 5 Volume:</label>
-                            <input type="range" id="osc5Volume" min="0" max="2" step="0.01" value=".5">
+                            <input type="range" id="osc5Volume" min="0" max="2" step="0.01" value="1">
                         </div>
 
                         <div class="form-group">
@@ -1191,6 +1291,20 @@
                         <div class="form-group">
                             <label for="osc5OVDistort">OSC 5 Orange Distort</label>
                             <input type="range" id="osc5OVDistort" min="0" max="1" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc5VoiceCount">OSC 5 Voice Count:</label>
+                            <input type="range" id="osc5VoiceCount" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc5VoiceMix">OSC 5 Voice Mix:</label>
+                            <select id="osc5VoiceMix" class="form-control">
+                                <option value="2">Root (√n)</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -1227,17 +1341,22 @@
                                 <option value="8">TriSaw</option>
                                 <option value="14">VX Power (Not Perfect)</option>
                                 <option value="15">damped saw</option>
+                                <option value="34">distorted saw</option>
                                 <option value="16">VX Phased</option>
                                 <option value="17">VX chip (Arp)</option>
                                 <option value="18">VX Robotsaw</option>
                                 <option value="19">ST chip (Arp)</option>
+                                <option value="30">this.thing</option>
+                                <option value="31">and</option>
+                                <option value="32">xor</option>
+                                <option value="33">or</option>
                                 <option value="9">Noise</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="osc6LFORate">OSC 6 LFO Rate:</label>
-                            <input type="range" id="osc6LFORate" min="0.5" max="3.0" step="0.01" value="2.21">
+                            <input type="range" id="osc6LFORate" min="0" max="3.0" step="0.01" value="2.21">
                         </div>
                         <div class="form-group">
                             <label for="osc6LFOAmount">OSC 6 LFO Amount:</label>
@@ -1249,7 +1368,7 @@
                         </div>
                         <div class="form-group">
                             <label for="osc6Volume">OSC 6 Volume:</label>
-                            <input type="range" id="osc6Volume" min="0" max="2" step="0.01" value=".5">
+                            <input type="range" id="osc6Volume" min="0" max="2" step="0.01" value="1">
                         </div>
 
                         <div class="form-group">
@@ -1270,6 +1389,20 @@
                         <div class="form-group">
                             <label for="osc6OVDistort">OSC 6 Orange Distort</label>
                             <input type="range" id="osc6OVDistort" min="0" max="1" step="0.01" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc6VoiceCount">OSC 6 Voice Count:</label>
+                            <input type="range" id="osc6VoiceCount" min="1" max="32" step="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="osc6VoiceMix">OSC 6 Voice Mix:</label>
+                            <select id="osc6VoiceMix" class="form-control">
+                                <option value="2">Root (√n)</option>
+                                <option value="1">Linear (1/n)</option>
+                                <option value="0">Flat (None)</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -2376,14 +2509,56 @@
             renderKeyboard();
             updateHarmonicsText();
 
+            // Initialize voice mix controls to follow master setting
+            initializeVoiceMixControls();
+            
+            // Initialize voice count summary
+            updateVoiceCountSummary();
+            
+            // Initialize voice count slider labels
+            updateVoiceCountSliderLabels();
+
             // Handle window resize for keyboard
             window.addEventListener('resize', renderKeyboard);
             
             // Initialize OSC tabs functionality
             initializeOSCTabs();
+            
+            // Add event listener to update per-OSC voice count defaults when global synthVoices changes
+            const synthVoicesSlider = document.getElementById('synthVoices');
+            if (synthVoicesSlider) {
+                synthVoicesSlider.addEventListener('input', () => {
+                    // Only update if no per-OSC sliders have been explicitly set
+                    let hasCustomSettings = false;
+                    for (let i = 1; i <= 6; i++) {
+                        const slider = document.getElementById(`osc${i}VoiceCount`);
+                        if (slider && slider.value !== synthVoicesSlider.value) {
+                            hasCustomSettings = true;
+                            break;
+                        }
+                    }
+                    
+                    updateVoiceCountSummary();
+                    updateVoiceCountSliderLabels();
+                });
+            }
+            
+            // Add event listeners to update voice count summary when relevant controls change
+            const voiceCountControls = ['oscCount', 'synthVoices', 'osc1VoiceCount', 'osc2VoiceCount', 'osc3VoiceCount', 'osc4VoiceCount', 'osc5VoiceCount', 'osc6VoiceCount'];
+            voiceCountControls.forEach(controlId => {
+                const element = document.getElementById(controlId);
+                if (element) {
+                    element.addEventListener('input', () => {
+                        updateVoiceCountSummary();
+                        updateVoiceCountSliderLabels();
+                    });
+                    element.addEventListener('change', () => {
+                        updateVoiceCountSummary();
+                        updateVoiceCountSliderLabels();
+                    });
+                }
+            });
         });
-
-
 
         // OSC Tabs functionality
         function initializeOSCTabs() {
@@ -3034,8 +3209,6 @@
                     const oscCount = parseInt(document.getElementById('oscCount')?.value || '1');
                     for (let s = 1; s <= maxOsc; s++) {
                         for (let t = 1; t <= maxOsc; t++) {
-                            const elSync = document.getElementById(`sync_s${s}_t${t}`) || document.getElementById(`sync_s${s}_t${t}`);
-                            const elRing = document.getElementById(`ring_s${s}_t${t}`) || document.getElementById(`ring_s${s}_t${t}`);
                             const visible = (s <= oscCount) && (t <= oscCount);
                             const nodeSync = document.getElementById(`sync_s${s}_t${t}`);
                             const nodeRing = document.getElementById(`ring_s${s}_t${t}`);
@@ -3580,7 +3753,10 @@
                     masterOctave: getMasterOctave(),
                     masterDetune: getMasterDetune(),
                     masterCents: getMasterCents(),
-                    enableSynth: document.getElementById("enableSynth")?.checked || false
+                    masterVoiceMix: getMasterVoiceMix(),
+                    masterVoices: parseInt(document.getElementById('synthVoices')?.value || '1'),
+                    enableSynth: document.getElementById("enableSynth")?.checked || false,
+                    oscVoiceCounts: Array.from({ length: 6 }, (_, i) => getOSCVoiceCount(i + 1))
                 };
                 this.lastConfigTime = now;
                 return this.cachedConfig;
@@ -3590,19 +3766,13 @@
         function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, waveformType, t, SynthState, SR) {
             try {
                 if (heldNotesSet.size === 0) return [0, 0];
-                
+
                 // Get cached config (updated every 100ms) for performance
                 const config = synthOptimizer.cacheDOMValues();
                 if (!config.enableSynth) return [0, 0];
 
-                // Initialize SynthState more efficiently
-                if (!SynthState.oscPhaseClock) {
-                    SynthState.oscPhaseClock = new Array(6).fill(0);
-                    SynthState.oscPhaseFull = new Array(6).fill(0);
-                    SynthState.phaseAcuL = Array.from({ length: 6 }, () => []);
-                    SynthState.phaseAcuR = Array.from({ length: 6 }, () => []);
-                    SynthState.voiceMixes = [];
-                }
+                // Decide master voices: prefer function parameter 'm' if valid, else config
+                const masterVoices = (typeof m === 'number' && m > 0) ? Math.max(1, Math.floor(m)) : (config.masterVoices || 1);
 
                 // Pre-calculate values that don't change during processing
                 const notesArray = Array.from(heldNotesSet);
@@ -3611,243 +3781,496 @@
                     noteBaseFreqs[i] = 2 ** ((notesArray[i] - 67.5 - 9.23) / 12);
                 }
                 const len = notesArray.length;
-                const totalVoices = len * m;
-                const volumeNormalization = 1 / (m ** 0.5);
+
+                // Calculate per-OSC voice counts and total voices consistently (include masterVoices)
+                const oscVoiceCounts = config.oscVoiceCounts || [];
+                let totalVoices = 0;
+                let maxVoicesPerNote = 0;
+                let maxOscVoiceCount = 0;
+
+                for (let oscIndex = 0; oscIndex < config.oscCount; oscIndex++) {
+                    if (!isOSCEnabled(oscIndex + 1)) {
+                        oscVoiceCounts[oscIndex] = 0;
+                        continue;
+                    }
+                    const oscVoices = oscVoiceCounts[oscIndex] || 1;
+                    oscVoiceCounts[oscIndex] = oscVoices;
+                    maxOscVoiceCount = Math.max(maxOscVoiceCount, oscVoices);
+                    const effectiveVoices = oscVoices * masterVoices; // incorporate master voices
+                    totalVoices += len * effectiveVoices;
+                    maxVoicesPerNote = Math.max(maxVoicesPerNote, effectiveVoices);
+                }
+
+                const volumeNormalization = 1 / Math.sqrt(Math.max(1, maxVoicesPerNote));
+
+                // Initialize SynthState arrays to totalVoices length if not already set (or if totalVoices changed)
+                if (!SynthState.oscPhaseClock || SynthState._lastTotalVoices !== totalVoices) {
+                    SynthState._lastTotalVoices = totalVoices;
+                    const oscCount6 = Math.max(6, config.oscCount);
+                    SynthState.oscPhaseClock = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.oscPhaseFull = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.prevOscPhaseClock = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.prevOscPhaseFull = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.phaseAcuL = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.phaseAcuR = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.voiceMixes = new Array(totalVoices);
+                    for (let i = 0; i < totalVoices; i++) SynthState.voiceMixes[i] = { L: 0, R: 0 };
+                    SynthState.oscOutputsL = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                    SynthState.oscOutputsR = Array.from({ length: oscCount6 }, () => new Array(totalVoices).fill(0));
+                } else {
+                    // Ensure voiceMixes has correct length and zeroed
+                    if (!Array.isArray(SynthState.voiceMixes) || SynthState.voiceMixes.length !== totalVoices) {
+                        SynthState.voiceMixes = new Array(totalVoices);
+                    }
+                    for (let i = 0; i < totalVoices; i++) {
+                        SynthState.voiceMixes[i] = SynthState.voiceMixes[i] || { L: 0, R: 0 };
+                        SynthState.voiceMixes[i].L = 0;
+                        SynthState.voiceMixes[i].R = 0;
+                    }
+                }
+
+                // Helper: per-OSC base offsets so each osc uses a consistent global k index
+                const perOscBaseOffset = new Array(config.oscCount).fill(0);
+                {
+                    let offset = 0;
+                    for (let oscIndex = 0; oscIndex < config.oscCount; oscIndex++) {
+                        if (!isOSCEnabled(oscIndex + 1)) {
+                            perOscBaseOffset[oscIndex] = offset; // keep offset unchanged for disabled oscillators
+                            continue;
+                        }
+                        const oscVoices = oscVoiceCounts[oscIndex] || 1;
+                        perOscBaseOffset[oscIndex] = offset;
+                        offset += len * (oscVoices * masterVoices);
+                    }
+                    // sanity: offset should equal totalVoices
+                }
+
+                // mapping helper: global index for given parameters
+                const getGlobalIndex = (oscIndex, noteIndex, masterSlot, voiceIndex) => {
+                    const base = perOscBaseOffset[oscIndex] || 0;
+                    const oscVoices = oscVoiceCounts[oscIndex] || 1;
+                    return base + (noteIndex * masterVoices + masterSlot) * oscVoices + voiceIndex;
+                };
 
                 let sumL = 0, sumR = 0;
 
-                // Process each OSC
+                // Helper to read matrix checkboxes (kept as before)
+                const getSyncMatrix = () => {
+                    const matrix = [];
+                    for (let s = 1; s <= 6; s++) {
+                        matrix[s] = [];
+                        for (let t = 1; t <= 6; t++) {
+                            const el = document.getElementById(`sync_s${s}_t${t}`);
+                            matrix[s][t] = el ? el.checked : false;
+                        }
+                    }
+                    return matrix;
+                };
+                const getRingMatrix = () => {
+                    const matrix = [];
+                    for (let s = 1; s <= 6; s++) {
+                        matrix[s] = [];
+                        for (let t = 1; t <= 6; t++) {
+                            const el = document.getElementById(`ring_s${s}_t${t}`);
+                            matrix[s][t] = el ? el.checked : false;
+                        }
+                    }
+                    return matrix;
+                };
+
+                const syncMatrix = getSyncMatrix();
+                const ringMatrix = getRingMatrix();
+
+                // Store previous phase clocks for sync detection
+                const prevClocks = SynthState.prevOscPhaseClock.map(osc => osc.slice());
+
+                // First pass: process each OSC and fill oscOutputs and voiceMixes (but skip adding for ring-modded voices)
                 for (let oscIndex = 0; oscIndex < config.oscCount; oscIndex++) {
                     if (!isOSCEnabled(oscIndex + 1)) continue;
 
                     const oscConfig = getOSCConfig(oscIndex + 1);
                     const effectiveOctave = config.masterOctave + oscConfig.octave;
-                    const effectiveDetune = config.masterDetune + oscConfig.detune;
+                    const oscDetune = oscConfig.detune; // the osc can only use its own detune
+                    const masterDetune = config.masterDetune; // master detune is applied to all oscillators
                     const centsAdjustment = Math.pow(2, (config.masterCents + oscConfig.cents) / 12000);
 
-                    // Pre-calculate LFO
+                    // Pre-calc LFO
                     let lfoValue = 0;
                     if (oscConfig.lfoEnabled) {
                         lfoValue = Math.sin(oscConfig.lfoRate * t / 44100 * Math.PI) * oscConfig.lfoAmount;
                     }
 
-                    // Pre-calculate common values for this OSC
                     const sampleRateFactor = 44100 / SR;
                     const oscVolume = oscConfig.volume;
                     const oscOVDistort = oscConfig.distort;
                     const oscWaveform = oscConfig.waveform;
+                    const oscVoiceCount = oscVoiceCounts[oscIndex];
+
+                    for (let noteIndex = 0; noteIndex < len; noteIndex++) {
+                        for (let masterSlot = 0; masterSlot < masterVoices; masterSlot++) {
+                            for (let voiceIndex = 0; voiceIndex < oscVoiceCount; voiceIndex++) {
+                                const k = getGlobalIndex(oscIndex, noteIndex, masterSlot, voiceIndex);
+
+                                // Use pre-calculated base frequency and apply octave shift
+                                const pitch = noteBaseFreqs[noteIndex] * (2 ** effectiveOctave) * centsAdjustment;
+
+                                const detuneL = Math.sin(voiceIndex) * 8;
+                                const detuneR = Math.sin(-voiceIndex) * 8;
+                                const DTL = Math.abs(detuneL) * 1e9;
+                                const DTR = Math.abs(detuneR) * 1e9;
+
+                                const masterDetuneL = Math.sin(masterSlot)
+                                const masterDetuneR = Math.sin(-masterSlot);
+                                const MDTL = Math.abs(masterDetuneL) * 1e9;
+                                const MDTR = Math.abs(masterDetuneR) * 1e9;
+
+                                //console.log(detuneL, detuneR, masterDetuneL, masterDetuneR, DTL, DTR, MDTL, MDTR)
+
+                                // Fast phase accumulation
+                                let basePL = pitch * (1 + detuneL * (oscDetune) / 100);
+                                let basePR = pitch * (1 + detuneR * (oscDetune) / 100);
+                                
+                                basePL *= (1 + masterDetuneL * (masterDetune) / 100);
+                                basePR *= (1 + masterDetuneR * (masterDetune) / 100);
 
 
+                                let pitchIncL = oscConfig.lfoEnabled ? basePL * (1 + lfoValue) : basePL;
+                                let pitchIncR = oscConfig.lfoEnabled ? basePR * (1 + lfoValue) : basePR;
 
-                    // Generate voices for this OSC - optimized version
-                    for (let k = 0; k < totalVoices; k++) {
-                        const i = k % len;
-                        const j = Math.floor(k / len);
-                        
-                        // Use pre-calculated base frequency and apply octave shift
-                        const pitch = noteBaseFreqs[i] * (2 ** effectiveOctave) * centsAdjustment;
+                                pitchIncL *= sampleRateFactor;
+                                pitchIncR *= sampleRateFactor;
 
-                        // Pre-calculate detune values
-                        const detuneL = Math.sin(j) * 8;
-                        const detuneR = Math.sin(-j) * 8;
-                        const DTL = Math.abs(detuneL) * 1e9;
-                        const DTR = Math.abs(detuneR) * 1e9;
+                                // Ensure accumulators exist (pre-filled, but keep defensive check)
+                                if (typeof SynthState.phaseAcuL[oscIndex][k] === 'undefined') SynthState.phaseAcuL[oscIndex][k] = 0;
+                                if (typeof SynthState.phaseAcuR[oscIndex][k] === 'undefined') SynthState.phaseAcuR[oscIndex][k] = 0;
 
-                        // Fast phase accumulation
-                        const basePL = pitch * (1 + detuneL * effectiveDetune / 100);
-                        const basePR = pitch * (1 + detuneR * effectiveDetune / 100);
+                                // Check for sync from any source oscillator that targets this osc
+                                let syncTriggered = false;
+                                for (let srcOsc = 0; srcOsc < config.oscCount; srcOsc++) {
+                                    if (srcOsc === oscIndex) continue;
+                                    if (syncMatrix[srcOsc + 1] && syncMatrix[srcOsc + 1][oscIndex + 1]) {
+                                        const srcPhaseClock = SynthState.oscPhaseClock[srcOsc][k];
+                                        const srcPrevClock = prevClocks[srcOsc][k];
+                                        if (typeof srcPhaseClock !== 'undefined' && typeof srcPrevClock !== 'undefined') {
+                                            if (srcPhaseClock < srcPrevClock) {
+                                                SynthState.phaseAcuL[oscIndex][k] = 0;
+                                                SynthState.phaseAcuR[oscIndex][k] = 0;
+                                                syncTriggered = true;
+                                            }
+                                        }
+                                    }
+                                }
 
-                        let pitchIncL = oscConfig.lfoEnabled ? basePL * (1 + lfoValue) : basePL;
-                        let pitchIncR = oscConfig.lfoEnabled ? basePR * (1 + lfoValue) : basePR;
+                                // Advance accumulators
+                                SynthState.phaseAcuL[oscIndex][k] += pitchIncL;
+                                SynthState.phaseAcuR[oscIndex][k] += pitchIncR;
 
-                        pitchIncL *= sampleRateFactor;
-                        pitchIncR *= sampleRateFactor;
+                                const phaseL = SynthState.phaseAcuL[oscIndex][k] + DTL + MDTL;
+                                const phaseR = SynthState.phaseAcuR[oscIndex][k] + DTR + MDTR;
 
-                        // Ensure accumulators exist (done once per voice)
-                        if (!SynthState.phaseAcuL[oscIndex][k]) SynthState.phaseAcuL[oscIndex][k] = 0;
-                        if (!SynthState.phaseAcuR[oscIndex][k]) SynthState.phaseAcuR[oscIndex][k] = 0;
+                                // Update OSC clocks (after advancing phase) - store per voice
+                                SynthState.oscPhaseClock[oscIndex][k] = Math.floor(phaseL) & 255;
+                                SynthState.oscPhaseFull[oscIndex][k] = phaseL;
 
-                        // Advance accumulators
-                        SynthState.phaseAcuL[oscIndex][k] += pitchIncL;
-                        SynthState.phaseAcuR[oscIndex][k] += pitchIncR;
+                                // Waveform generation (preserved)
+                                let vl, vr;
+                                switch (oscWaveform) {
+                                    case 0: // sine
+                                        vl = -Math.sin(phaseL / 128 * Math.PI);
+                                        vr = -Math.sin(phaseR / 128 * Math.PI);
+                                        break;
+                                    case 1: // triangle
+                                        vl = Math.asin(-Math.sin(phaseL / 128 * Math.PI)) / Math.PI * 2;
+                                        vr = Math.asin(-Math.sin(phaseR / 128 * Math.PI)) / Math.PI * 2;
+                                        break;
+                                    case 2: // sawtooth
+                                        vl = ((phaseL + 128) / 128) % 2 - 1;
+                                        vr = ((phaseR + 128) / 128) % 2 - 1;
+                                        break;
+                                    case 3: // square
+                                        vl = (phaseL & 128)/64 - 1;
+                                        vr = (phaseR & 128)/64 - 1;
+                                        break;
+                                    case 4: { // PWM
+                                        const phh = Math.acos(-Math.cos(t / 32768 * Math.PI)) / Math.PI * 128;
+                                        vl = ((phaseL | (phaseL + phh)) & 128)/128 - phh/256 - 0.5;
+                                        vr = ((phaseR | (phaseR + phh)) & 128)/128 - phh/256 - 0.5;
+                                        break;
+                                    }
+                                    case 5: // brTable
+                                        vl = brTable[Math.floor(phaseL) & 255];
+                                        vr = brTable[Math.floor(phaseR) & 255];
+                                        break;
+                                    case 6: // custom waveform
+                                        vl = customWaveform(pitch * (1 + detuneL * detuneAmount / 100), t, phaseL);
+                                        vr = customWaveform(pitch * (1 + detuneR * detuneAmount / 100), t, phaseR);
+                                        break;
+                                    case 7: // indigo
+                                        vl = indigo.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % indigo.length)/(2**12)-8;
+                                        vr = indigo.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % indigo.length)/(2**12)-8;
+                                        break;
+                                    case 8: // TriSaw
+                                        vl = (((phaseL & 128) ? ~phaseL : phaseL*2) & 255)/170 - 0.56;
+                                        vr = (((phaseR & 128) ? ~phaseR : phaseR*2) & 255)/170 - 0.56;
+                                        break;
+                                    case 9: // noise
+                                        vl = Math.random()*2-1;
+                                        vr = Math.random()*2-1;
+                                        break;
+                                    case 11: // strings
+                                        vl = strings.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % strings.length)/(2**12)-8;
+                                        vr = strings.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % strings.length)/(2**12)-8;
+                                        break;
+                                    case 12: // unisono
+                                        vl = unisono.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % unisono.length)/(2**12)-8;
+                                        vr = unisono.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % unisono.length)/(2**12)-8;
+                                        break;
+                                    case 13: // strings + unisono
+                                        vl = (unisono.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % unisono.length) + strings.charCodeAt(Math.floor(phaseL*2**(2.1/12)/55*258) % strings.length))/(2**12)-16;
+                                        vr = (unisono.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % unisono.length) + strings.charCodeAt(Math.floor(phaseR*2**(2.1/12)/55*258) % strings.length))/(2**12)-16;
+                                        break;
+                                    case 14: { // Power
+                                        const powerResult = Power(phaseL, len * masterVoices * oscVoiceCount, k, t); // this function is very slow, i don't know why
+                                        vl = powerResult[0];
+                                        vr = powerResult[1];
+                                        break;
+                                    }
+                                    case 15: // damped saw
+                                        vl = Math.sin(Math.tan((phaseL/128-(Math.sin(Math.tan((phaseL/128)%2-1)*2.02))/6)%2-1)*2.02);
+                                        vr = Math.sin(Math.tan((phaseR/128-(Math.sin(Math.tan((phaseR/128)%2-1)*2.02))/6)%2-1)*2.02);
+                                        break;
+                                    case 16: { // VX Phased
+                                        const i = k % len;
+                                        const j = Math.floor(k / len);
+                                        const state = getPhasedState(j, i);
+                                        const phasedResult = Phased(phaseL + 128, t, len, state);
+                                        vl = phasedResult[0];
+                                        vr = phasedResult[1];
+                                        break;
+                                    }
+                                    case 17: // VX chip (Arp)
+                                        {
+                                            const chipResult = Chip(notesArray, detuneL+masterDetuneL, detuneR+masterDetuneR, (oscDetune/100)*(masterDetune/100), 1, t, effectiveOctave);
+                                            vl = chipResult[0] / len;
+                                            vr = chipResult[1] / len;
+                                        }
+                                        break;
+                                    case 18: // VX Robotsaw
+                                        {
+                                            const robotResult = Robotsaw(phaseL, t, k);
+                                            vl = robotResult[0];
+                                            vr = robotResult[1];
+                                        }
+                                        break;
+                                    case 19: // ST chip (Arp)
+                                        {
+                                            const chip2Result = Chip2(notesArray, detuneL+masterDetuneL, detuneR+masterDetuneR, (oscDetune/100)*(masterDetune/100), 1, t, effectiveOctave);
+                                            vl = chip2Result[0] / len;
+                                            vr = chip2Result[1] / len;
+                                        }
+                                        break;
+                                    case 20: // OV vox
+                                        vl = vox.charCodeAt(Math.floor(phaseL * Math.pow(2, 2/12) / 55 * 258) % vox.length) / (2**12) - 8;
+                                        vr = vox.charCodeAt(Math.floor(phaseR * Math.pow(2, 2/12) / 55 * 258) % vox.length) / (2**12) - 8;
+                                        break;
+                                    case 21: // OV airy
+                                        vl = airy.charCodeAt(Math.floor(phaseL * Math.pow(2, 2/12) / 55 * 258) % airy.length) / (2**12) - 8;
+                                        vr = airy.charCodeAt(Math.floor(phaseR * Math.pow(2, 2/12) / 55 * 258) % airy.length) / (2**12) - 8;
+                                        break;
+                                    case 22: // OV voxpad
+                                        vl = voxpad.charCodeAt(Math.floor(phaseL * Math.pow(2, 2/12) / 55 * 258) % voxpad.length) / (2**12) - 8;
+                                        vr = voxpad.charCodeAt(Math.floor(phaseR * Math.pow(2, 2/12) / 55 * 258) % voxpad.length) / (2**12) - 8;
+                                        break;
+                                    case 23: // OV pulse
+                                        vl = Math.max(Math.min(Math.tan(phaseL/128*Math.PI)/10,1),-1);
+                                        vr = Math.max(Math.min(Math.tan(phaseR/128*Math.PI)/10,1),-1);
+                                        break;
+                                    case 24: // OV damped saw
+                                        vl = Math.sin(phaseL/64*Math.PI+Math.sin(phaseL/64*Math.PI)/1.75+Math.sin(phaseL/64*Math.PI*2)/3);
+                                        vr = Math.sin(phaseR/64*Math.PI+Math.sin(phaseR/64*Math.PI)/1.75+Math.sin(phaseR/64*Math.PI*2)/3);
+                                        break;
+                                    case 25: // OV damped square
+                                        vl = Math.sin(-phaseL/128*Math.PI+Math.sin(-phaseL/64*Math.PI)/1.75+Math.sin(-phaseL/64*Math.PI*2)/3);
+                                        vr = Math.sin(-phaseR/128*Math.PI+Math.sin(-phaseR/64*Math.PI)/1.75+Math.sin(-phaseR/64*Math.PI*2)/3);
+                                        break;
+                                    case 26: // OV damped triangle
+                                        vl = -Math.sin(phaseL/128*Math.PI+Math.sin((phaseL+64)/64*Math.PI)/4);
+                                        vr = -Math.sin(phaseR/128*Math.PI+Math.sin((phaseR+64)/64*Math.PI)/4);
+                                        break;
+                                    case 27: // OV curvation
+                                        vl = -Math.sin(phaseL/128*Math.PI+Math.sin((phaseL+64)/64*Math.PI)/2);
+                                        vr = -Math.sin(phaseR/128*Math.PI+Math.sin((phaseR+64)/64*Math.PI)/2);
+                                        break;
+                                    case 28: // OV circular
+                                        vl = -Math.sin(Math.sin(phaseL/128*Math.PI))*1.19;
+                                        vr = -Math.sin(Math.sin(phaseR/128*Math.PI))*1.19;
+                                        break;
+                                    case 29: // OV distored saw
+                                        vl = Math.max(Math.min(Math.tan(phaseL/128*Math.PI),1),-1);
+                                        vr = Math.max(Math.min(Math.tan(phaseR/128*Math.PI),1),-1);
+                                        break;
+                                    case 30: // this.thing
+                                        vl=((3*phaseL&t>>8)-((5+2*(1&-t>>17))*phaseL>>1&t>>7)&255)/128-1
+                                        vr=((3*phaseR&t>>8)-((5+2*(1&-t>>17))*phaseR>>1&t>>7)&255)/128-1;
+                                        break;
+                                    case 31: //and
+                                        vl=((phaseL+128&t>>8&255)-t/512%128)/128-1
+                                        vr=((phaseR+128&t>>8&255)-t/512%128)/128-1
+                                        break;
+                                    case 32: //xor
+                                        vl=((phaseL+128^t>>8)&255)/128-1
+                                        vr=((phaseR+128^t>>8)&255)/128-1
+                                        break;
+                                    case 33:
+                                        vl=(((phaseL+128|t>>8)&255)-t/512%128)/128-1
+                                        vr=(((phaseR+128|t>>8)&255)-t/512%128)/128-1
+                                        break;
+                                    case 34: // distorted saw (saturated)
+                                        vl= Math.tanh(((phaseL + 128) / 64) % 4 - 2)
+                                        vr= Math.tanh(((phaseR + 128) / 64) % 4 - 2)
+                                        break;
+                                    default: // fallback to sine
+                                        vl = -Math.sin(phaseL / 128 * Math.PI);
+                                        vr = -Math.sin(phaseR / 128 * Math.PI);
+                                }
 
-                        const phaseL = SynthState.phaseAcuL[oscIndex][k] + DTL;
-                        const phaseR = SynthState.phaseAcuR[oscIndex][k] + DTR;
+                                // Apply distortion and volume and store in oscOutputs arrays
+                                const distortedVL = vl + (oscOVDistort > 0 ? waveShaper(vl) * oscOVDistort * 2 : 0);
+                                const distortedVR = vr + (oscOVDistort > 0 ? waveShaper(vr) * oscOVDistort * 2 : 0);
 
-                        // Update OSC clocks
-                        SynthState.oscPhaseClock[oscIndex] = Math.floor(phaseL) & 255;
-                        SynthState.oscPhaseFull[oscIndex] = phaseL;
+                                // voiceNormalization per osc configuration
+                                let voiceNormalization = 1;
+                                if (oscConfig.voiceMix === 1) {
+                                    voiceNormalization = 1 / (oscConfig.voices || oscVoiceCount);
+                                } else if (oscConfig.voiceMix === 2) {
+                                    voiceNormalization = 1 / Math.sqrt(oscConfig.voices || oscVoiceCount);
+                                }
 
-                        // Fast waveform generation for all cases
-                        let vl, vr;
-                        switch (oscWaveform) {
-                            case 0: // sine
-                                vl = -Math.sin(phaseL / 128 * Math.PI);
-                                vr = -Math.sin(phaseR / 128 * Math.PI);
-                                break;
-                            case 1: // triangle
-                                vl = Math.asin(-Math.sin(phaseL / 128 * Math.PI)) / Math.PI * 2;
-                                vr = Math.asin(-Math.sin(phaseR / 128 * Math.PI)) / Math.PI * 2;
-                                break;
-                            case 2: // sawtooth
-                                vl = ((phaseL + 128) / 128) % 2 - 1;
-                                vr = ((phaseR + 128) / 128) % 2 - 1;
-                                break;
-                            case 3: // square
-                                vl = (phaseL & 128)/64 - 1;
-                                vr = (phaseR & 128)/64 - 1;
-                                break;
-                            case 4: { // PWM
-                                const phh = Math.acos(-Math.cos(t / 32768 * Math.PI)) / Math.PI * 128;
-                                vl = ((phaseL | (phaseL + phh)) & 128)/128 - phh/256 - 0.5;
-                                vr = ((phaseR | (phaseR + phh)) & 128)/128 - phh/256 - 0.5;
-                                break;
-                            }
-                            case 5: // brTable
-                                vl = brTable[Math.floor(phaseL) & 255];
-                                vr = brTable[Math.floor(phaseR) & 255];
-                                break;
-                            case 6: // custom waveform
-                                vl = customWaveform(pitch * (1 + detuneL * detuneAmount / 100), t, phaseL);
-                                vr = customWaveform(pitch * (1 + detuneR * detuneAmount / 100), t, phaseR);
-                                break;
-                            case 7: // indigo
-                                vl = indigo.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % indigo.length)/(2**12)-8;
-                                vr = indigo.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % indigo.length)/(2**12)-8;
-                                break;
-                            case 8: // TriSaw
-                                vl = (((phaseL & 128) ? ~phaseL : phaseL*2) & 255)/170 - 0.56;
-                                vr = (((phaseR & 128) ? ~phaseR : phaseR*2) & 255)/170 - 0.56;
-                                break;
-                            case 9: // noise
-                                vl = Math.random()*2-1;
-                                vr = Math.random()*2-1;
-                                break;
-                            case 11: // strings
-                                vl = strings.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % strings.length)/(2**12)-8;
-                                vr = strings.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % strings.length)/(2**12)-8;
-                                break;
-                            case 12: // unisono
-                                vl = unisono.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % unisono.length)/(2**12)-8;
-                                vr = unisono.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % unisono.length)/(2**12)-8;
-                                break;
-                            case 13: // strings + unisono
-                                vl = (unisono.charCodeAt(Math.floor(phaseL*2**(2/12)/55*258) % unisono.length) + strings.charCodeAt(Math.floor(phaseL*2**(2.1/12)/55*258) % strings.length))/(2**12)-16;
-                                vr = (unisono.charCodeAt(Math.floor(phaseR*2**(2/12)/55*258) % unisono.length) + strings.charCodeAt(Math.floor(phaseR*2**(2.1/12)/55*258) % strings.length))/(2**12)-16;
-                                break;
-                            case 14: { // Power
-                                const powerResult = Power(phaseL, len * m, k, t);
-                                vl = powerResult[0];
-                                vr = powerResult[1];
-                                break;
-                            }
-                            case 15: // damped saw
-                                vl = Math.sin(Math.tan((phaseL/128-(Math.sin(Math.tan((phaseL/128)%2-1)*2.02))/6)%2-1)*2.02);
-                                vr = Math.sin(Math.tan((phaseR/128-(Math.sin(Math.tan((phaseR/128)%2-1)*2.02))/6)%2-1)*2.02);
-                                break;
-                            case 16: { // VX Phased
-                                const i = k % len;
-                                const j = Math.floor(k / len);
-                                const state = getPhasedState(j, i);
-                                const phasedResult = Phased(phaseL + 128, t, len, state);
-                                vl = phasedResult[0];
-                                vr = phasedResult[1];
-                                break;
-                            }
-                            case 17: // VX chip (Arp)
-                                const chipResult = Chip(notesArray, detuneL, detuneR, effectiveDetune/100, 1, t, effectiveOctave);
-                                vl = chipResult[0] / len;
-                                vr = chipResult[1] / len;
-                                break;
-                            case 18: // VX Robotsaw
-                                const robotResult = Robotsaw(phaseL, t, k);
-                                vl = robotResult[0];
-                                vr = robotResult[1];
-                                break;
-                            case 19: // ST chip (Arp)
-                                const chip2Result = Chip2(notesArray, detuneL, detuneR, effectiveDetune/100, 1, t, effectiveOctave);
-                                vl = chip2Result[0] / len;
-                                vr = chip2Result[1] / len;
-                                break;
-                            case 20: // OV vox
-                                vl = vox.charCodeAt(Math.floor(phaseL * Math.pow(2, 2/12) / 55 * 258) % vox.length) / (2**12) - 8;
-                                vr = vox.charCodeAt(Math.floor(phaseR * Math.pow(2, 2/12) / 55 * 258) % vox.length) / (2**12) - 8;
-                                break;
-                            case 21: // OV airy
-                                vl = airy.charCodeAt(Math.floor(phaseL * Math.pow(2, 2/12) / 55 * 258) % airy.length) / (2**12) - 8;
-                                vr = airy.charCodeAt(Math.floor(phaseR * Math.pow(2, 2/12) / 55 * 258) % airy.length) / (2**12) - 8;
-                                break;
-                            case 22: // OV voxpad
-                                vl = voxpad.charCodeAt(Math.floor(phaseL * Math.pow(2, 2/12) / 55 * 258) % voxpad.length) / (2**12) - 8;
-                                vr = voxpad.charCodeAt(Math.floor(phaseR * Math.pow(2, 2/12) / 55 * 258) % voxpad.length) / (2**12) - 8;
-                                break;
-                            case 23: // OV pulse
-                                vl = Math.max(Math.min(Math.tan(phaseL/128*Math.PI)/10,1),-1);
-                                vr = Math.max(Math.min(Math.tan(phaseR/128*Math.PI)/10,1),-1);
-                                break;
-                            case 24: // OV damped saw
-                                vl = Math.sin(phaseL/64*Math.PI+Math.sin(phaseL/64*Math.PI)/1.75+Math.sin(phaseL/64*Math.PI*2)/3);
-                                vr = Math.sin(phaseR/64*Math.PI+Math.sin(phaseR/64*Math.PI)/1.75+Math.sin(phaseR/64*Math.PI*2)/3);
-                                break;
-                            case 25: // OV damped square
-                                vl = Math.sin(-phaseL/128*Math.PI+Math.sin(-phaseL/64*Math.PI)/1.75+Math.sin(-phaseL/64*Math.PI*2)/3);
-                                vr = Math.sin(-phaseR/128*Math.PI+Math.sin(-phaseR/64*Math.PI)/1.75+Math.sin(-phaseR/64*Math.PI*2)/3);
-                                break;
-                            case 26: // OV damped triangle
-                                vl = -Math.sin(phaseL/128*Math.PI+Math.sin((phaseL+64)/64*Math.PI)/4);
-                                vr = -Math.sin(phaseR/128*Math.PI+Math.sin((phaseR+64)/64*Math.PI)/4);
-                                break;
-                            case 27: // OV curvation
-                                vl = -Math.sin(phaseL/128*Math.PI+Math.sin((phaseL+64)/64*Math.PI)/2);
-                                vr = -Math.sin(phaseR/128*Math.PI+Math.sin((phaseR+64)/64*Math.PI)/2);
-                                break;
-                            case 28: // OV circular
-                                vl = -Math.sin(Math.sin(phaseL/128*Math.PI))*1.19;
-                                vr = -Math.sin(Math.sin(phaseR/128*Math.PI))*1.19;
-                                break;
-                            case 29: // OV distored saw
-                                vl = Math.max(Math.min(Math.tan(phaseL/128*Math.PI),1),-1);
-                                vr = Math.max(Math.min(Math.tan(phaseR/128*Math.PI),1),-1);
-                                break;
-                            default: // fallback to sine
-                                vl = -Math.sin(phaseL / 128 * Math.PI);
-                                vr = -Math.sin(phaseR / 128 * Math.PI);
-                        }
+                                SynthState.oscOutputsL[oscIndex][k] = distortedVL * oscVolume * voiceNormalization;
+                                SynthState.oscOutputsR[oscIndex][k] = distortedVR * oscVolume * voiceNormalization;
 
-                        // Initialize voice mix efficiently
-                        if (!SynthState.voiceMixes[k]) {
-                            SynthState.voiceMixes[k] = { L: 0, R: 0 };
-                        }
+                                // Decide whether to add to voiceMixes now (skip if this osc participates in ring modulation)
+                                let isOSCInRingMod = false;
+                                for (let srcOsc = 0; srcOsc < config.oscCount; srcOsc++) {
+                                    for (let tgtOsc = 0; tgtOsc < config.oscCount; tgtOsc++) {
+                                        if (ringMatrix[srcOsc + 1] && ringMatrix[srcOsc + 1][tgtOsc + 1]) {
+                                            if (srcOsc === oscIndex || tgtOsc === oscIndex) {
+                                                isOSCInRingMod = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (isOSCInRingMod) break;
+                                }
 
-                        // Apply distortion and volume
-                        const distortedVL = vl + (oscOVDistort > 0 ? waveShaper(vl) * oscOVDistort * 2 : 0);
-                        const distortedVR = vr + (oscOVDistort > 0 ? waveShaper(vr) * oscOVDistort * 2 : 0);
-                        
-                        SynthState.voiceMixes[k].L += distortedVL * oscVolume;
-                        SynthState.voiceMixes[k].R += distortedVR * oscVolume;
-                    }
+                                if (!isOSCInRingMod) {
+                                    // Add directly to voice mix
+                                    SynthState.voiceMixes[k].L += SynthState.oscOutputsL[oscIndex][k];
+                                    SynthState.voiceMixes[k].R += SynthState.oscOutputsR[oscIndex][k];
+                                }
+                            } // voiceIndex
+                        } // masterSlot
+                    } // noteIndex
+                } // oscIndex
+
+                // Save prev clocks for next sample
+                for (let oscIndex = 0; oscIndex < config.oscCount; oscIndex++) {
+                    SynthState.prevOscPhaseClock[oscIndex] = SynthState.oscPhaseClock[oscIndex].slice();
+                    SynthState.prevOscPhaseFull[oscIndex] = SynthState.oscPhaseFull[oscIndex].slice();
                 }
 
+                // Apply ring modulation using the same global index mapping
+                // For each note, masterSlot and voiceIndex, compute ring contributions
+                for (let noteIndex = 0; noteIndex < len; noteIndex++) {
+                    for (let masterSlot = 0; masterSlot < masterVoices; masterSlot++) {
+                        // iterate voice index up to the maximum voice count across oscillators
+                        for (let voiceIndex = 0; voiceIndex < maxOscVoiceCount; voiceIndex++) {
+                            let ringL = 0, ringR = 0, ringCount = 0;
+
+                            for (let srcOsc = 0; srcOsc < config.oscCount; srcOsc++) {
+                                for (let tgtOsc = 0; tgtOsc < config.oscCount; tgtOsc++) {
+                                    if (ringMatrix[srcOsc + 1] && ringMatrix[srcOsc + 1][tgtOsc + 1]) {
+                                        const srcOscVoices = oscVoiceCounts[srcOsc] || 0;
+                                        const tgtOscVoices = oscVoiceCounts[tgtOsc] || 0;
+                                        // only apply if both oscillators actually have this voice index
+                                        if (voiceIndex < srcOscVoices && voiceIndex < tgtOscVoices) {
+                                            const srcK = getGlobalIndex(srcOsc, noteIndex, masterSlot, voiceIndex);
+                                            const tgtK = getGlobalIndex(tgtOsc, noteIndex, masterSlot, voiceIndex);
+                                            const srcL = SynthState.oscOutputsL[srcOsc][srcK] || 0;
+                                            const srcR = SynthState.oscOutputsR[srcOsc][srcK] || 0;
+                                            const tgtL = SynthState.oscOutputsL[tgtOsc][tgtK] || 0;
+                                            const tgtR = SynthState.oscOutputsR[tgtOsc][tgtK] || 0;
+
+                                            ringL += srcL * tgtL;
+                                            ringR += srcR * tgtR;
+                                            ringCount++;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (ringCount > 0) {
+                                const ringResultL = ringL / Math.sqrt(ringCount);
+                                const ringResultR = ringR / Math.sqrt(ringCount);
+
+                                // Mix into existing voiceMixes (scaled)
+                                // We must add to the correct global slot(s) — pick a representative target index:
+                                // Since ring produced between multiple oscillators, add to the voiceMix index for the first involved osc
+                                // We'll just update the one that matches the first srcOsc that exists for this voice
+                                // Find any k index to apply the ring mix to (prefer the first enabled osc)
+                                let applied = false;
+                                for (let oscIndex = 0; oscIndex < config.oscCount && !applied; oscIndex++) {
+                                    if (!isOSCEnabled(oscIndex + 1)) continue;
+                                    const oscVoices = oscVoiceCounts[oscIndex] || 0;
+                                    if (voiceIndex < oscVoices) {
+                                        const k = getGlobalIndex(oscIndex, noteIndex, masterSlot, voiceIndex);
+                                        if (SynthState.voiceMixes[k]) {
+                                            SynthState.voiceMixes[k].L += ringResultL * 0.5;
+                                            SynthState.voiceMixes[k].R += ringResultR * 0.5;
+                                            applied = true;
+                                        }
+                                    }
+                                } // if none applied (edge-case) skip
+                            }
+                        } // voiceIndex
+                    } // masterSlot
+                } // noteIndex
+
                 // Apply master processing - optimized
+                // First, collect voices by key/note to apply global distortion to OSC mix per key
+                const keyMixes = new Array(len * masterVoices).fill(0).map(() => ({ L: 0, R: 0 }));
+                
+                // Sum voices by key (before global distortion)
                 for (let k = 0; k < totalVoices; k++) {
                     const voiceMix = SynthState.voiceMixes[k];
                     if (voiceMix) {
-                        let voiceL = voiceMix.L;
-                        let voiceR = voiceMix.R;
-
-                        // Apply global distortion
-                        if (config.globalOVDistortVal > 0) {
-                            voiceL += waveShaper(voiceL) * config.globalOVDistortVal * 2;
-                            voiceR += waveShaper(voiceR) * config.globalOVDistortVal * 2;
-                        }
-
-                        sumL += voiceL * config.masterVolume * volumeNormalization;
-                        sumR += voiceR * config.masterVolume * volumeNormalization;
+                        // Find which key this voice belongs to
+                        const keyIndex = k % (len * masterVoices);
+                        keyMixes[keyIndex].L += voiceMix.L;
+                        keyMixes[keyIndex].R += voiceMix.R;
                     }
                 }
+                
+                // Apply global distortion to each key's OSC mix, then add to output
+                for (let keyIndex = 0; keyIndex < keyMixes.length; keyIndex++) {
+                    let keyL = keyMixes[keyIndex].L;
+                    let keyR = keyMixes[keyIndex].R;
+                    
+                    // Apply global distortion to the mix of all OSC for this key
+                    if (config.globalOVDistortVal > 0) {
+                        keyL += waveShaper(keyL / 2) * config.globalOVDistortVal * 2;
+                        keyR += waveShaper(keyR / 2) * config.globalOVDistortVal * 2;
+                    }
+                    
+                    sumL += keyL * config.masterVolume * volumeNormalization;
+                    sumR += keyR * config.masterVolume * volumeNormalization;
+                }
 
-                // Clear voice mixes efficiently
-                SynthState.voiceMixes.length = 0;
+                // Clear voice mixes efficiently (reset zero)
+                for (let i = 0; i < SynthState.voiceMixes.length; i++) {
+                    SynthState.voiceMixes[i].L = 0;
+                    SynthState.voiceMixes[i].R = 0;
+                }
 
                 return [sumL / 3, sumR / 3];
             } catch (error) {
@@ -3855,7 +4278,6 @@
                 return [0, 0];
             }
         }
-
 
         // Helper functions for OSC management with backwards compatibility
         function getOSCCount() {
@@ -3893,6 +4315,9 @@
             const octave = pref(`osc${oscNumber}Octave`, v => parseInt(v), 0);
             const detune = pref(`osc${oscNumber}Detune`, v => parseFloat(v), 0);
             const distort = pref(`osc${oscNumber}OVDistort`, v => parseFloat(v), 0);
+            
+            // Get voice mix setting with master fallback logic
+            const voiceMix = getEffectiveVoiceMix(oscNumber);
             const enabled = (function(){
                 const el = tryGet(`osc${oscNumber}Enabled`);
                 if (el) return el.checked;
@@ -3944,12 +4369,24 @@
                 return false;
             })();
 
-            return { waveform, volume, octave, detune, distort, enabled, cents, lfoRate, lfoAmount, lfoEnabled };
+            const voices = getOSCVoiceCount(oscNumber);
+            
+            return { waveform, volume, octave, detune, distort, voiceMix, enabled, cents, lfoRate, lfoAmount, lfoEnabled, voices };
         }
 
         function isOSCEnabled(oscNumber) {
             const enabledEl = document.getElementById(`osc${oscNumber}Enabled`);
             return enabledEl ? enabledEl.checked : true;
+        }
+
+        function getOSCVoiceCount(oscNumber) {
+            // For backwards compatibility: if no per-OSC voice count, use global synthVoices
+            const voiceCountEl = document.getElementById(`osc${oscNumber}VoiceCount`);
+            if (voiceCountEl) {
+                return parseInt(voiceCountEl.value);
+            }
+            // fallback to global voice count
+            return parseInt(document.getElementById('synthVoices')?.value || '1');
         }
 
         function getGlobalOVDistort() {
@@ -3973,6 +4410,137 @@
 
         function getMasterCents() {
             return parseFloat(document.getElementById('synthCents')?.value || '0');
+        }
+
+        function getMasterVoiceMix() {
+            return parseInt(document.getElementById('globalVoiceMix')?.value || '2'); // 2 = root default
+        }
+
+        function getEffectiveVoiceMix(oscNumber) {
+            const oscElement = document.getElementById(`osc${oscNumber}VoiceMix`);
+            const masterElement = document.getElementById('globalVoiceMix');
+            
+            if (!oscElement || !masterElement) {
+                return 2; // Default to root
+            }
+            
+            const oscValue = parseInt(oscElement.value || '2');
+            const masterValue = parseInt(masterElement.value || '2');
+            
+            // If OSC is set to default (2=root), use master setting
+            // If OSC is explicitly set to something else, use that
+            // Special case: if master is also 2, both default to root
+            if (oscValue === 2) {
+                return masterValue === 2 ? 2 : masterValue;
+            }
+            return oscValue;
+        }
+
+        function updateVoiceCountSliderLabels() {
+            const masterVoices = parseInt(document.getElementById('synthVoices')?.value || '1');
+            
+            for (let i = 1; i <= 6; i++) {
+                const slider = document.getElementById(`osc${i}VoiceCount`);
+                const label = document.querySelector(`label[for="osc${i}VoiceCount"]`);
+                
+                if (slider && label) {
+                    const sliderValue = parseInt(slider.value || '1');
+                    const isDefault = sliderValue === masterVoices;
+                    
+                    // Update label to show if using default or custom value
+                    if (isDefault) {
+                        label.innerHTML = `OSC ${i} Voice Count: <span style="color: #5ac8fa">(using master: ${masterVoices})</span>`;
+                    } else {
+                        label.innerHTML = `OSC ${i} Voice Count: <span style="color: #ffaa00">(custom: ${sliderValue})</span>`;
+                    }
+                }
+            }
+        }
+
+        function initializeVoiceMixControls() {
+            const masterElement = document.getElementById('globalVoiceMix');
+            if (!masterElement) return;
+            
+            // Set all OSC voice mix controls to default (2=root) so they follow master
+            for (let i = 1; i <= 6; i++) {
+                const oscElement = document.getElementById(`osc${i}VoiceMix`);
+                if (oscElement) {
+                    oscElement.value = '2'; // Default to root to follow master
+                }
+            }
+            
+            // Add event listener to master control to update OSC controls when needed
+            masterElement.addEventListener('change', () => {
+                // When master changes, update all OSC controls that are set to default (2=root)
+                const masterValue = masterElement.value;
+                for (let i = 1; i <= 6; i++) {
+                    const oscElement = document.getElementById(`osc${i}VoiceMix`);
+                    if (oscElement && oscElement.value === '2') {
+                        // Only update OSC controls that are still set to default
+                        oscElement.value = masterValue;
+                    }
+                }
+                updateURLParams(); // Update URL with new master setting
+                updateVoiceCountSummary(); // Refresh the voice count display
+            });
+            
+            // Add event listeners to individual OSC controls to detect when user changes them manually
+            for (let i = 1; i <= 6; i++) {
+                const oscElement = document.getElementById(`osc${i}VoiceMix`);
+                if (oscElement) {
+                    oscElement.addEventListener('change', () => {
+                        updateURLParams(); // Update URL when OSC voice mix changes
+                        updateVoiceCountSummary(); // Refresh the voice count display
+                    });
+                }
+            }
+        }
+
+        function updateVoiceCountSummary() {
+            const summaryElement = document.getElementById('voiceCountSummary');
+            if (!summaryElement) return;
+
+            const oscCount = parseInt(document.getElementById('oscCount')?.value || '1');
+            const masterVoices = parseInt(document.getElementById('synthVoices')?.value || '1');
+            const masterVoiceMix = document.getElementById('globalVoiceMix')?.value || '2';
+            
+            let oscSummary = 'OSC Voices: ';
+            let oscMixSummary = 'OSC Mix: ';
+            let totalOSCVoices = 0;
+            let totalEffectiveVoices = 0;
+            
+            for (let i = 1; i <= oscCount; i++) {
+                const oscVoices = parseInt(document.getElementById(`osc${i}VoiceCount`)?.value || masterVoices);
+                const oscVoiceMix = getEffectiveVoiceMix(i);
+                const effectiveVoices = oscVoices * masterVoices;
+                oscSummary += `OSC${i}:${oscVoices} `;
+                oscMixSummary += `OSC${i}:${['Flat', 'Linear', 'Root'][oscVoiceMix]} `;
+                totalOSCVoices += oscVoices;
+                totalEffectiveVoices += effectiveVoices;
+            }
+            
+            // Calculate final total voices (sum of all OSC voices * master voices)
+            const finalTotalVoices = totalOSCVoices * masterVoices;
+            const masterMixName = ['Flat (None)', 'Linear (1/n)', 'Root (√n)'][masterVoiceMix];
+            
+            // Calculate expected normalization for Root (√n) mix
+            const maxEffectiveVoices = Math.max(...Array.from({length: oscCount}, (_, i) => {
+                const oscVoices = parseInt(document.getElementById(`osc${i+1}VoiceCount`)?.value || masterVoices);
+                return oscVoices * masterVoices;
+            }));
+            const expectedRootNormalization = maxEffectiveVoices > 0 ? (1 / Math.sqrt(maxEffectiveVoices)).toFixed(3) : '1.000';
+            
+            summaryElement.innerHTML = `
+                ${oscSummary}<br>
+                Master Voices: ${masterVoices}<br>
+                Master Voice Mix: ${masterMixName}<br>
+                ${oscMixSummary}<br>
+                Total OSC Voices: ${totalOSCVoices}<br>
+                Total Effective Voices: ${totalEffectiveVoices}<br>
+                <strong>Final Total Voices: ${finalTotalVoices}</strong><br>
+                Expected Root Normalization: ${expectedRootNormalization}<br>
+                <small>Calculation: (${oscSummary}) × Master (${masterVoices}) = ${finalTotalVoices} total voices</small>
+            `;
         }
 
         function getOSCCents(oscNumber) {
@@ -4374,7 +4942,7 @@
 
             // BPM sync (140 bpm default)
             const bpm = 140;
-            const BPMnorm = bpm / 48000 * 256 * t;
+            const BPMnorm = bpm / 44100 * 256 * t;
 
             const step = (BPMnorm >> 13);   // step index
             const step8 = step & 7;         // 0..7
@@ -4539,7 +5107,7 @@
                         inputRight = new Float32Array(length);
                         SR = audioCtx.sampleRate
 
-                        const voices   = parseInt(document.getElementById('synthVoices').value);
+                        const voices   = synthOptimizer.cacheDOMValues().masterVoices;
                         const SRfix    = parseFloat(document.getElementById('SRfix').value)
                         resetSynthState()
                         const synthOBJ = {}
@@ -6991,11 +7559,8 @@
                                 fft_classic(reC, imC, false, false);
                         }
 
-                        // ⬇️ envelope state arrays (persistent across calls!)
-                        if (!applyFFTLogic._classicEnv) {
-                            applyFFTLogic._classicEnv = new Float32Array(SIZE);
-                        }
-                        const env = applyFFTLogic._classicEnv;
+                        // Use the channel-specific envelope state instead of shared static variable
+                        const env = envelopeState;
 
                         const DecayType = parseInt(document.getElementById('decayType').value);
                         const Release   = parseFloat(document.getElementById('release').value) 
@@ -7710,4 +8275,3 @@
     </script>
 </body>
 </html>
-

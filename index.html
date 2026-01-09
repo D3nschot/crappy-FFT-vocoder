@@ -7606,9 +7606,9 @@
                         } else if (useClassicMagnitudeTransfer === 2) {
                             for (let i = 0; i < SIZE; i++) {
                                 const outPh = phC[i];
-
+                                // you need to set the bin size to 2048 for more accreate result
                                 // pick a neighborhood width (e.g. 8 bins like before)
-                                const step = 4;
+                                const step = Math.floor(5*(SIZE/1024));
                                 const center = Math.floor(i / step) * step;
 
                                 let weightedMag = 0;
@@ -7631,7 +7631,7 @@
 
                                 // apply your shaping
                                 const mappedMag = magC[i] *
-                                    Math.min(smoothMagM * (Math.sin(i / SIZE * Math.PI) ** 3 + 0.01) * 37.5 , 3); // Rule #1: never clamp your bins (MAGIX), if you dont want it to be loud use a compressor or limiter like how Image Line did :)
+                                    Math.min(smoothMagM * (Math.sin(i / SIZE * Math.PI) ** 2.5 + 0.01) * 40 , 3*Math.sqrt(SIZE/1024)); // Rule #1: never clamp your bins (MAGIX), if you dont want it to be loud use a compressor or limiter like how Image Line did :)
 
 
                                 reM[i] = mappedMag * Math.cos(outPh);
@@ -8275,3 +8275,4 @@
     </script>
 </body>
 </html>
+

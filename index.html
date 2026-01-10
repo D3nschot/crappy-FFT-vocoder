@@ -1927,6 +1927,55 @@
                 </div>
             </div>
 
+            <!-- Some Experiments Controls Panel -->
+            <div id="someExpControls" class="control-panel hidden">
+                <h3>Some Experiments Settings</h3>
+
+                <div class="form-group">
+                    <label for="expMode">Experiment Mode:</label>
+                    <select id="expMode" class="form-control">
+                        <option value="0">Classic Filter-Bank</option>
+                        <option value="1">Chaotic Drift</option>
+                        <option value="2">Nonlinear Oscillator</option>
+                        <option value="3">Bitwise Vocoder</option>
+                        <option value="4">Bitwise Vocoder Alt</option>
+                        <option value="5">Rectified Logic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="expFF">Filter Count (ff):</label>
+                    <input type="range" id="expFF" value="32" min="1" max="256" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="expRes">Resonance:</label>
+                    <input type="range" id="expRes" value="0.9" min="0" max="0.9999" step="0.0001" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="expFreq">Frequency:</label>
+                    <input type="range" id="expFreq" value="440" min="20" max="20000" step="1" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="expBaseFreq">Base Frequency:</label>
+                    <input type="range" id="expBaseFreq" value="48000" min="8000" max="192000" step="1000" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <i>
+                        <strong>Experiment Modes:</strong><br>
+                        &bull; <strong>Classic Filter-Bank:</strong> Standard vocoder with bandpass filters<br>
+                        &bull; <strong>Chaotic Drift:</strong> Phase-based frequency modulation<br>
+                        &bull; <strong>Nonlinear Oscillator:</strong> Self-modulating filters<br>
+                        &bull; <strong>Bitwise Vocoder:</strong> Bit-level manipulation<br>
+                        &bull; <strong>Bitwise Vocoder Alt:</strong> Alternative bitwise processing<br>
+                        &bull; <strong>Rectified Logic:</strong> Rectified signal logic
+                    </i>
+                </div>
+            </div>
+
             <!-- Processing Controls Panel -->
             <div class="control-panel">
                 <h3>Processing</h3>
@@ -2137,11 +2186,12 @@
         let Vmode = parseInt(urlParams.get("Vmode")) || 0;
 
         function SetUpUI() {
-            const controls = ['FFTcontrols', 'analogControls', '4ormClone'];
+            const controls = ['FFTcontrols', 'analogControls', '4ormClone', 'someExpControls'];
             const configs = [
                 { title: 'Crappy FFT Vocoder', whatIs: 'a Fast Fourier Transform vocoder', button: 'Change to Analog Mode', show: 0 },
                 { title: 'Crappy Analog Vocoder', whatIs: 'an Analog Vocoder', button: 'Change to 4ormulator Mode', show: 1 },
-                { title: 'Crappy 4ormulator clone', whatIs: 'an 4ormulator clone', button: 'Change to FFT Mode', show: 2 }
+                { title: 'Crappy 4ormulator clone', whatIs: 'an 4ormulator clone', button: 'Change to Some Experiments Mode', show: 2 },
+                { title: 'Some Experiments', whatIs: 'experimental filter bank vocoder', button: 'Change to FFT Mode', show: 3 }
             ];
 
             controls.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -2155,7 +2205,7 @@
 
 
         document.getElementById('changeBackButton').addEventListener('click', function() {
-            Vmode = ((Number(Vmode) || 0) + 1) % 3;
+            Vmode = ((Number(Vmode) || 0) + 1) % 4;
             SetUpUI();
             
             const params = new URLSearchParams(window.location.search);
@@ -2803,7 +2853,7 @@
                 });
 
 
-                properties.push(`Mode: ${['FFT Mode','Analog Mode','4orm Mode'][Vmode]}`); // Add Vmode as a property
+                properties.push(`Mode: ${['FFT Mode','Analog Mode','4orm Mode','Some Experiments'][Vmode]}`); // Add Vmode as a property
                 // Collect file input details
                 fileInputs.forEach(fileInput => {
                     const file = fileInput.files[0];
@@ -5222,6 +5272,15 @@
                                     carrierRight,
                                     buffer.sampleRate
                                 );
+                            } else if (Vmode == 3) {
+                                processedBuffer = applySomeExperimentsLogic(
+                                    offlineContext,
+                                    inputLeft,
+                                    inputRight,
+                                    carrierLeft,
+                                    carrierRight,
+                                    buffer.sampleRate
+                                );
                             }
                         } else {
                             // for debugging synth
@@ -5475,6 +5534,108 @@
                 return context.createBuffer(2, inputLeft.length, sampleRate);
             }
         }
+
+        function applySomeExperimentsLogic(context, carrierLeft, carrierRight, inputLeft, inputRight, sampleRate) {
+            try {
+                const len = inputLeft.length;
+                const buffer = context.createBuffer(2, len, sampleRate);
+                const outL = buffer.getChannelData(0);
+                const outR = buffer.getChannelData(1);
+
+                const mode = +document.getElementById('expMode')?.value || 0;
+                const ff   = +document.getElementById('expFF')?.value || 32;
+                const res  = +document.getElementById('expRes')?.value || 0.9;
+                const freq = +document.getElementById('expFreq')?.value || 440;
+                const SR   = +document.getElementById('expBaseFreq')?.value || 48000;
+                const decayType = +document.getElementById('DecayType')?.value || 0;
+                const rel  = +document.getElementById('release')?.value || 0.0;
+
+                // --- envelope helpers ---
+                const z = [];
+                const rms  = (a,d,i)=>(z[i]??={v:0},z[i].v=(1-d)*z[i].v+d*a*a,Math.sqrt(z[i].v));
+                const peak = (a,d,i)=>(z[i]??={v:0},z[i].v=Math.max(a,z[i].v-Math.sqrt(d)/2),z[i].v/3);
+                const dec  = [rms, peak][decayType];
+
+                // --- state factory ---
+                const createState = () => ({
+                    flp:Array(ff).fill(0), fbp:Array(ff).fill(0),
+                    alp:Array(ff).fill(0), abp:Array(ff).fill(0),
+                    env:Array(ff).fill(0), phase:Array(ff).fill(0)
+                });
+
+                const stateL = createState();
+                const stateR = createState();
+
+                function process(s, mod, car) {
+                    let out = 0;
+
+                    for (let i = 0; i < ff; i++) {
+                        const g = (i + 1) / ff;
+                        const R = res;
+
+                        // --- analysis ---
+                        let hp = (mod - s.alp[i] - (1 - R) * s.abp[i]) / (1 + g * g);
+                        s.abp[i] += g * hp;
+                        s.alp[i] += g * s.abp[i];
+                        s.env[i] = dec(Math.abs(s.abp[i]) * 0.5, 2 ** -((rel * 3) ** 2) / 400, i);
+
+                        // --- resynthesis ---
+                        switch (mode) {
+                            case 0: // classic
+                                hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + g * g);
+                                s.fbp[i] += g * hp;
+                                s.flp[i] += g * s.fbp[i];
+                                out += s.fbp[i] * s.env[i];
+                                break;
+
+                            case 1: // chaotic drift
+                                s.phase[i] += i + 1;
+                                const cg = (Math.sin(s.phase[i] / 100000 / ff * 32) + 1) * 0.5 * g + 0.002;
+                                hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + cg * cg);
+                                s.fbp[i] += cg * hp;
+                                s.flp[i] += cg * s.fbp[i];
+                                out += s.fbp[i] * s.env[i];
+                                break;
+
+                            case 2: // nonlinear osc
+                                s.fbp[i] += i * 0.1 + s.env[i] * 0.05;
+                                s.fbp[i] += Math.sin(s.fbp[i] * 0.001 + i) * s.env[i] * 0.5;
+                                out += Math.sin(s.fbp[i]) * s.env[i];
+                                break;
+
+                            case 3: // bitwise
+                                s.fbp[i] += (s.abp[i] + 1) * (i + 1) / SR * freq;
+                                out += ((s.fbp[i] & (s.env[i] * 8)) - (s.env[i] * 8 | 0) / 2) * 0.05;
+                                break;
+
+                            case 4:
+                                s.fbp[i] += (s.abp[i] + 1) * (2 ** i) / SR * freq;
+                                out += ((s.fbp[i] & (s.env[i] * 8)) - (s.env[i] * 8 | 0) / 2) * 0.05;
+                                break;
+
+                            case 5: // rectified logic
+                                hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + g * g);
+                                s.fbp[i] += g * hp;
+                                s.flp[i] += g * s.fbp[i];
+                                out += (Math.abs(s.fbp[i]) * 15 & s.env[i] * 15) * Math.sign(s.fbp[i]) * 0.025;
+                                break;
+                        }
+                    }
+                    return out / ff * 16;
+                }
+
+                for (let t = 0; t < len; t++) {
+                    outL[t] = process(stateL, inputLeft[t],  carrierLeft[t]);
+                    outR[t] = process(stateR, inputRight[t], carrierRight[t]);
+                }
+
+                return buffer;
+            } catch (e) {
+                console.error(e);
+                return context.createBuffer(2, inputLeft.length, sampleRate);
+            }
+        }
+
 
         const clamp=(minn,maxx,value)=>Math.min(Math.max(value,minn),maxx)
 
@@ -7317,7 +7478,7 @@
 
         function applyFFTLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
             // Add the new FFT functions for classic magnitude transfer
-            function bitReverseIndexes(n){ 
+            function bitReverseIndexes(n){
                 const rev = new Uint32Array(n); 
                 const bits = Math.log2(n)|0; 
                 for(let i=0;i<n;i++){ 
@@ -7606,7 +7767,7 @@
                         } else if (useClassicMagnitudeTransfer === 2) {
                             for (let i = 0; i < SIZE; i++) {
                                 const outPh = phC[i];
-                                // you need to set the bin size to 2048 for more accreate result
+
                                 // pick a neighborhood width (e.g. 8 bins like before)
                                 const step = Math.floor(5*(SIZE/1024));
                                 const center = Math.floor(i / step) * step;
@@ -8275,4 +8436,3 @@
     </script>
 </body>
 </html>
-

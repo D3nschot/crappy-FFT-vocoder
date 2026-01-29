@@ -1535,12 +1535,37 @@
                     <select id="decayType" class="form-control">
                         <option value="1">RMS</option>
                         <option value="2">Peak</option>
+                        <option value="3">AHR</option>
+                        <option value="4">ADSR</option>
                     </select>
+                </div>
+
+                <div class="form-group" style="display:none;">
+                    <label for="modeLin">Mode lin:</label>
+                    <input type="checkbox" id="modeLin">
+                </div>
+
+                <!-- Hidden sliders for envelope followers -->
+                <div class="form-group" style="display:none;">
+                    <label for="Attack">Attack:</label>
+                    <input type="range" id="Attack" value="0.01" min="0" max="1" step="0.001" class="form-control">
+                </div>
+                <div class="form-group" style="display:none;">
+                    <label for="Hold">Hold:</label>
+                    <input type="range" id="Hold" value="0.05" min="0" max="1" step="0.001" class="form-control">
+                </div>
+                <div class="form-group" style="display:none;">
+                    <label for="Decay">Decay:</label>
+                    <input type="range" id="Decay" value="0.0" min="0" max="1" step="0.001" class="form-control">
+                </div>
+                <div class="form-group" style="display:none;">
+                    <label for="Sustain">Sustain:</label>
+                    <input type="range" id="Sustain" value="0.5" min="0" max="1" step="0.001" class="form-control">
                 </div>
 
                 <div class="form-group">
                     <label for="release">Release:</label>
-                    <input type="range" id="release" value="0" min="0" max="0.99" step="0.01" class="form-control">
+                    <input type="range" id="release" value="0" min="0" max="0.999" step="0.001" class="form-control">
                 </div>
 
                 <div class="form-group">
@@ -1961,6 +1986,11 @@
                 <div class="form-group">
                     <label for="expBaseFreq">Base Frequency:</label>
                     <input type="range" id="expBaseFreq" value="48000" min="8000" max="192000" step="1000" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="altFLT">Alternative filter</label>
+                    <input type="checkbox" id="altFLT"></input>
                 </div>
 
                 <div class="form-group">
@@ -2545,6 +2575,33 @@
 
         // Initialize everything
         document.addEventListener('DOMContentLoaded', () => {
+            // Decay type visibility control - show/hide envelope sliders based on selection
+                const decayTypeSelect = document.getElementById('decayType');
+
+                // Get envelope slider groups
+                const ahrSliders = Array.from(document.querySelectorAll('#Attack, #Hold')).map(el => el.closest('.form-group'));
+                const adsrSliders = Array.from(document.querySelectorAll('#Decay, #Sustain, #Hold')).map(el => el.closest('.form-group'));
+
+                // Initially hide sliders
+                ahrSliders.forEach(group => group.style.display = 'none');
+                adsrSliders.forEach(group => group.style.display = 'none');
+
+                // Function to update slider visibility based on decayType
+                const updateSliderVisibility = () => {
+                    const selected = parseInt(decayTypeSelect.value);
+                    const showAHR = selected === 3;
+                    const showADSR = selected === 4;
+                    ahrSliders.forEach(group => {
+                        group.style.display = showAHR ? 'block' : 'none';
+                    });
+                    adsrSliders.forEach(group => {
+                        group.style.display = showADSR ? 'block' : 'none';
+                    });
+                };
+
+                // Update sliders on decayType change
+                decayTypeSelect.addEventListener('change', updateSliderVisibility);
+            
             // Attach URL updating to all inputs
             document.querySelectorAll('input[type="range"], input[type="number"], input[type="checkbox"], select, textarea').forEach(input => {
                 input.addEventListener('input', updateURLParams);
@@ -5081,6 +5138,7 @@
         }
 
         // Modified processAudio function to use the synth
+        let AHR_STATE = {};
         function processAudio(buffer) {
             try {
                 if (!loadedAudioBuffer) {
@@ -5141,6 +5199,7 @@
 
                 offlineSource.start();
                 offlineContext.startRendering().then(function(renderedBuffer) {
+                    AHR_STATE = {}//to reset
 
                     let carrierLeft  = loadedCarrierBuffer.getChannelData(0);
                     let carrierRight = loadedCarrierBuffer.numberOfChannels > 1
@@ -5244,6 +5303,7 @@
                     // Pause for 10ms (adjust as needed)
                     await new Promise(resolve => setTimeout(resolve, 10));
                     const SynthOnly = document.getElementById('SynthOnly')?.checked || false;
+
                         if (!SynthOnly) {
                             if (Vmode == 0) {
                                 processedBuffer = applyFFTLogic(
@@ -5331,6 +5391,115 @@
             // Hide popup when done
             showProcessPOP_UP_WL('', false);
         }
+
+        // AHR Envelope Follower
+        const AHR_FOLLOWER = (idx, input, opts = {}) => {
+            const {
+                attack = 0.01,
+                hold = 0.05,
+                release = 0.1,
+                rectified = true,
+                sr = 48000,
+                mode = "exp" // "exp" | "lin"
+            } = opts;
+
+            const x = rectified ? Math.abs(input) : input;
+
+            if (!AHR_STATE[idx]) {
+                AHR_STATE[idx] = {
+                    level: 0,
+                    stage: 'idle',
+                    holdSamplesRemaining: 0,
+                    atkAlpha: 0,
+                    relAlpha: 0,
+                    atkStep: 0,
+                    relStep: 0,
+                    srUsed: 0,
+                    mode: "exp"
+                };
+            }
+
+            const s = AHR_STATE[idx];
+
+            // recompute coefficients when needed
+            if (s.srUsed !== sr || s.mode !== mode || s.attack !== attack || s.release !== release) {
+                const atkSamples = Math.max(attack * sr, 1);
+                const relSamples = Math.max(release * sr, 1);
+
+
+                    s.atkAlpha = 1 / ((atkSamples+1)/2);
+                    s.relAlpha = 1 / ((relSamples+1)/2);
+                if (mode === "lin") {
+                    // linearized exponential coefficient
+                    s.atkStep = 1 / (atkSamples);
+                    s.relStep = 1 / (relSamples);
+                }
+
+                s.srUsed = sr;
+                s.mode = mode;
+                s.attack = attack;
+                s.release = release;
+            }
+
+            // --- State machine ---
+            if (x > s.level) {
+                s.stage = 'attack';
+                if (mode === "lin") {
+                    s.level += Math.min(x - s.level, s.atkStep);
+                } else {
+                    s.level += (x - s.level) * s.atkAlpha;
+                }
+                s.holdSamplesRemaining = 0;
+            } else {
+                if (s.stage === 'attack') {
+                    s.stage = hold > 0 ? 'hold' : 'release';
+                    s.holdSamplesRemaining = (hold * sr) | 0;
+                } 
+                else if (s.stage === 'hold') {
+                    if (--s.holdSamplesRemaining <= 0)
+                        s.stage = 'release';
+                }
+
+                if (s.stage === 'release' || s.stage === 'idle') {
+                    if (mode === "lin") {
+                        const d = x - s.level;
+                        s.level += Math.sign(d) * Math.min(Math.abs(d), s.relStep);
+                    } else {
+                        s.level += (x - s.level) * s.relAlpha;
+                    }
+
+                    if (s.level < 1e-9) {
+                        s.level = 0;
+                        s.stage = 'idle';
+                    }
+                }
+            }
+
+            return s.level;
+        };
+
+        // ADSR Envelope Follower
+        const ADSR_FOLLOWER = (idx, input, opts = {}) => {
+            const { attack = 0.0, decay = 0.0, sustain = 0.5, release = 0.0, hold = 0.0, sr = 48000, mode = 'exp' } = opts;
+
+            const transientEnv = AHR_FOLLOWER(idx + "_t", input, {
+                attack: attack,
+                hold: 0.0,
+                release: decay * hold, 
+                sr: sr,
+                mode: mode
+            });
+
+            const sustainEnv = AHR_FOLLOWER(idx + "_s", input, {
+                attack: attack,
+                hold: hold,
+                release: release,
+                sr: sr,
+                mode: mode
+            });
+
+            return (transientEnv * (1.0 - sustain)) + (sustainEnv * sustain);
+        };
 
         function apply4ormLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
             try {
@@ -5491,7 +5660,28 @@
                         let tt=0
                         const Fcall = call * stages*2 + i
                         const stageAg = ag * repeatArr(arr, i);
-                        const dec=[rms,peak][decayType]
+                        // Decay selector: 0=rms, 1=peak, 2=AHR, 3=ADSR
+                        const dec = (val, decayF, callIdx) => {
+                            if (decayType === 0) return rms(val, decayF, callIdx);
+                            if (decayType === 1) return peak(val, decayF, callIdx);
+                            if (decayType === 2) {
+                                const atk = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                                const hold = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                                const rel = parseFloat(document.getElementById('release')?.value || 0.1);
+                                const mode = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+                                return AHR_FOLLOWER('4orm_' + callIdx, val, { attack: atk, hold: hold, release: rel, sr: HZ, mode: mode });
+                            }
+                            if (decayType === 3) {
+                                const atk2 = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                                const dec2 = parseFloat(document.getElementById('Decay')?.value || 0.0);
+                                const sus2 = parseFloat(document.getElementById('Sustain')?.value || 0.5);
+                                const hold2 = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                                const rel2 = parseFloat(document.getElementById('release')?.value || 0.1);
+                                const mode2 = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+                                return ADSR_FOLLOWER('4orm_' + callIdx, val, { attack: atk2, decay: dec2, sustain: sus2, release: rel2, hold: hold2, sr: HZ, mode: mode2 });
+                            }
+                            return rms(val, decayF, callIdx);
+                        };
                         if (document.getElementById('use_gen')?.checked) {
                             const GENi = generator(stageAg/stages, IP2)*stages;
                             let GEN = 0
@@ -5535,103 +5725,199 @@
             }
         }
 
-        function applySomeExperimentsLogic(context, carrierLeft, carrierRight, inputLeft, inputRight, sampleRate) {
+        function applySomeExperimentsLogic(
+            context,
+            carrierLeft, carrierRight,
+            inputLeft, inputRight,
+            sampleRate
+        ) {
             try {
                 const len = inputLeft.length;
                 const buffer = context.createBuffer(2, len, sampleRate);
                 const outL = buffer.getChannelData(0);
                 const outR = buffer.getChannelData(1);
 
-                const mode = +document.getElementById('expMode')?.value || 0;
-                const ff   = +document.getElementById('expFF')?.value || 32;
-                const res  = +document.getElementById('expRes')?.value || 0.9;
-                const freq = +document.getElementById('expFreq')?.value || 440;
-                const SR   = +document.getElementById('expBaseFreq')?.value || 48000;
-                const decayType = +document.getElementById('DecayType')?.value || 0;
-                const rel  = +document.getElementById('release')?.value || 0.0;
+                // UI params
+                const mode   = +document.getElementById('expMode')?.value || 0;
+                const ff     = +document.getElementById('expFF')?.value || 32;
+                const res    = +document.getElementById('expRes')?.value || 0.95;
+                const rel    = +document.getElementById('release')?.value || 0.003;
+                const freq   = +document.getElementById('expFreq')?.value || 390;
+                const altFLT = +document.getElementById('altFLT')?.checked || 0;
 
-                // --- envelope helpers ---
-                const z = [];
-                const rms  = (a,d,i)=>(z[i]??={v:0},z[i].v=(1-d)*z[i].v+d*a*a,Math.sqrt(z[i].v));
-                const peak = (a,d,i)=>(z[i]??={v:0},z[i].v=Math.max(a,z[i].v-Math.sqrt(d)/2),z[i].v/3);
-                const dec  = [rms, peak][decayType];
+                const SR = sampleRate;
+
+                z5_5 = [];
+
+                function peak(a, decayF, call) {
+                    z5_5[call] ??= { var1: 0 };
+                    z5_5[call].var1 = Math.max(Math.abs(a), z5_5[call].var1 - Math.sqrt(decayF) / 2);
+                    return z5_5[call].var1 / 3;
+                }
+                function rms(a, decayF, call) {
+                    z5_5[call] ??= { var1: 0 };
+                    z5_5[call].var1 = (1 - decayF) * z5_5[call].var1 + decayF * a * a;
+                    return Math.sqrt(z5_5[call].var1);
+                }
 
                 // --- state factory ---
-                const createState = () => ({
-                    flp:Array(ff).fill(0), fbp:Array(ff).fill(0),
-                    alp:Array(ff).fill(0), abp:Array(ff).fill(0),
-                    env:Array(ff).fill(0), phase:Array(ff).fill(0)
+                const makeState = () => ({
+                    flp: Array(ff).fill(0),
+                    fbp: Array(ff).fill(0),
+                    alp: Array(ff).fill(0),
+                    abp: Array(ff).fill(0),
+                    env: Array(ff).fill(0),
+                    phase: Array(ff).fill(0)
                 });
 
-                const stateL = createState();
-                const stateR = createState();
+                const stateL = makeState();
+                const stateR = makeState();
 
-                function process(s, mod, car) {
+                // --- alt filter (unchanged logic) ---
+                function altFilter(state, i, x, cc, r1) {
+                    cc = Math.min(cc, 0.999);
+                    const fbv = r1 + r1 / (1 - cc);
+
+                    state[0][i] += cc * (x - state[0][i] + fbv * (state[0][i] - state[1][i]));
+                    state[1][i] += cc * (state[0][i] - state[1][i]);
+
+                    return (state[1][i] - state[0][i]) / (1 - cc);
+                }
+
+                function process(s, mod, car, ch) {
                     let out = 0;
 
                     for (let i = 0; i < ff; i++) {
-                        const g = (i + 1) / ff;
-                        const R = res;
 
-                        // --- analysis ---
-                        let hp = (mod - s.alp[i] - (1 - R) * s.abp[i]) / (1 + g * g);
-                        s.abp[i] += g * hp;
-                        s.alp[i] += g * s.abp[i];
-                        s.env[i] = dec(Math.abs(s.abp[i]) * 0.5, 2 ** -((rel * 3) ** 2) / 400, i);
+                        /* ===== ANALYSIS ===== */
+                        let g = (i + 1) / ff;
+                        let R = res;
+                        let cg = g;
 
-                        // --- resynthesis ---
+                        if (mode === 1) {
+                            s.phase[i] += (i + 1) * (16 / ff);
+                            cg = (Math.cos(s.phase[i] / 100000) + 1) * 0.5 * g + 0.002;
+                        }
+
+                        let ab;
+                        // compute envelope value per selected decay type (1=RMS,2=Peak,3=AHR,4=ADSR)
+                        const decayType = parseInt(document.getElementById('decayType')?.value || '1');
+                        const atk_ui = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                        const hold_ui = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                        const decay_ui = parseFloat(document.getElementById('Decay')?.value || 0.0);
+                        const sustain_ui = parseFloat(document.getElementById('Sustain')?.value || 0.5);
+                        const mode_ui = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+
+                        if (altFLT) {
+                            ab = altFilter([s.alp, s.abp], i, mod, cg, R);
+                            const absVal = Math.abs(ab);
+                            switch (decayType) {
+                                case 1:
+                                    s.env[i] = rms(absVal, rel, i);
+                                    break;
+                                case 2:
+                                    s.env[i] = peak(absVal, rel, i);
+                                    break;
+                                case 3:
+                                    s.env[i] = AHR_FOLLOWER('exp_ch' + ch + '_a_' + i, absVal, { attack: atk_ui, hold: hold_ui, release: rel, sr: sampleRate, mode: mode_ui });
+                                    break;
+                                case 4:
+                                    s.env[i] = ADSR_FOLLOWER('exp_ch' + ch + '_a_' + i, absVal, { attack: atk_ui, decay: decay_ui, sustain: sustain_ui, release: rel, hold: hold_ui, sr: sampleRate, mode: mode_ui });
+                                    break;
+                                default:
+                                    s.env[i] = absVal;
+                            }
+                        } else {
+                            const hp = (mod - s.alp[i] - (1 - R) * s.abp[i]) / (1 + cg * cg);
+                            s.abp[i] += cg * hp;
+                            s.alp[i] += cg * s.abp[i];
+                            const absVal = Math.abs(s.abp[i]);
+                            switch (decayType) {
+                                case 1:
+                                    s.env[i] = rms(absVal, rel, i);
+                                    break;
+                                case 2:
+                                    s.env[i] = peak(absVal, rel, i);
+                                    break;
+                                case 3:
+                                    s.env[i] = AHR_FOLLOWER('exp_ch' + ch + '_b_' + i, absVal, { attack: atk_ui, hold: hold_ui, release: rel, sr: sampleRate, mode: mode_ui });
+                                    break;
+                                case 4:
+                                    s.env[i] = ADSR_FOLLOWER('exp_ch' + ch + '_b_' + i, absVal, { attack: atk_ui, decay: decay_ui, sustain: sustain_ui, release: rel, hold: hold_ui, sr: sampleRate, mode: mode_ui });
+                                    break;
+                                default:
+                                    s.env[i] = absVal;
+                            }
+                        }
+
+                        /* ===== RESYNTH ===== */
                         switch (mode) {
-                            case 0: // classic
-                                hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + g * g);
-                                s.fbp[i] += g * hp;
-                                s.flp[i] += g * s.fbp[i];
-                                out += s.fbp[i] * s.env[i];
+
+                            case 0:
+                                if (altFLT & 1) {
+                                    out += altFilter([s.flp, s.fbp], i, car, g, R) * s.env[i] * 0.5;
+                                } else {
+                                    const hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + g * g);
+                                    s.fbp[i] += g * hp;
+                                    s.flp[i] += g * s.fbp[i];
+                                    out += s.fbp[i] * s.env[i] / 2;
+                                }
                                 break;
 
-                            case 1: // chaotic drift
-                                s.phase[i] += i + 1;
-                                const cg = (Math.sin(s.phase[i] / 100000 / ff * 32) + 1) * 0.5 * g + 0.002;
-                                hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + cg * cg);
-                                s.fbp[i] += cg * hp;
-                                s.flp[i] += cg * s.fbp[i];
-                                out += s.fbp[i] * s.env[i];
+                            case 1:
+                                if (altFLT) {
+                                    out += altFilter([s.flp, s.fbp], i, car, cg, R) * s.env[i] * 0.5;
+                                } else {
+                                    const hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + cg * cg);
+                                    s.fbp[i] += cg * hp;
+                                    s.flp[i] += cg * s.fbp[i];
+                                    out += s.fbp[i] * s.env[i] / 2;
+                                }
                                 break;
 
-                            case 2: // nonlinear osc
-                                s.fbp[i] += i * 0.1 + s.env[i] * 0.05;
-                                s.fbp[i] += Math.sin(s.fbp[i] * 0.001 + i) * s.env[i] * 0.5;
-                                out += Math.sin(s.fbp[i]) * s.env[i];
+                            case 2:
+                                s.fbp[i] += i / 10;
+                                s.fbp[i] += s.env[i] * 0.05;
+                                s.fbp[i] += Math.sin(s.fbp[i] * 0.001 + i) * 0.5 * s.env[i];
+                                out += Math.sin(s.fbp[i]) * s.env[i] / 4;
                                 break;
 
-                            case 3: // bitwise
+                            case 3:
                                 s.fbp[i] += (s.abp[i] + 1) * (i + 1) / SR * freq;
                                 out += ((s.fbp[i] & (s.env[i] * 8)) - (s.env[i] * 8 | 0) / 2) * 0.05;
                                 break;
 
                             case 4:
-                                s.fbp[i] += (s.abp[i] + 1) * (2 ** i) / SR * freq;
+                                s.fbp[i] += (s.abp[i] + 1) * 2 ** i / SR * freq;
                                 out += ((s.fbp[i] & (s.env[i] * 8)) - (s.env[i] * 8 | 0) / 2) * 0.05;
                                 break;
 
-                            case 5: // rectified logic
-                                hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + g * g);
-                                s.fbp[i] += g * hp;
-                                s.flp[i] += g * s.fbp[i];
-                                out += (Math.abs(s.fbp[i]) * 15 & s.env[i] * 15) * Math.sign(s.fbp[i]) * 0.025;
+                            case 5:
+                                if (altFLT) {
+                                    const v = altFilter([s.flp, s.fbp], i, car, g, R);
+                                    out += ((Math.abs(v) * 15 & s.env[i] * 15) * Math.sign(v)) * 0.025;
+                                } else {
+                                    const hp = (car - s.flp[i] - (1 - R) * s.fbp[i]) / (1 + g * g);
+                                    s.fbp[i] += g * hp;
+                                    s.flp[i] += g * s.fbp[i];
+                                    out += ((Math.abs(s.fbp[i]) * 15 & s.env[i] * 15) * Math.sign(s.fbp[i])) * 0.025;
+                                }
                                 break;
                         }
                     }
+
                     return out / ff * 16;
                 }
 
                 for (let t = 0; t < len; t++) {
-                    outL[t] = process(stateL, inputLeft[t],  carrierLeft[t]);
-                    outR[t] = process(stateR, inputRight[t], carrierRight[t]);
+                    outL[t] = process(stateL, inputLeft[t], carrierLeft[t], 0);
+                    outR[t] = process(stateR, inputRight[t], carrierRight[t], 1);
                 }
 
                 return buffer;
+
             } catch (e) {
-                console.error(e);
+                console.error("applySomeExperimentsLogic error:", e);
                 return context.createBuffer(2, inputLeft.length, sampleRate);
             }
         }
@@ -7335,7 +7621,28 @@
             // Vocoder function
             function vocoder(inp, car, bool=false) {
                 let relv = 0, nv = n, volv = vol, fbv = fb, dbv = db, dww = dw, selv = sel;
-                let p = [rms, peak][max(min(selv, 2), 0)];
+                // Envelope selector: 0=RMS, 1=Peak, 2=AHR, 3=ADSR
+                let p = (val, decayF, callIdx) => {
+                    const modeLin = document.getElementById('modeLin')?.checked;
+                    const ch = bool ? 1 : 0;
+                    if (selv <= 0) return rms(val, decayF, callIdx);
+                    if (selv === 1) return peak(val, decayF, callIdx);
+                    if (selv === 2) {
+                        const atk = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                        const hold = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                        const relv = parseFloat(document.getElementById('release')?.value || 0.1);
+                        const mode = modeLin ? 'lin' : 'exp';
+                        return AHR_FOLLOWER('analog_ch' + ch + '_' + callIdx, val, { attack: atk, hold: hold, release: relv, sr: sampleRate, mode: mode });
+                    }
+                    // selv === 3 -> ADSR
+                    const atk2 = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                    const dec2 = parseFloat(document.getElementById('Decay')?.value || 0.0);
+                    const sus2 = parseFloat(document.getElementById('Sustain')?.value || 0.5);
+                    const hold2 = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                    const rel2 = parseFloat(document.getElementById('release')?.value || 0.1);
+                    const mode2 = modeLin ? 'lin' : 'exp';
+                    return ADSR_FOLLOWER('analog_ch' + ch + '_' + callIdx, val, { attack: atk2, decay: dec2, sustain: sus2, release: rel2, hold: hold2, sr: sampleRate, mode: mode2 });
+                };
                 let result = 0;
                 let carrierSum = 0, modSum = 0;
                 const Alt_BP=parseInt(document.getElementById('Alt_BP').value) || 0;
@@ -7676,7 +7983,7 @@
             const useClassicMagnitudeTransfer = parseInt(document.getElementById('FFTmode').value||0);
 
             // Process left and right channels separately
-            const processChannel = (inputData, carrierData, outputData, envelopeState, ReverbState) => {
+            const processChannel = (inputData, carrierData, outputData, envelopeState, ReverbState, ch) => {
                 const startTime = performance.now();
                 const Break = document.getElementById('BandBreak').checked;
                 const flip = document.getElementById('FreqFlip').checked
@@ -7748,6 +8055,24 @@
                                     env[i] = Math.max(instMag, env[i] * (1 - REL));
                                     magM[i] = env[i];
                                     break;
+                                case 3: { // AHR follower
+                                    const atk = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                                    const hold = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                                    const rel = parseFloat(document.getElementById('release')?.value || 0.1);
+                                    const mode = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+                                    magM[i] = AHR_FOLLOWER('fft_ch' + ch + '_' + i, instMag, { attack: atk, hold: hold, release: rel, sr: sampleRate/SIZE*10, mode: mode }); //on FFTs everting moves slowly according to SIZE
+                                    break;
+                                }
+                                case 4: { // ADSR follower
+                                    const atk2 = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                                    const dec2 = parseFloat(document.getElementById('Decay')?.value || 0.0);
+                                    const sus2 = parseFloat(document.getElementById('Sustain')?.value || 0.5);
+                                    const hold2 = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                                    const rel2 = parseFloat(document.getElementById('release')?.value || 0.1);
+                                    const mode2 = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+                                    magM[i] = ADSR_FOLLOWER('fft_ch' + ch + '_' + i, instMag, { attack: atk2, decay: dec2, sustain: sus2, release: rel2, hold: hold2, sr: sampleRate/SIZE*10, mode: mode2 });
+                                    break;
+                                }
                                 default: // raw
                                     magM[i] = instMag;
                             }
@@ -7898,6 +8223,26 @@
                                         envelopeState[i] = Math.max(mag2, envelopeState[i] * (1 - REL));
                                         envelope += envelopeState[i];
                                         break;
+                                    case 3: { // AHR per-band
+                                        const atk = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                                        const hold = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                                        const rel = parseFloat(document.getElementById('release')?.value || 0.1);
+                                        const mode = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+                                        const val = AHR_FOLLOWER('fft_ch' + ch + '_' + i, mag2, { attack: atk, hold: hold, release: rel, sr: sampleRate/SIZE*10, mode: mode });
+                                        envelope += val;
+                                        break;
+                                    }
+                                    case 4: { // ADSR per-band
+                                        const atk2 = parseFloat(document.getElementById('Attack')?.value || 0.01);
+                                        const dec2 = parseFloat(document.getElementById('Decay')?.value || 0.0);
+                                        const sus2 = parseFloat(document.getElementById('Sustain')?.value || 0.5);
+                                        const hold2 = parseFloat(document.getElementById('Hold')?.value || 0.05);
+                                        const rel2 = parseFloat(document.getElementById('release')?.value || 0.1);
+                                        const mode2 = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
+                                        const val2 = ADSR_FOLLOWER('fft_ch' + ch + '_' + i, mag2, { attack: atk2, decay: dec2, sustain: sus2, release: rel2, hold: hold2, sr: sampleRate/SIZE*10, mode: mode2 });
+                                        envelope += val2;
+                                        break;
+                                    }
                                 }
 
                                 const reverbAMT = parseFloat(document.getElementById("reverbAMT").value)
@@ -8039,27 +8384,70 @@
             };
 
             // Process left channel
-            processChannel(inputLeft, carrierLeft, outputLeft, envelopeStateLeft, ReverbStateLeft);
+            processChannel(inputLeft, carrierLeft, outputLeft, envelopeStateLeft, ReverbStateLeft, 0);
 
             // Process right channel
-            processChannel(inputRight, carrierRight, outputRight, envelopeStateRight, ReverbStateRight);
+            processChannel(inputRight, carrierRight, outputRight, envelopeStateRight, ReverbStateRight, 1);
 
             return outputBuffer;
         }
 
-        // Initialize everything when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            const synthKeyboardContainer = document.getElementById("synthKeyboardContainer");
-            if (synthKeyboardContainer) {
-                renderSynthKeyboard(synthKeyboardContainer, synthState.heldNotes);
-                
-                window.addEventListener('resize', () => {
+            // Initialize everything when DOM is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                const synthKeyboardContainer = document.getElementById("synthKeyboardContainer");
+                if (synthKeyboardContainer) {
                     renderSynthKeyboard(synthKeyboardContainer, synthState.heldNotes);
-                });
-
-
-            }
-        });
+    
+                    window.addEventListener('resize', () => {
+                        renderSynthKeyboard(synthKeyboardContainer, synthState.heldNotes);
+                    });
+                }
+    
+                // Decay type visibility control - show/hide envelope sliders based on selection
+                const decayTypeSelect = document.getElementById('decayType');
+    
+                // Get envelope slider groups by their actual IDs
+                const attackGroup = document.getElementById('Attack')?.closest('.form-group');
+                const holdGroup = document.getElementById('Hold')?.closest('.form-group');
+                const decayGroup = document.getElementById('Decay')?.closest('.form-group');
+                const sustainGroup = document.getElementById('Sustain')?.closest('.form-group');
+                const ModeGroup = document.getElementById('modeLin')?.closest('.form-group')
+    
+                // Function to update envelope slider visibility
+                function updateEnvelopeSliders() {
+                    const decayType = parseInt(decayTypeSelect?.value || '1');
+    
+                    // Hide all envelope sliders first
+                    if (attackGroup) attackGroup.style.display = 'none';
+                    if (holdGroup) holdGroup.style.display = 'none';
+                    if (decayGroup) decayGroup.style.display = 'none';
+                    if (sustainGroup) sustainGroup.style.display = 'none';
+                    if (ModeGroup) ModeGroup.style.display = 'none';
+    
+                    // Show sliders based on decay type
+                    if (decayType === 3) {
+                        // AHR selected - show Attack and Hold sliders
+                        if (attackGroup) attackGroup.style.display = 'flex';
+                        if (holdGroup) holdGroup.style.display = 'flex';
+                        if (ModeGroup) ModeGroup.style.display = 'flex';
+                    } else if (decayType === 4) {
+                        // ADSR selected - show Attack, Decay, and Sustain sliders
+                        if (attackGroup) attackGroup.style.display = 'flex';
+                        if (decayGroup) decayGroup.style.display = 'flex';
+                        if (holdGroup) holdGroup.style.display = 'flex';
+                        if (sustainGroup) sustainGroup.style.display = 'flex';
+                        if (ModeGroup) ModeGroup.style.display = 'flex';
+                    }
+                    // For RMS (1) and Peak (2), all envelope sliders remain hidden
+                }
+    
+                // Add event listener to decayType select
+                if (decayTypeSelect) {
+                    decayTypeSelect.addEventListener('change', updateEnvelopeSliders);
+                    // Initialize visibility on page load
+                    updateEnvelopeSliders();
+                }
+            });
 
 
         /*

@@ -3870,12 +3870,20 @@
             }
         };
 
-        function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, waveformType, t, SynthState, SR) {
+        // Main synthesis function
+        function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, waveformType, t, SynthState = synthState, SR, configParam) {
             try {
                 if (heldNotesSet.size === 0) return [0, 0];
 
-                // Get cached config (updated every 100ms) for performance
-                const config = synthOptimizer.cacheDOMValues();
+                // Ensure a valid sample rate is available. If callers omit `SR`, fall back to AudioContext's
+                // sampleRate when available, otherwise use 44100 Hz as a safe default. This prevents NaN
+                // calculations for pitch increments when `SR` is undefined.
+                if (!SR || isNaN(SR)) {
+                    SR = (typeof audioCtx !== 'undefined' && audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 44100;
+                }
+
+                // Use provided cached config when available to avoid repeated DOM access per-sample
+                const config = configParam || synthOptimizer.cacheDOMValues();
                 if (!config.enableSynth) return [0, 0];
 
                 // Decide master voices: prefer function parameter 'm' if valid, else config
@@ -4056,9 +4064,12 @@
                                 for (let srcOsc = 0; srcOsc < config.oscCount; srcOsc++) {
                                     if (srcOsc === oscIndex) continue;
                                     if (syncMatrix[srcOsc + 1] && syncMatrix[srcOsc + 1][oscIndex + 1]) {
-                                        const srcPhaseClock = SynthState.oscPhaseClock[srcOsc][k];
-                                        const srcPrevClock = prevClocks[srcOsc][k];
+                                        // compute the corresponding global index for the source oscillator
+                                        const srcK = getGlobalIndex(srcOsc, noteIndex, masterSlot, voiceIndex);
+                                        const srcPhaseClock = SynthState.oscPhaseClock[srcOsc][srcK];
+                                        const srcPrevClock = prevClocks[srcOsc][srcK];
                                         if (typeof srcPhaseClock !== 'undefined' && typeof srcPrevClock !== 'undefined') {
+                                            // detect wrap-around (clock decreased) -> reset target accumulators
                                             if (srcPhaseClock < srcPrevClock) {
                                                 SynthState.phaseAcuL[oscIndex][k] = 0;
                                                 SynthState.phaseAcuR[oscIndex][k] = 0;

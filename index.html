@@ -9702,51 +9702,68 @@ function Robotsaw(y, t, itt) {
                 return rev; 
             }
 
+            function harm(o) {
+                let sum = 0;
+                for (let k = 1; k <= 3; k++) {
+                    sum += Math.sin(k * o) / k;
+                }
+                return sum * 1.2;
+            }
+
+            function harms(o) {
+                let sum = 0;
+                for (let k = 1; k <= 3; k++) {
+                    k2 = k * 2 + 1;
+                    sum += Math.sin(k2 * o) / k2;
+                }
+                return sum * 1.2;
+            }
+
             const type = parseInt(document.getElementById('BR_voc_Type').value);
             const wave = (o) => {
                 switch (type) {
                     case 0:
-                        return sin(o);
+                        return Math.sin(o);
                     case 1:
-                        return asin(sin(o)) / PI * 2.25;
+                        return Math.asin(Math.sin(o)) / Math.PI * 2.25;
                     case 2:
-                        return sin(sin(o) * 2) * 0.9;
+                        return Math.sin(Math.sin(o) * 2) * 0.9;
                     case 3:
-                        return sin(o * 2) * 0.9;
+                        return Math.sin(o * 2) * 0.9;
                     case 4:
-                        return sin(o * 3) * 0.8;
+                        return Math.sin(o * 3) * 0.8;
                     case 5:
-                        return o / PI & 1 ? 0.65 : -0.65;
+                        return o / Math.PI & 1 ? 0.65 : -0.65;
                     case 6:
-                        return ((o / PI) % 2 - 1) / 1.4;
+                        return ((o / Math.PI) % 2 - 1) / 1.4;
                     case 7:
-                        return sin(sin(sin(o) * 2) * 2) * 0.8;
+                        return Math.sin(Math.sin(Math.sin(o) * 2) * 2) * 0.8;
                     case 8:
-                        return sin(o / 2) * 0.9;
+                        return Math.sin(o / 2) * 0.9;
                     case 9:
-                        return sin(o ** 2) * 0.95;
+                        return Math.sin(o ** 2) * 0.95;
                     case 10:
-                        return sin(o) ** 2;
+                        return Math.sin(o) ** 2;
                     case 11:
-                        return (-Math.abs(sin(o / 2)) + 0.5) * 1.7;
+                        return (-Math.abs(Math.sin(o / 2)) + 0.5) * 1.7;
                     case 12:
-                        return (Math.abs(sin(o / 2 + PI / 4) ** 3) - 0.5) * 1.8;
+                        return (Math.abs(Math.sin(o / 2 + Math.PI / 4) ** 3) - 0.5) * 1.8;
                     case 13:
-                        return sin(rand(o / 1e10) * PI) * 0.9;
+                        return Math.sin(Math.random(o / 1e10) * Math.PI) * 0.9;
                     case 14:
-                        return sin(o) ** 3 * 1.15;
+                        return Math.sin(o) ** 3 * 1.15;
                     case 15:
-                        return sin(o * sin(o)) / 2;
+                        return Math.sin(o * Math.sin(o)) / 2;
                     case 16:
                         return harm(o) * 0.8;
                     case 17:
                         return harmS(o) * 0.9;
                     case 18:
-                        return sin((o * 128 / PI | o * 127 / PI) / 128 * PI);
+                        return Math.sin((o * 128 / Math.PI | o * 127 / Math.PI) / 128 * Math.PI);
                     case 19:
-                        return sin((o * 4 / PI | 0) / 4 * PI);
+                        return Math.sin((o * 4 / Math.PI | 0) / 4 * Math.PI);
                     default:
-                        return sin(o);
+                        return Math.sin(o);
                 }
             };
 

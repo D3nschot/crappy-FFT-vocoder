@@ -9449,13 +9449,13 @@ function Robotsaw(y, t, itt) {
             // Envelope followers
             function peak(a, decayF, call) {
                 z5[call] ??= { var1: 0 };
-                z5[call].var1 = Math.max(abs(a), z5[call].var1 - sqrt(decayF) / 2);
+                z5[call].var1 = Math.max(Math.abs(a), z5[call].var1 - Math.sqrt(decayF) / 2);
                 return z5[call].var1 / 3;
             }
             function rms(a, decayF, call) {
                 z5[call] ??= { var1: 0 };
                 z5[call].var1 = (1 - decayF) * z5[call].var1 + decayF * a * a;
-                return sqrt(z5[call].var1);
+                return Math.sqrt(z5[call].var1);
             }
             
             function bandFrequency(bands, index, sampleRate, convertToFloat = true) {
@@ -9627,7 +9627,7 @@ function Robotsaw(y, t, itt) {
                     const modFiltered = filter(inp, i + 0 + bool*n*3, flip, dww, g)*EQvol;
                     const carFiltered = filter(car, i + n + bool*n*3, false, dww, ic)*EQvol;
 
-                    const absFilterX = abs(modFiltered);
+                    const absFilterX = Math.abs(modFiltered);
                     const mod = p(absFilterX, 2**-((relv*3)**2)/400, i + bool*n*3);
 
                     // For debugging: sum up mod and carrier
@@ -9636,7 +9636,7 @@ function Robotsaw(y, t, itt) {
                     //combined = modFiltered/512
 
                     // If mod is always zero, you will only hear silence or the modular
-                    const combined = mod * carFiltered * (1 - fbv) / sqrt(nv * 10) * (1 - g);
+                    const combined = mod * carFiltered * (1 - fbv) / Math.sqrt(nv * 10) * (1 - g);
                     result += combined * volv;
 
                     //console.log(result, mod, carFiltered, combined, inp, car, i, nv, modulatedValue);
@@ -9651,7 +9651,7 @@ function Robotsaw(y, t, itt) {
                     LPC = lp(car*64, ic, fbv, 2, n*2+2 + bool*n*3);
                     LPM = lp(inp*64, ic, fbv, 2, n*2+3 + bool*n*3);
 
-                    ABSLPC = abs(LPM);
+                    ABSLPC = Math.abs(LPM);
                     LPOUT = LPC * p(ABSLPC, 2**-((rel*3)**2)/400, n*2+2)
                 }
 
@@ -9662,7 +9662,7 @@ function Robotsaw(y, t, itt) {
                     HPC = hpTC(car*64, ic, fbv/2, 2, n*2+2 + bool*n*3);
                     HPM = hpTC(inp*64, ic, fbv/2, 2, n*2+3 + bool*n*3);
 
-                    ABSHPC = abs(HPM);
+                    ABSHPC = Math.abs(HPM);
                     HPOUT = HPC * p(ABSHPC, 2**-((rel*3)**2)/400, n*2+3)
                 }
 
@@ -9728,9 +9728,9 @@ function Robotsaw(y, t, itt) {
                     case 10:
                         return sin(o) ** 2;
                     case 11:
-                        return (-abs(sin(o / 2)) + 0.5) * 1.7;
+                        return (-Math.abs(sin(o / 2)) + 0.5) * 1.7;
                     case 12:
-                        return (abs(sin(o / 2 + PI / 4) ** 3) - 0.5) * 1.8;
+                        return (Math.abs(sin(o / 2 + PI / 4) ** 3) - 0.5) * 1.8;
                     case 13:
                         return sin(rand(o / 1e10) * PI) * 0.9;
                     case 14:
@@ -10178,7 +10178,7 @@ function Robotsaw(y, t, itt) {
 
                             // divide bands
                             for (let j = 0; j <= divbands; j++) {
-                                const weight = 1 - abs(j - divHalf) / divbands;
+                                const weight = 1 - Math.abs(j - divHalf) / divbands;
                                 
                                 ip_ = Math.round(ipBase + (j - divHalf) + Shift);
 

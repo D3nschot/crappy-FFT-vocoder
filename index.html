@@ -8159,7 +8159,7 @@ function Robotsaw(y, t, itt) {
                 const harmExpr = document.getElementById('Harmonics')?.value || '[0,2,3,7].map(i => 2**(i/12))';
                 const volume = parseFloat(document.getElementById('4ormVolume')?.value || 1.0);
                 const _4ormFilterType = parseInt(document.getElementById('4ormFilterType')?.value || 0);
-                const decayType = parseInt(document.getElementById('DecayType')?.value || 0);
+                const decayType = parseInt(document.getElementById('decayType')?.value || 1);
                 const HZ = context.sampleRate
 
                 // Parse harmonic array
@@ -8338,18 +8338,18 @@ function Robotsaw(y, t, itt) {
                         let tt=0
                         const Fcall = call * stages*2 + i
                         const stageAg = ag * repeatArr(arr, i);
-                        // Decay selector: 0=rms, 1=peak, 2=AHR, 3=ADSR
+                        // Decay selector: 1=rms, 2=peak, 3=AHR, 4=ADSR
                         const dec = (val, decayF, callIdx) => {
-                            if (decayType === 0) return rms(val, decayF, callIdx);
-                            if (decayType === 1) return peak(val, decayF, callIdx);
-                            if (decayType === 2) {
+                            if (decayType === 1) return rms(val, decayF, callIdx);
+                            if (decayType === 2) return peak(val, decayF, callIdx);
+                            if (decayType === 3) {
                                 const atk = parseFloat(document.getElementById('Attack')?.value || 0.01);
                                 const hold = parseFloat(document.getElementById('Hold')?.value || 0.05);
                                 const rel = parseFloat(document.getElementById('release')?.value || 0.1);
                                 const mode = document.getElementById('modeLin')?.checked ? 'lin' : 'exp';
                                 return AHR_FOLLOWER('4orm_' + callIdx, val, { attack: atk, hold: hold, release: rel, sr: HZ, mode: mode });
                             }
-                            if (decayType === 3) {
+                            if (decayType === 4) {
                                 const atk2 = parseFloat(document.getElementById('Attack')?.value || 0.01);
                                 const dec2 = parseFloat(document.getElementById('Decay')?.value || 0.0);
                                 const sus2 = parseFloat(document.getElementById('Sustain')?.value || 0.5);
@@ -8431,7 +8431,7 @@ function Robotsaw(y, t, itt) {
                     z5_5[call] ??= { var1: 0 };
                     z5_5[call].var1 = Math.max(Math.abs(a), z5_5[call].var1 - Math.sqrt(decayF) / 2);
                     return z5_5[call].var1 / 3;
-                }
+                }        
                 function rms(a, decayF, call) {
                     z5_5[call] ??= { var1: 0 };
                     z5_5[call].var1 = (1 - decayF) * z5_5[call].var1 + decayF * a * a;
@@ -9404,7 +9404,7 @@ function Robotsaw(y, t, itt) {
                 return out;
             }
 
-            return { ap, bpTC, bpTC2, TBP, bpFFT, BPTCsvf, BPTCsvf_weird, svfFilter, hpTC, lp, hp, bp, bp2, bp3, bp4, bp5 };
+            return { ap, bpTC, bpTC2, TBP, bpFFT, BPTCsvf, BPTCsvf_weird, svfFilter, hpTC, lp, hp, bp, bp2, bp3, bp4, bp5, z5 };
         })());
 
         function applyAnalogLogic(context, inputLeft, inputRight, carrierLeft, carrierRight, sampleRate) {
@@ -9428,7 +9428,6 @@ function Robotsaw(y, t, itt) {
             const BPTCsvf_weird = BP.BPTCsvf_weird;
 
             // "Filter"
-            // this should sound similar to Magix's vocoder filters
             const svfFilter = BP.svfFilter;
 
             // UI values
@@ -9648,22 +9647,22 @@ function Robotsaw(y, t, itt) {
                 if (addLPtoLowEnd) {
                     let { ic, distance, EQvol: eqv } = curve(1, nv);
 
-                    fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
-                    LPC = lp(car*64, ic, fbv, 2, n*2+2 + bool*n*3);
-                    LPM = lp(inp*64, ic, fbv, 2, n*2+3 + bool*n*3);
+                    let fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
+                    let LPC = lp(car*64, ic, fbv, 2, n*2+2 + bool*n*3);
+                    let LPM = lp(inp*64, ic, fbv, 2, n*2+3 + bool*n*3);
 
-                    ABSLPC = Math.abs(LPM);
+                    let ABSLPC = Math.abs(LPM);
                     LPOUT = LPC * p(ABSLPC, 2**-((rel*3)**2)/400, n*2+2)
                 }
 
                 if (addHPtoHighEnd) {
                     let { ic, distance, EQvol: eqv } = curve(nv, nv);
 
-                    fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
-                    HPC = hpTC(car*64, ic, fbv/2, 2, n*2+2 + bool*n*3);
-                    HPM = hpTC(inp*64, ic, fbv/2, 2, n*2+3 + bool*n*3);
+                    let fbvv = UseResBasedOnDistance?fb*(1-distance*1.75):fb
+                    let HPC = hpTC(car*64, ic, fbv/2, 2, n*2+2 + bool*n*3);
+                    let HPM = hpTC(inp*64, ic, fbv/2, 2, n*2+3 + bool*n*3);
 
-                    ABSHPC = Math.abs(HPM);
+                    let ABSHPC = Math.abs(HPM);
                     HPOUT = HPC * p(ABSHPC, 2**-((rel*3)**2)/400, n*2+3)
                 }
 

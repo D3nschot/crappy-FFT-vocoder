@@ -5358,70 +5358,10 @@ const waveFunctions = {
 
 
 
-            function showErrorPopup(message, warn = false) {
-                // Check if popup already exists, remove it
-                let existingPopup = document.getElementById('errorPopup');
-                if (existingPopup) {
-                    existingPopup.remove();
-                }
+            // Note: showErrorPopup/formatVerboseError are defined once, later in the page
+            // (after this IIFE), since that definition is the one that actually wins at
+            // runtime when both scripts load (later top-level function decl overrides this one).
 
-                // Create overlay
-                const overlay = document.createElement('div');
-                overlay.id = 'errorPopup';
-                overlay.style.position = 'fixed';
-                overlay.style.top = '0';
-                overlay.style.left = '0';
-                overlay.style.width = '100vw';
-                overlay.style.height = '100vh';
-                overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                overlay.style.display = 'flex';
-                overlay.style.alignItems = 'center';
-                overlay.style.justifyContent = 'center';
-                overlay.style.zIndex = '10000';
-
-                // Create popup container
-                const popup = document.createElement('div');
-                popup.style.backgroundColor = warn ? '#b58900' : '#700'; // yellow for warn, red for error
-                popup.style.color = '#fff';
-                popup.style.padding = '20px 30px';
-                popup.style.borderRadius = '12px';
-                popup.style.maxWidth = '400px';
-                popup.style.width = '90%';
-                popup.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
-                popup.style.textAlign = 'center';
-                popup.style.fontFamily = 'Arial, sans-serif';
-
-                // Message text
-                const messageEl = document.createElement('p');
-                messageEl.style.marginBottom = '20px';
-                messageEl.style.whiteSpace = 'pre-wrap'; // preserve line breaks
-                messageEl.textContent = message;
-
-                // Close button
-                const closeBtn = document.createElement('button');
-                closeBtn.textContent = 'Close';
-                closeBtn.style.background = warn ? '#d7a600' : '#a00'; // lighter yellow for warn, dark red for error
-                closeBtn.style.border = 'none';
-                closeBtn.style.color = '#fff';
-                closeBtn.style.padding = '10px 20px';
-                closeBtn.style.borderRadius = '8px';
-                closeBtn.style.cursor = 'pointer';
-                closeBtn.style.fontSize = '16px';
-                closeBtn.style.fontWeight = 'bold';
-                closeBtn.style.transition = 'background 0.3s ease';
-
-                closeBtn.addEventListener('mouseenter', () => {
-                    closeBtn.style.background = warn ? '#ffcc00' : '#f00'; // bright yellow on hover for warn, bright red for error
-                });
-
-                // Append elements
-                popup.appendChild(messageEl);
-                popup.appendChild(closeBtn);
-                overlay.appendChild(popup);
-                document.body.appendChild(overlay);
-            }
-
-            // Scope (optional)
             const scope = document.getElementById("bbScope");
             const fft = document.getElementById("bbFFT");
             const ctx = scope ? scope.getContext("2d") : null;
@@ -5988,7 +5928,13 @@ return ((Math.sin(carrier) + 1) * 0.5 * (Math.sin(modulator) + 1) * 0.5) * 255;`
                         tryProcessAudio(loadedAudioBuffer);
                     }, function(error) {
                         console.error('Error decoding carrier audio data:', error);
-                        showErrorPopup(`Error decoding carrier audio data. Please select a valid audio file. \n ${error}`);
+                        const v = formatVerboseError('audioInput.decodeAudioData (Audio Input file)', error, {
+                            fileName: file.name,
+                            fileType: file.type || '(unknown)',
+                            fileSizeBytes: file.size,
+                            audioContextSampleRate: audioContext ? audioContext.sampleRate : null
+                        });
+                        showErrorPopup('Error decoding carrier audio data. Please select a valid audio file.\n' + v.summary, false, v.details);
                     });
 
 
@@ -6020,7 +5966,13 @@ return ((Math.sin(carrier) + 1) * 0.5 * (Math.sin(modulator) + 1) * 0.5) * 255;`
                         tryProcessAudio(loadedAudioBuffer);
                     }, function(error) {
                         console.error('Error decoding modular audio data:', error);
-                        showErrorPopup(`Error decoding modular audio data. Please select a valid audio file. \n ${error}`);
+                        const v = formatVerboseError('carrierInput.decodeAudioData (Carrier Input file)', error, {
+                            fileName: file.name,
+                            fileType: file.type || '(unknown)',
+                            fileSizeBytes: file.size,
+                            audioContextSampleRate: audioContext ? audioContext.sampleRate : null
+                        });
+                        showErrorPopup('Error decoding modular audio data. Please select a valid audio file.\n' + v.summary, false, v.details);
                     });
 
 
@@ -6035,7 +5987,12 @@ return ((Math.sin(carrier) + 1) * 0.5 * (Math.sin(modulator) + 1) * 0.5) * 255;`
             if (loadedAudioBuffer && (loadedCarrierBuffer||EnSynth)) {
                 processAudio(loadedAudioBuffer);
             } else {
-                showErrorPopup('Please load both audio and input files first.', true); // warning style popup
+                const v = formatVerboseError('reprocessButton click handler', null, {
+                    audioInputLoaded: !!loadedAudioBuffer,
+                    carrierInputLoaded: !!loadedCarrierBuffer,
+                    synthEnabled: EnSynth
+                });
+                showErrorPopup('Please load both audio and input files first.\n' + v.summary, true, v.details); // warning style popup
             }
         });
 
@@ -6204,7 +6161,59 @@ return ((Math.sin(carrier) + 1) * 0.5 * (Math.sin(modulator) + 1) * 0.5) * 255;`
             }
         }
 
-        function showErrorPopup(message, warn = false) {
+        // Builds a verbose error string: which function/object threw, where (line/col via stack),
+        // the original error message, and a minified JSON dump of whatever context object is passed in.
+        // `context` should be a plain object of whatever state is relevant to the failing call
+        // (e.g. the synth config, buffer info, iteration index) so the popup can show it minified.
+        function formatVerboseError(label, error, context) {
+            // If this is a validation/warning call with no actual exception, generate one
+            // here just to capture a stack trace pointing at the real call site.
+            const errForStack = error || new Error('(validation check, not a thrown exception)');
+            const isRealError = !!error;
+
+            let where = '(unknown location - no stack available)';
+            if (typeof errForStack.stack === 'string') {
+                // Stack lines look like "at functionName (url:line:col)" - keep the first few useful frames,
+                // skipping the formatVerboseError frame itself when we generated the error ourselves.
+                const skip = isRealError ? 1 : 2;
+                const frames = errForStack.stack.split('\n').slice(skip, skip + 3).map(l => l.trim()).filter(Boolean);
+                if (frames.length) where = frames.join('\n  <- ');
+            }
+
+            let configDump = '(no context provided)';
+            if (context !== undefined) {
+                try {
+                    configDump = JSON.stringify(context, (key, val) => {
+                        if (val instanceof Float32Array || val instanceof Uint8Array || val instanceof Int16Array) {
+                            return `[${val.constructor.name} len=${val.length}]`;
+                        }
+                        if (val instanceof Set) return `[Set len=${val.size}]`;
+                        if (typeof val === 'function') return '[function]';
+                        return val;
+                    });
+                } catch (e) {
+                    configDump = '(could not serialize context: ' + e.message + ')';
+                }
+            }
+
+            const summary = isRealError
+                ? `${label}: ${error.message || String(error)}`
+                : `${label}`;
+
+            const details = isRealError
+                ? `Function/Object: ${label}\n`
+                    + `Error type: ${error.name || 'Error'}\n`
+                    + `Message: ${error.message || String(error)}\n`
+                    + `Location:\n  ${where}\n`
+                    + `Config (minified): ${configDump}`
+                : `Function/Object: ${label}\n`
+                    + `Location:\n  ${where}\n`
+                    + `Config (minified): ${configDump}`;
+
+            return { summary, details };
+        }
+
+        function showErrorPopup(message, warn = false, details = null) {
             // Check if popup already exists, remove it
             let existingPopup = document.getElementById('errorPopup');
             if (existingPopup) {
@@ -6231,17 +6240,61 @@ return ((Math.sin(carrier) + 1) * 0.5 * (Math.sin(modulator) + 1) * 0.5) * 255;`
             popup.style.color = '#fff';
             popup.style.padding = '20px 30px';
             popup.style.borderRadius = '12px';
-            popup.style.maxWidth = '400px';
+            popup.style.maxWidth = details ? '700px' : '400px';
             popup.style.width = '90%';
+            popup.style.maxHeight = '80vh';
+            popup.style.overflowY = 'auto';
             popup.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
             popup.style.textAlign = 'center';
             popup.style.fontFamily = 'Arial, sans-serif';
 
             // Message text
             const messageEl = document.createElement('p');
-            messageEl.style.marginBottom = '20px';
+            messageEl.style.marginBottom = details ? '10px' : '20px';
             messageEl.style.whiteSpace = 'pre-wrap'; // preserve line breaks
             messageEl.textContent = message;
+            popup.appendChild(messageEl);
+
+            // Verbose details block: function/object name, stack location, minified config dump
+            if (details) {
+                const detailsEl = document.createElement('pre');
+                detailsEl.style.textAlign = 'left';
+                detailsEl.style.whiteSpace = 'pre-wrap';
+                detailsEl.style.wordBreak = 'break-word';
+                detailsEl.style.background = 'rgba(0,0,0,0.35)';
+                detailsEl.style.color = '#ffd9d9';
+                detailsEl.style.fontFamily = "'Monaco', 'Menlo', 'Ubuntu Mono', monospace";
+                detailsEl.style.fontSize = '12px';
+                detailsEl.style.padding = '12px';
+                detailsEl.style.borderRadius = '8px';
+                detailsEl.style.marginBottom = '15px';
+                detailsEl.textContent = details;
+                popup.appendChild(detailsEl);
+
+                const copyBtn = document.createElement('button');
+                copyBtn.textContent = 'Copy details';
+                copyBtn.style.background = '#444';
+                copyBtn.style.border = 'none';
+                copyBtn.style.color = '#fff';
+                copyBtn.style.padding = '8px 14px';
+                copyBtn.style.borderRadius = '8px';
+                copyBtn.style.cursor = 'pointer';
+                copyBtn.style.fontSize = '13px';
+                copyBtn.style.marginRight = '10px';
+                copyBtn.addEventListener('click', () => {
+                    const fullText = message + '\n\n' + details;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(fullText).then(() => {
+                            copyBtn.textContent = 'Copied!';
+                            setTimeout(() => { copyBtn.textContent = 'Copy details'; }, 1500);
+                        }).catch(() => {
+                            copyBtn.textContent = 'Copy failed';
+                            setTimeout(() => { copyBtn.textContent = 'Copy details'; }, 1500);
+                        });
+                    }
+                });
+                popup.appendChild(copyBtn);
+            }
 
             // Close button
             const closeBtn = document.createElement('button');
@@ -6274,7 +6327,6 @@ return ((Math.sin(carrier) + 1) * 0.5 * (Math.sin(modulator) + 1) * 0.5) * 255;`
 
 
             // Append elements
-            popup.appendChild(messageEl);
             popup.appendChild(closeBtn);
             overlay.appendChild(popup);
             document.body.appendChild(overlay);
@@ -7005,7 +7057,17 @@ function polyFsawFromKeyboard(m, heldNotesSet, octaveShift, detuneAmount, wavefo
 
         return [sumL / 3, sumR / 3];
     } catch (error) {
-        showErrorPopup(`Error in polyFsawFromKeyboard \n ${error}`);
+        const v = formatVerboseError('polyFsawFromKeyboard', error, {
+            masterVoicesArg: m,
+            heldNotesCount: heldNotesSet ? heldNotesSet.size : null,
+            octaveShift: octaveShift,
+            detuneAmount: detuneAmount,
+            waveformType: waveformType,
+            t: t,
+            SR: SR,
+            hadConfigParam: !!configParam
+        });
+        showErrorPopup('Error in polyFsawFromKeyboard.\n' + v.summary, false, v.details);
         return [0, 0];
     }
 }
@@ -7764,7 +7826,12 @@ function Robotsaw(y, t, itt) {
         function processAudio(buffer) {
             try {
                 if (!loadedAudioBuffer) {
-                    showErrorPopup('Please select a Modular audio file.',true);
+                    const v = formatVerboseError('processAudio (Modular audio file check)', null, {
+                        loadedAudioBuffer: !!loadedAudioBuffer,
+                        loadedCarrierBuffer: !!loadedCarrierBuffer,
+                        bufferArgProvided: !!buffer
+                    });
+                    showErrorPopup('Please select a Modular audio file.\n' + v.summary, true, v.details);
                     return;
                 }
 
@@ -7772,13 +7839,22 @@ function Robotsaw(y, t, itt) {
                 const synthEnabled = document.getElementById('enableSynth')?.checked || false;
                 
                 if (!synthEnabled && !loadedCarrierBuffer) {
-                    showErrorPopup('Please select a carrier audio file or enable Synth.',true);
+                    const v = formatVerboseError('processAudio (Carrier audio file / Synth check)', null, {
+                        synthEnabled: synthEnabled,
+                        loadedCarrierBuffer: !!loadedCarrierBuffer,
+                        loadedAudioBuffer: !!loadedAudioBuffer
+                    });
+                    showErrorPopup('Please select a carrier audio file or enable Synth.\n' + v.summary, true, v.details);
                     return;
                 }
 
                 const iterations = parseInt(document.getElementById('iterations').value);
                 if (iterations < 1) {
-                    showErrorPopup('Please enter a valid number of iterations.',true);
+                    const v = formatVerboseError('processAudio (Iterations check)', null, {
+                        iterationsInputValue: document.getElementById('iterations').value,
+                        parsedIterations: iterations
+                    });
+                    showErrorPopup('Please enter a valid number of iterations.\n' + v.summary, true, v.details);
                     return;
                 }
 
@@ -7842,7 +7918,13 @@ function Robotsaw(y, t, itt) {
 
                         if (synthSource === 'bytebeat') {
                             if (!window.bbSynth || !bbSynth.prepareRenderContext || !bbSynth.renderSample) {
-                                showErrorPopup('Bytebeat synth is not available. Please reload the page.');
+                                const v = formatVerboseError('processAudio -> offlineContext.startRendering (bytebeat availability check)', null, {
+                                    windowBbSynthExists: !!window.bbSynth,
+                                    hasPrepareRenderContext: !!(window.bbSynth && bbSynth.prepareRenderContext),
+                                    hasRenderSample: !!(window.bbSynth && bbSynth.renderSample),
+                                    synthSource: synthSource
+                                });
+                                showErrorPopup('Bytebeat synth is not available. Please reload the page.\n' + v.summary, false, v.details);
                                 return;
                             }
                             if (typeof bbSynth.resetBbStateForRender === 'function') {
@@ -7901,7 +7983,16 @@ function Robotsaw(y, t, itt) {
                     showProcessPOP_UP('', false);
                 }).catch(function(error) {
                     console.error('Error during offline rendering:', error);
-                    showErrorPopup('An error occurred during audio processing: ' + error.message);
+                    const v = formatVerboseError('processAudio -> offlineContext.startRendering().catch', error, {
+                        synthEnabled: synthEnabled,
+                        synthSource: document.getElementById('synthSource')?.value || '6x',
+                        iterations: iterations,
+                        Vmode: Vmode,
+                        carrierLength: loadedCarrierBuffer ? loadedCarrierBuffer.length : null,
+                        carrierSampleRate: loadedCarrierBuffer ? loadedCarrierBuffer.sampleRate : null,
+                        carrierChannels: loadedCarrierBuffer ? loadedCarrierBuffer.numberOfChannels : null
+                    });
+                    showErrorPopup('An error occurred during audio processing.\n' + v.summary, false, v.details);
                     document.getElementById('playButton').disabled = true;
                     document.getElementById('pauseButton').disabled = true;
                     document.getElementById('stopButton').disabled = true;
@@ -7912,7 +8003,15 @@ function Robotsaw(y, t, itt) {
 
             } catch (error) {
                 console.error('Error in processAudio:', error);
-                showErrorPopup('An unexpected error occurred during audio processing setup: ' + error.message);
+                const v = formatVerboseError('processAudio (setup, outer catch)', error, {
+                    bufferArgSampleRate: buffer ? buffer.sampleRate : null,
+                    bufferArgChannels: buffer ? buffer.numberOfChannels : null,
+                    bufferArgLength: buffer ? buffer.length : null,
+                    loadedAudioBufferPresent: !!loadedAudioBuffer,
+                    loadedCarrierBufferPresent: !!loadedCarrierBuffer,
+                    Vmode: Vmode
+                });
+                showErrorPopup('An unexpected error occurred during audio processing setup.\n' + v.summary, false, v.details);
                 document.getElementById('playButton').disabled = true;
                 document.getElementById('pauseButton').disabled = true;
                 document.getElementById('stopButton').disabled = true;
@@ -8013,7 +8112,23 @@ function Robotsaw(y, t, itt) {
                         carrierLeft = inputLeft;
                         carrierRight = inputRight;
                 } catch (error) {
-                    showErrorPopup(`An error occurred during processing iteration ${i + 1}: ${error.message}. Processing stopped.`);
+                    const modeFnNames = ['applyFFTLogic', 'applyAnalogLogic', 'apply4ormLogic', 'applySomeExperimentsLogic'];
+                    const v = formatVerboseError(
+                        `processAudioIterations -> ${modeFnNames[Vmode] || ('Vmode=' + Vmode)} (iteration ${i + 1}/${iterations})`,
+                        error,
+                        {
+                            iteration: i + 1,
+                            totalIterations: iterations,
+                            Vmode: Vmode,
+                            synthOnly: document.getElementById('SynthOnly')?.checked || false,
+                            sampleRate: buffer ? buffer.sampleRate : null,
+                            inputLeftLength: inputLeft ? inputLeft.length : null,
+                            inputRightLength: inputRight ? inputRight.length : null,
+                            carrierLeftLength: carrierLeft ? carrierLeft.length : null,
+                            carrierRightLength: carrierRight ? carrierRight.length : null
+                        }
+                    );
+                    showErrorPopup(`Processing stopped on iteration ${i + 1}.\n` + v.summary, false, v.details);
                     showProcessPOP_UP_WL('', false); // Hide any pop-ups
                     break; // Stop further iterations
                 }
